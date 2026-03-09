@@ -27,16 +27,16 @@ public partial class Reservation
 
     [Required]
     [Column("nomclient")]
-    [StringLength(50)]
+    [StringLength(50, ErrorMessage = "Le nom ne doit pas dépasser 50 caractères")]
     public string NomClient { get; set; } = null!;
 
     [Required]
     [Column("prenomclient")]
-    [StringLength(50)]
+    [StringLength(50, ErrorMessage = "Le prenom ne doit pas dépasser 50 caractères")]
     public string PrenomClient { get; set; } = null!;
 
     [Column("telephoneclient", TypeName = "char(10)")]
-    [RegularExpression(@"^0[1-9][0-9]{8}$")]
+    [RegularExpression(@"^0[1-9][0-9]{8}$", ErrorMessage = "Le numéro de téléphone doit contenir 10 chiffres et commencer par 0.")]
     public string? TelephoneClient { get; set; }
 
     // --- Navigation Properties ---

@@ -16,7 +16,7 @@ public partial class Commodite
     public int CategorieId { get; set; }
 
     [Column("nomcommodite")]
-    [StringLength(50)]
+    [StringLength(50,ErrorMessage ="Le nom ne doit pas dépasser 50 caractères")]
     public string? NomCommodite { get; set; }
 
     [ForeignKey(nameof(CategorieId))]

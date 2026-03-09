@@ -55,7 +55,7 @@ public partial class Utilisateur
     public decimal Solde { get; set; }
 
     [Column("remember_token")]
-    [StringLength(100)]
+    [StringLength(100,ErrorMessage = "Le remember token ne peut pas dépasser 100 caractères")]
     public string? RememberToken { get; set; }
 
     [Column("two_factor_secret", TypeName = "text")]

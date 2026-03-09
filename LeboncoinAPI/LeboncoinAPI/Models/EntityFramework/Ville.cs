@@ -18,11 +18,12 @@ public partial class Ville
 
     [Required]
     [Column("codepostal", TypeName = "char(5)")]
+
     public string CodePostal { get; set; } = null!;
 
     [Required]
     [Column("nomville")]
-    [StringLength(40)]
+    [StringLength(40,ErrorMessage = "Le nom doit avoir moins de 40 caractères")]
     public string NomVille { get; set; } = null!;
 
     [Column("taxedesejour", TypeName = "decimal(10,2)")]

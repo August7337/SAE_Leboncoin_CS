@@ -16,7 +16,7 @@ public partial class TypeHebergement
     public int CategorieId { get; set; }
 
     [Column("nomtypehebergement")]
-    [StringLength(30)]
+    [StringLength(30, ErrorMessage = "Le nom ne doit pas dépasser 30 caractères")]
     public string? NomTypeHebergement { get; set; }
 
     [ForeignKey(nameof(CategorieId))]

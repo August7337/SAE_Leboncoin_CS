@@ -17,12 +17,12 @@ public partial class Professionnel
 
     [Required]
     [Column("nomsociete")]
-    [StringLength(30)]
+    [StringLength(30, ErrorMessage = "Le nom ne doit pas dépasser 30 caractères")]
     public string NomSociete { get; set; } = null!;
 
     [Required]
     [Column("secteuractivite")]
-    [StringLength(50)]
+    [StringLength(50, ErrorMessage = "Le secteur ne doit pas dépasser 50 caractères")]
     public string SecteurActivite { get; set; } = null!;
 
     [ForeignKey(nameof(UtilisateurId))]

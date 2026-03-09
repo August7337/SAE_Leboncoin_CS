@@ -12,7 +12,7 @@ public partial class Categorie
     public int CategorieId { get; set; }
 
     [Column("nomcategorie")]
-    [StringLength(24)]
+    [StringLength(24,ErrorMessage ="Le nom de la catégorie ne doit pas dépasser 25 caractères")]
     public string? NomCategorie { get; set; }
 
     [InverseProperty("CategorieHebergement")]

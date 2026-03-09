@@ -13,7 +13,7 @@ public partial class Compensation
     public int CompensationId { get; set; }
 
     [Column("nomcompensation")]
-    [StringLength(100)]
+    [StringLength(100, ErrorMessage = "Le nom ne doit pas dépasser 100 caractères")]
     public string? NomCompensation { get; set; }
 
     // Table de liaison Many-to-Many "demander" (Incident <-> Compensation)

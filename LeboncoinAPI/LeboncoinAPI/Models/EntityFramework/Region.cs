@@ -13,7 +13,7 @@ public partial class Region
 
     [Required]
     [Column("nomregion")]
-    [StringLength(30)]
+    [StringLength(30, ErrorMessage = "Le nom ne doit pas dépasser 30 caractères")]
     public string NomRegion { get; set; } = null!;
 
     [InverseProperty("RegionAssociee")]

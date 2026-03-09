@@ -12,6 +12,6 @@ public partial class TypeVoyageur
 
     [Required]
     [Column("nomtypevoyageur")]
-    [StringLength(30)]
+    [StringLength(30, ErrorMessage = "Le nom ne doit pas dépasser 30 caractères")]
     public string NomTypeVoyageur { get; set; } = null!;
 }
