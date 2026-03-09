@@ -53,4 +53,10 @@ public partial class Incident
 
     [ForeignKey(nameof(UtilisateurId))]
     public virtual Utilisateur UtilisateurDeclarant { get; set; } = null!;
+
+    [ForeignKey(nameof(DateId))]
+    public virtual DateReference DateIncident { get; set; } = null!;
+
+    // Table de liaison "demander" (Incident <-> Compensation)
+    public virtual ICollection<Compensation> CompensationsDemandees { get; set; } = new List<Compensation>();
 }
