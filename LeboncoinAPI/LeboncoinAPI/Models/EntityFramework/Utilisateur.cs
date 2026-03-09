@@ -76,6 +76,17 @@ public partial class Utilisateur
     [ForeignKey(nameof(AdresseId))]
     public virtual Adresse AdresseUtilisateur { get; set; } = null!;
 
+
+    [ForeignKey(nameof(DateId))]
+    public virtual DateReference DateInscription { get; set; } = null!;
+
+    // 1 to 1 relationships (Particulier / Professionnel)
+    [InverseProperty("UtilisateurBase")]
+    public virtual Particulier? ProfilParticulier { get; set; }
+
+    [InverseProperty("UtilisateurBase")]
+    public virtual Professionnel? ProfilProfessionnel { get; set; }
+
     [InverseProperty("UtilisateurAuteur")]
     public virtual ICollection<Annonce> AnnoncesPubliees { get; set; } = new List<Annonce>();
 

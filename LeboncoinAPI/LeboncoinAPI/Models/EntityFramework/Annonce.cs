@@ -100,6 +100,20 @@ public partial class Annonce
     [ForeignKey(nameof(AdresseId))]
     public virtual Adresse AdresseAnnonce { get; set; } = null!;
 
+    [ForeignKey(nameof(DateId))]
+    public virtual DateReference DatePublication { get; set; } = null!;
+
+    [ForeignKey(nameof(HeureDepartId))]
+    public virtual Heure HeureDepart { get; set; } = null!;
+
+    [ForeignKey(nameof(HeureArriveeId))]
+    public virtual Heure HeureArrivee { get; set; } = null!;
+
+    [ForeignKey(nameof(TypeHebergementId))]
+    [InverseProperty("Annonces")]
+    public virtual TypeHebergement TypeHebergementAssocie { get; set; } = null!;
+
+    // Collections inverses
     [InverseProperty("AnnonceConcernee")]
     public virtual ICollection<Reservation> Reservations { get; set; } = new List<Reservation>();
 
@@ -108,4 +122,7 @@ public partial class Annonce
 
     // Table de liaison "favoriser"
     public virtual ICollection<Utilisateur> UtilisateursFavoris { get; set; } = new List<Utilisateur>();
+
+    // Table de liaison "proposer"
+    public virtual ICollection<Commodite> CommoditesProposees { get; set; } = new List<Commodite>();
 }
