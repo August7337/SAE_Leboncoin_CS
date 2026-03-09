@@ -1,0 +1,6 @@
+@LeboncoinAPI_HostAddress = http://localhost:5150
+
+GET {{LeboncoinAPI_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
