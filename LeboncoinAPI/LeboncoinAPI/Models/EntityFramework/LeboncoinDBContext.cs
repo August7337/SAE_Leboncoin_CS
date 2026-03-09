@@ -23,6 +23,15 @@ public partial class LeboncoinDBContext : DbContext
     public virtual DbSet<Ville> Villes { get; set; } = null!;
     public virtual DbSet<Particulier> Particuliers { get; set; } = null!;
     public virtual DbSet<Professionnel> Professionnels { get; set; } = null!;
+    public virtual DbSet<Region> Regions { get; set; } = null!;
+    public virtual DbSet<Departement> Departements { get; set; } = null!;
+    public virtual DbSet<Categorie> Categories { get; set; } = null!;
+    public virtual DbSet<TypeHebergement> TypesHebergements { get; set; } = null!;
+    public virtual DbSet<Commodite> Commodites { get; set; } = null!;
+    public virtual DbSet<DateReference> DatesReferences { get; set; } = null!;
+    public virtual DbSet<Heure> Heures { get; set; } = null!;
+    public virtual DbSet<TypeVoyageur> TypesVoyageurs { get; set; } = null!;
+    public virtual DbSet<Compensation> Compensations { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -73,6 +82,8 @@ public partial class LeboncoinDBContext : DbContext
         {
             entity.HasIndex(e => e.NumSiret).IsUnique();
         });
+
+
 
         OnModelCreatingPartial(modelBuilder);
     }
