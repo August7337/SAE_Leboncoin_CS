@@ -10,6 +10,7 @@ public partial class Adresse
 {
     [Key]
     [Column("idadresse")]
+    [Required]
     public int AdresseId { get; set; }
 
     [Column("idville")]
@@ -19,7 +20,7 @@ public partial class Adresse
     public int? NumeroRue { get; set; }
 
     [Column("nomrue")]
-    [StringLength(39)]
+    [StringLength(39,ErrorMessage = "La longueur du nom de la rue doit être inférieure à 39 caractères")]
     public string? NomRue { get; set; }
 
     // --- Navigation Properties ---

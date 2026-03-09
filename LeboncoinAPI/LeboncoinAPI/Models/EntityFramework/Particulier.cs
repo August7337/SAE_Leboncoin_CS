@@ -15,17 +15,17 @@ public partial class Particulier
 
     [Required]
     [Column("nomutilisateur")]
-    [StringLength(50)]
+    [StringLength(50, ErrorMessage = "Le nom ne doit pas dépasser 50 caractères")]
     public string NomUtilisateur { get; set; } = null!;
 
     [Required]
     [Column("prenomutilisateur")]
-    [StringLength(50)]
+    [StringLength(50, ErrorMessage = "Le prenom ne doit pas dépasser 50 caractères")]
     public string PrenomUtilisateur { get; set; } = null!;
 
     [Required]
     [Column("civilite")]
-    [StringLength(15)]
+    [StringLength(15, ErrorMessage ="Le message ne doit pas dépasser 15 caractères")]
     public string Civilite { get; set; } = null!;
 
     [Column("iddate")]

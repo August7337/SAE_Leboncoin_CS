@@ -22,11 +22,11 @@ public partial class Incident
     public int DateId { get; set; }
 
     [Column("motifincident")]
-    [StringLength(100)]
+    [StringLength(100,ErrorMessage ="Le motif ne doit pas depasser 100 caractères")]
     public string? MotifIncident { get; set; }
 
     [Column("descriptionincident")]
-    [StringLength(2000)]
+    [StringLength(2000,ErrorMessage ="La description ne doit pas dépasser 2000 caractères")]
     public string? DescriptionIncident { get; set; }
 
     [Column("etape")]
@@ -42,7 +42,7 @@ public partial class Incident
     public bool EstRemisAuContentieux { get; set; }
 
     [Column("explicationproprietaire")]
-    [StringLength(2000)]
+    [StringLength(2000, ErrorMessage = "L'explication ne doit pas dépasser 2000 caractères")]
     public string? ExplicationProprietaire { get; set; }
 
     // --- Navigation Properties ---
