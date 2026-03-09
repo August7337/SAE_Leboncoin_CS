@@ -23,7 +23,7 @@ public partial class Message
 
     [Required]
     [Column("contenumessage")]
-    [StringLength(1000)]
+    [StringLength(1000,ErrorMessage ="Le message ne doit pas dépasser 1000 caractères")]
     public string ContenuMessage { get; set; } = null!;
 
     // --- Navigation Properties ---

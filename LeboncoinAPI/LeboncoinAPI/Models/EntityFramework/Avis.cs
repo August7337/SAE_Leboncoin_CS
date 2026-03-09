@@ -22,11 +22,11 @@ public partial class Avis
     public int UtilisateurId { get; set; }
 
     [Column("texteavis")]
-    [StringLength(500)]
+    [StringLength(500,ErrorMessage = "L'avis ne peut pas depasser 500 caractères")]
     public string? TexteAvis { get; set; }
 
     [Column("nombreetoiles", TypeName = "decimal(2,1)")]
-    [Range(1.0, 5.0)]
+    [Range(1.0, 5.0, ErrorMessage = "Le nombre d'étoiles doit être compris entre 1 et 5")]
     public decimal NombreEtoiles { get; set; }
 
     // --- Navigation Properties ---
