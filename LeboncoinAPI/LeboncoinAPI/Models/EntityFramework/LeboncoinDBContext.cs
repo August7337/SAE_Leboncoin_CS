@@ -2,15 +2,15 @@
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 
-namespace MonProjetAPI.Models.EntityFramework;
+namespace LeboncoinAPI.Models.EntityFramework;
 
-public partial class MonProjetDbContext : DbContext
+public partial class LeboncoinDBContext : DbContext
 {
-    public MonProjetDbContext(DbContextOptions<MonProjetDbContext> options)
+    public LeboncoinDBContext(DbContextOptions<LeboncoinDBContext> options)
         : base(options)
     { }
 
-    public MonProjetDbContext() { }
+    public LeboncoinDBContext() { }
 
     // --- Déclaration de tous les DbSets (Représentation des tables) ---
     public virtual DbSet<Utilisateur> Utilisateurs { get; set; } = null!;
