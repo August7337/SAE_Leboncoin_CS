@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace LeboncoinAPI.Migrations
 {
     [DbContext(typeof(LeboncoinDBContext))]
-    [Migration("20260311075644_remote-migration-v1.0.0")]
-    partial class remotemigrationv100
+    [Migration("20260311103905_migration-v1.0.0")]
+    partial class migrationv100
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

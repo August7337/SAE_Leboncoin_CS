@@ -2,11 +2,24 @@ using LeboncoinAPI.Models.DataManager;
 using LeboncoinAPI.Models.EntityFramework;
 using LeboncoinAPI.Models.Repository;
 using Microsoft.EntityFrameworkCore;
+using DotNetEnv; 
 
 var builder = WebApplication.CreateBuilder(args);
 
+// charge le fichier .env présent à la racine
+Env.TraversePath().Load();
+
+// récupère les identifiants depuis le .env (avec des valeurs par défaut si non trouvé)
+var dbHost = Environment.GetEnvironmentVariable("DB_HOST") ?? "localhost";
+var dbPort = Environment.GetEnvironmentVariable("DB_PORT") ?? "5432";
+var dbName = Environment.GetEnvironmentVariable("DB_NAME") ?? "LeboncoinDB";
+var dbUser = Environment.GetEnvironmentVariable("DB_USER") ?? "postgres";
+var dbPass = Environment.GetEnvironmentVariable("DB_PASS") ?? "postgres";
+
+var connectionString = $"Server={dbHost};Port={dbPort};Database={dbName};User Id={dbUser};Password={dbPass};";
+
 builder.Services.AddDbContext<LeboncoinDBContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("LeboncoinDbContextRemote")));
+    options.UseNpgsql(connectionString));
 
 builder.Services.AddScoped<IDataRepository<Utilisateur>, UtilisateurManager>();
 builder.Services.AddScoped<IDataRepository<Annonce>, AnnonceManager>();
