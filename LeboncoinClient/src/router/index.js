@@ -50,6 +50,23 @@ const routes = [
     path: '/settings',
     name: 'settings',
     component: () => import('../views/account/AccountSettingsView.vue')
+  },
+
+  // --- Profil & Sécurité ---
+  {
+    path: '/profil',
+    name: 'profile',
+    component: () => import('../views/profile/ProfileView.vue')
+  },
+  {
+    path: '/edit-profile',
+    name: 'edit-profile',
+    component: () => import('../views/profile/EditProfileView.vue')
+  },
+  {
+    path: '/security',
+    name: 'security',
+    component: () => import('../views/profile/SecurityView.vue')
   }
 ]
 

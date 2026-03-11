@@ -1,4 +1,6 @@
-<script setup></script>
+<script setup>
+// Tu peux ajouter une logique ici plus tard pour l'état actif
+</script>
 
 <template>
   <header
@@ -41,7 +43,7 @@
         </router-link>
 
         <router-link
-          to="/favoris"
+          to="/favorites"
           class="relative hidden md:flex flex-col items-center gap-1 group w-16"
         >
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6 group-hover:text-black transition-colors">
