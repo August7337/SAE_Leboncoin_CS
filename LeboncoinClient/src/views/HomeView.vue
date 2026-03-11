@@ -26,21 +26,12 @@
 <script setup>
 import { onMounted, ref } from 'vue'
 import AnnonceList from '../components/AnnonceList.vue'
-
-const API_BASE_URL = 'https://localhost:7057'
+import { buildAssetUrl } from '../services/api'
+import annoncesService from '../services/annoncesService'
 
 const annonces = ref([])
 const isLoading = ref(false)
 const errorMessage = ref('')
-
-const normalizePhotoUrl = (photoPath) => {
-  if (!photoPath) return ''
-  if (photoPath.startsWith('http://') || photoPath.startsWith('https://')) {
-    return photoPath
-  }
-
-  return `${API_BASE_URL}/${photoPath.replace(/^\/+/, '')}`
-}
 
 const mapAnnonceFromApi = (annonceApi) => ({
   idannonce: annonceApi.annonceId,
@@ -59,7 +50,7 @@ const mapAnnonceFromApi = (annonceApi) => ({
         },
       }
     : null,
-  photos: annonceApi.lienPhoto ? [{ lienphoto: normalizePhotoUrl(annonceApi.lienPhoto) }] : [],
+  photos: annonceApi.lienPhoto ? [{ lienphoto: buildAssetUrl(annonceApi.lienPhoto) }] : [],
 })
 
 const loadAnnonces = async () => {
@@ -67,13 +58,7 @@ const loadAnnonces = async () => {
   errorMessage.value = ''
 
   try {
-    const response = await fetch(`${API_BASE_URL}/api/annonces`)
-
-    if (!response.ok) {
-      throw new Error(`Erreur HTTP ${response.status}`)
-    }
-
-    const data = await response.json()
+    const data = await annoncesService.getAll()
     annonces.value = Array.isArray(data) ? data.map(mapAnnonceFromApi) : []
   } catch (error) {
     errorMessage.value = 'Impossible de charger les annonces.'

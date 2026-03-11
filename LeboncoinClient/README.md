@@ -36,3 +36,30 @@ npm run dev
 ```sh
 npm run build
 ```
+
+## Environment variables
+
+The frontend API base URL is configured with a Vite env variable:
+
+```sh
+VITE_API_BASE_URL=https://localhost:7057
+```
+
+Edit this value in `.env` (or create `.env.local` for your local machine).
+
+## API organization
+
+To keep Vue views clean, API calls are grouped in dedicated services.
+
+- Generic HTTP helpers: `src/services/api.js`
+- Annonces: `src/services/annoncesService.js`
+- Reservations: `src/services/reservationsService.js`
+- Utilisateurs: `src/services/utilisateursService.js`
+
+Example usage in a view:
+
+```js
+import annoncesService from '../services/annoncesService'
+
+const data = await annoncesService.getAll()
+```
