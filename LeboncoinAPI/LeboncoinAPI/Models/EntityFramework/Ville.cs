@@ -33,4 +33,7 @@ public partial class Ville
     // Navigation vers Adresse (One to Many)
     [InverseProperty("VilleAdresse")]
     public virtual ICollection<Adresse> Adresses { get; set; } = new List<Adresse>();
+
+    [ForeignKey(nameof(DepartementId))]
+    public virtual Departement DepartementAssocie { get; set; } = null!;
 }
