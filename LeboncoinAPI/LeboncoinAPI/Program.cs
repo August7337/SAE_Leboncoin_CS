@@ -21,7 +21,7 @@ var connectionString = $"Server={dbHost};Port={dbPort};Database={dbName};User Id
 builder.Services.AddDbContext<LeboncoinDBContext>(options =>
     options.UseNpgsql(connectionString));
 
-builder.Services.AddScoped<IDataRepository<Utilisateur>, UtilisateurManager>();
+builder.Services.AddScoped<IDataUtilisateurRepository<Utilisateur>, UtilisateurManager>();
 builder.Services.AddScoped<IDataRepository<Annonce>, AnnonceManager>();
 builder.Services.AddScoped<IDataRepository<Reservation>, ReservationManager>();
 
