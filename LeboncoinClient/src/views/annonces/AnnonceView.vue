@@ -35,11 +35,11 @@
           <h2 class="text-xl font-bold text-gray-900 mb-4">À propos de ce logement</h2>
           <div class="flex gap-4 mb-6">
             <div class="bg-gray-50 rounded-2xl p-4 flex-1 text-center border border-gray-100">
-              <span class="block text-lg font-black text-[#ea580c]">150 €</span>
+              <span class="block text-lg font-black text-[#ea580c]">{{ formatPrice(annonce.prixnuitee) }} €</span>
               <span class="text-gray-500 text-xs font-bold uppercase">Par nuit</span>
             </div>
             <div class="bg-gray-50 rounded-2xl p-4 flex-1 text-center border border-gray-100">
-              <span class="block text-lg font-black text-gray-900">Nice</span>
+              <span class="block text-lg font-black text-gray-900">{{ annonce.adresse?.ville?.nomville }}</span>
               <span class="text-gray-500 text-xs font-bold uppercase">Ville</span>
             </div>
           </div>
@@ -52,7 +52,7 @@
         <section class="mb-8">
           <h2 class="text-xl font-bold text-gray-900 mb-6">Équipements inclus</h2>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-             <div class="flex items-center gap-3 text-gray-700">
+              <div class="flex items-center gap-3 text-gray-700">
                 <div class="w-2 h-2 bg-[#ea580c] rounded-full"></div>
                 Piscine privée
               </div>
@@ -101,7 +101,7 @@ const annonce = ref(null);
 
 const loadData = () => {
   loading.value = true;
-  // Simulation de l'appel API avec les données exactes de ta Home
+  // Simulation API
   setTimeout(() => {
     annonce.value = {
       idannonce: 1,

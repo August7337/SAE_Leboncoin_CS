@@ -27,7 +27,6 @@
 import { ref } from 'vue';
 import AnnonceList from '../components/AnnonceList.vue';
 
-// Données synchronisées avec ta page de détail
 const annonces = ref([
   {
     idannonce: 1,
