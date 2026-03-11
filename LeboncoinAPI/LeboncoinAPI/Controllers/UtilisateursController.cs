@@ -42,14 +42,12 @@ public class UtilisateursController : ControllerBase
 
     // GET: api/Utilisateurs/5
     [HttpGet("email/{email}")]
-    public async Task<ActionResult<Utilisateur>> GetUtilisateurByEmail(string email)
+    public async Task<IActionResult> GetUtilisateurByEmail(string email)
     {
         var utilisateur = await _dataRepository.GetByEmailAsync(email);
 
         if (utilisateur == null)
-        {
-            return NotFound("Utilisateur introuvable.");
-        }
+            return NotFound(); 
 
         return Ok(utilisateur);
     }
@@ -96,7 +94,7 @@ public class UtilisateursController : ControllerBase
     public async Task<IActionResult> DeleteUtilisateur(int id)
     {
         var utilisateur = await _dataRepository.GetByIdAsync(id);
-
+            
         if (utilisateur == null)
         {
             return NotFound("Utilisateur à supprimer introuvable.");

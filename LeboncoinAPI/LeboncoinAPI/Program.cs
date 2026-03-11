@@ -1,15 +1,15 @@
-using LeboncoinAPI.Models.DataManager;
+ï»¿using LeboncoinAPI.Models.DataManager;
 using LeboncoinAPI.Models.EntityFramework;
 using LeboncoinAPI.Models.Repository;
 using Microsoft.EntityFrameworkCore;
-using DotNetEnv; 
+using DotNetEnv;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// charge le fichier .env présent à la racine
+
 Env.TraversePath().Load();
 
-// récupère les identifiants depuis le .env (avec des valeurs par défaut si non trouvé)
+
 var dbHost = Environment.GetEnvironmentVariable("DB_HOST") ?? "localhost";
 var dbPort = Environment.GetEnvironmentVariable("DB_PORT") ?? "5432";
 var dbName = Environment.GetEnvironmentVariable("DB_NAME") ?? "LeboncoinDB";
@@ -25,10 +25,23 @@ builder.Services.AddScoped<IDataUtilisateurRepository<Utilisateur>, UtilisateurM
 builder.Services.AddScoped<IDataRepository<Annonce>, AnnonceManager>();
 builder.Services.AddScoped<IDataRepository<Reservation>, ReservationManager>();
 
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll",
+        policy =>
+        {
+            policy.AllowAnyOrigin()
+                  .AllowAnyHeader()
+                  .AllowAnyMethod();
+        });
+});
+
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
-        options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+        options.JsonSerializerOptions.ReferenceHandler =
+        System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
     });
 
 builder.Services.AddEndpointsApiExplorer();
@@ -41,6 +54,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+
+app.UseCors("AllowAll");
 
 app.UseHttpsRedirection();
 app.UseAuthorization();

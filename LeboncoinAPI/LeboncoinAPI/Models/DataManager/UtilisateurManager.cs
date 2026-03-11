@@ -49,6 +49,6 @@ public class UtilisateurManager : IDataUtilisateurRepository<Utilisateur>
 
     public async Task<Utilisateur?> GetByEmailAsync(string email)
     {
-        return await _dbContext.Utilisateurs.FindAsync(email);
+        return await _dbContext.Utilisateurs.FirstOrDefaultAsync(u=> u.Email.ToLower() == email.ToLower());
     }
 }
