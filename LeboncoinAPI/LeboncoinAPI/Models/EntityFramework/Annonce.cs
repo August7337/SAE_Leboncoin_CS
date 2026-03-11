@@ -42,14 +42,13 @@ public partial class Annonce
     [StringLength(4000, ErrorMessage = "La description de l'annonce ne doit pas depasser 4000 caractères")]
     public string DescriptionAnnonce { get; set; } = null!;
 
+    [Column("lienphoto")]
+    [StringLength(200, ErrorMessage = "Le lien de l'image ne peut pas depasser 200 caractères")]
+    public string? LienPhoto { get; set; }
+
     [Column("nombreetoilesleboncoin")]
     [Range(1, 5, ErrorMessage = "La note doit être compris entre 1 et 5")]
     public int? NombreEtoilesLeBonCoin { get; set; }
-
-
-    [Column("lienphoto")]
-    [StringLength(50, ErrorMessage = "Le lien de l'image ne peut pas depasser 50 caractères")]
-    public string? LienPhoto { get; set; }
 
     [Column("montantacompte", TypeName = "decimal(10,2)")]
     [Range(0, double.MaxValue, ErrorMessage = "Le montant acompte doit être un nombre positif")]
