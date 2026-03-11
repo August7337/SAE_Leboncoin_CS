@@ -20,8 +20,6 @@ public class AnnonceManager : IDataRepository<Annonce>
         // Utilisation de .Include() si tu souhaites charger directement les données liées 
         // comme l'auteur ou l'adresse, utile pour éviter le N+1 query problem.
         return await _dbContext.Annonces
-            .Include(a => a.UtilisateurAuteur)
-            .Include(a => a.AdresseAnnonce)
             .ToListAsync();
     }
 
@@ -29,8 +27,6 @@ public class AnnonceManager : IDataRepository<Annonce>
     {
         // Pour GetById avec Include, on utilise FirstOrDefaultAsync plutôt que FindAsync
         return await _dbContext.Annonces
-            .Include(a => a.UtilisateurAuteur)
-            .Include(a => a.AdresseAnnonce)
             .FirstOrDefaultAsync(a => a.AnnonceId == id);
     }
 
