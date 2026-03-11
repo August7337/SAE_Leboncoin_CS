@@ -2,11 +2,12 @@
 using LeboncoinAPI.Models.Repository;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
+using System.Formats.Asn1;
 using System.Threading.Tasks;
 
 namespace LeboncoinAPI.Models.DataManager;
 
-public class UtilisateurManager : IDataRepository<Utilisateur>
+public class UtilisateurManager : IDataUtilisateurRepository<Utilisateur>
 {
     private readonly LeboncoinDBContext _dbContext;
 
@@ -44,5 +45,10 @@ public class UtilisateurManager : IDataRepository<Utilisateur>
     {
         _dbContext.Utilisateurs.Remove(entity);
         await _dbContext.SaveChangesAsync();
+    }
+
+    public async Task<Utilisateur?> GetByEmailAsync(string email)
+    {
+        return await _dbContext.Utilisateurs.FindAsync(email);
     }
 }

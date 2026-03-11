@@ -10,10 +10,10 @@ namespace LeboncoinAPI.Controllers;
 [ApiController]
 public class UtilisateursController : ControllerBase
 {
-    private readonly IDataRepository<Utilisateur> _dataRepository;
+    private readonly IDataUtilisateurRepository<Utilisateur> _dataRepository;
 
     // L'injection de dépendance fournit automatiquement l'instance d'UtilisateurManager
-    public UtilisateursController(IDataRepository<Utilisateur> dataRepository)
+    public UtilisateursController(IDataUtilisateurRepository<Utilisateur> dataRepository)
     {
         _dataRepository = dataRepository;
     }
@@ -28,7 +28,7 @@ public class UtilisateursController : ControllerBase
 
     // GET: api/Utilisateurs/5
     [HttpGet("{id}")]
-    public async Task<ActionResult<Utilisateur>> GetUtilisateur(int id)
+    public async Task<ActionResult<Utilisateur>> GetUtilisateurById(int id)
     {
         var utilisateur = await _dataRepository.GetByIdAsync(id);
 
@@ -39,6 +39,21 @@ public class UtilisateursController : ControllerBase
 
         return Ok(utilisateur);
     }
+
+    // GET: api/Utilisateurs/5
+    [HttpGet("email/{email}")]
+    public async Task<ActionResult<Utilisateur>> GetUtilisateurByEmail(string email)
+    {
+        var utilisateur = await _dataRepository.GetByEmailAsync(email);
+
+        if (utilisateur == null)
+        {
+            return NotFound("Utilisateur introuvable.");
+        }
+
+        return Ok(utilisateur);
+    }
+
 
     // POST: api/Utilisateurs
     [HttpPost]
@@ -52,7 +67,7 @@ public class UtilisateursController : ControllerBase
         await _dataRepository.AddAsync(utilisateur);
 
         // Renvoie un code 201 Created avec l'URI de la nouvelle ressource
-        return CreatedAtAction(nameof(GetUtilisateur), new { id = utilisateur.UtilisateurId }, utilisateur);
+        return CreatedAtAction(nameof(GetUtilisateurById), new { id = utilisateur.UtilisateurId }, utilisateur);
     }
 
     // PUT: api/Utilisateurs/5
