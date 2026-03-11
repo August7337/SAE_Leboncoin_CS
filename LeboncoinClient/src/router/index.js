@@ -1,11 +1,14 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
 const routes = [
+  // --- Accueil ---
   {
     path: '/',
     name: 'home',
     component: () => import('../views/HomeView.vue')
   },
+
+  // --- Annonces ---
   {
     path: '/annonce/:id',
     name: 'annonce-detail',
@@ -25,6 +28,28 @@ const routes = [
     path: '/search',
     name: 'search',
     component: () => import('../views/annonces/AnnonceSearchView.vue')
+  },
+
+  // --- Espace Compte (Account) ---
+  {
+    path: '/my-annonces',
+    name: 'my-annonces',
+    component: () => import('../views/account/MyAnnoncesView.vue')
+  },
+  {
+    path: '/messages',
+    name: 'messages',
+    component: () => import('../views/account/MessagesView.vue')
+  },
+  {
+    path: '/favorites',
+    name: 'favorites',
+    component: () => import('../views/account/FavoritesView.vue')
+  },
+  {
+    path: '/settings',
+    name: 'settings',
+    component: () => import('../views/account/AccountSettingsView.vue')
   }
 ]
 
