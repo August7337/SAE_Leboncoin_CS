@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContext<LeboncoinDBContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("LeboncoinDbContextRemote")));
 
 builder.Services.AddScoped<IDataRepository<Utilisateur>, UtilisateurManager>();
 builder.Services.AddScoped<IDataRepository<Annonce>, AnnonceManager>();
