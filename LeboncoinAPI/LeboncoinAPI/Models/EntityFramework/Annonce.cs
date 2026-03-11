@@ -34,29 +34,29 @@ public partial class Annonce
 
     [Required]
     [Column("titreannonce")]
-    [StringLength(50,ErrorMessage ="Le titre de l'annonce ne doit pas depasser 50 caractères")]
+    [StringLength(50, ErrorMessage = "Le titre de l'annonce ne doit pas depasser 50 caractères")]
     public string TitreAnnonce { get; set; } = null!;
 
     [Required]
     [Column("descriptionannonce")]
-    [StringLength(4000,ErrorMessage ="La description de l'annonce ne doit pas depasser 4000 caractères")]
+    [StringLength(4000, ErrorMessage = "La description de l'annonce ne doit pas depasser 4000 caractères")]
     public string DescriptionAnnonce { get; set; } = null!;
 
     [Column("nombreetoilesleboncoin")]
-    [Range(1, 5,ErrorMessage ="La note doit être compris entre 1 et 5")]
+    [Range(1, 5, ErrorMessage = "La note doit être compris entre 1 et 5")]
     public int? NombreEtoilesLeBonCoin { get; set; }
 
 
     [Column("lienphoto")]
     [StringLength(50, ErrorMessage = "Le lien de l'image ne peut pas depasser 50 caractères")]
-    public string LienPhoto { get; set; } 
+    public string? LienPhoto { get; set; }
 
     [Column("montantacompte", TypeName = "decimal(10,2)")]
-    [Range(0, double.MaxValue,ErrorMessage ="Le montant acompte doit être un nombre positif")]
+    [Range(0, double.MaxValue, ErrorMessage = "Le montant acompte doit être un nombre positif")]
     public decimal? MontantAcompte { get; set; }
 
     [Column("pourcentageacompte")]
-    [Range(0, 100,ErrorMessage = "Le pourcentage doit être compris entre 1 et 100")]
+    [Range(0, 100, ErrorMessage = "Le pourcentage doit être compris entre 1 et 100")]
     public int? PourcentageAcompte { get; set; }
 
     [Column("prixnuitee", TypeName = "decimal(10,2)")]
@@ -64,7 +64,7 @@ public partial class Annonce
     public decimal PrixNuitee { get; set; }
 
     [Column("capacite")]
-    [Range(1,int.MaxValue,ErrorMessage = "La capacité doit être supérieure ou egale à 1")]
+    [Range(1, int.MaxValue, ErrorMessage = "La capacité doit être supérieure ou egale à 1")]
     public int? Capacite { get; set; }
 
     [Column("nbchambres")]
