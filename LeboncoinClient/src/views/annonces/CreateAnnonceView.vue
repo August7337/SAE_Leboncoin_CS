@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue';
+import { ref } from 'vue'
 
 const form = ref({
   titre: '',
@@ -7,12 +7,12 @@ const form = ref({
   prix: '',
   capacite: 1,
   ville_id: '',
-  photos: []
-});
+  photos: [],
+})
 
 const submit = () => {
-  console.log("Envoi des données...", form.value);
-};
+  console.log('Envoi des données...', form.value)
+}
 </script>
 
 <template>
@@ -23,18 +23,32 @@ const submit = () => {
       <form @submit.prevent="submit" class="space-y-6">
         <div class="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
           <label class="block text-lg font-bold mb-4">Quel est le titre de votre annonce ?</label>
-          <input v-model="form.titre" type="text" placeholder="Ex: Studio centre-ville" 
-                 class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#ea580c] outline-none" required />
+          <input
+            v-model="form.titre"
+            type="text"
+            placeholder="Ex: Studio centre-ville"
+            class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#ea580c] outline-none"
+            required
+          />
         </div>
 
-        <div class="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 grid grid-cols-2 gap-4">
+        <div
+          class="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 grid grid-cols-2 gap-4"
+        >
           <div>
             <label class="block text-sm font-bold mb-2">Prix par nuit (€)</label>
-            <input v-model="form.prix" type="number" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#ea580c] outline-none" />
+            <input
+              v-model="form.prix"
+              type="number"
+              class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#ea580c] outline-none"
+            />
           </div>
           <div>
             <label class="block text-sm font-bold mb-2">Voyageurs max</label>
-            <select v-model="form.capacite" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#ea580c] outline-none bg-white">
+            <select
+              v-model="form.capacite"
+              class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#ea580c] outline-none bg-white"
+            >
               <option v-for="n in 10" :key="n" :value="n">{{ n }} personnes</option>
             </select>
           </div>
@@ -42,10 +56,18 @@ const submit = () => {
 
         <div class="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
           <label class="block text-lg font-bold mb-4">Description du bien</label>
-          <textarea v-model="form.description" rows="5" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#ea580c] outline-none resize-none" placeholder="Décrivez les équipements..."></textarea>
+          <textarea
+            v-model="form.description"
+            rows="5"
+            class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#ea580c] outline-none resize-none"
+            placeholder="Décrivez les équipements..."
+          ></textarea>
         </div>
 
-        <button type="submit" class="w-full bg-[#ea580c] hover:bg-[#c2410c] text-white font-black py-4 rounded-2xl shadow-lg transition-all text-lg">
+        <button
+          type="submit"
+          class="w-full bg-[#ea580c] hover:bg-[#c2410c] text-white font-black py-4 rounded-2xl shadow-lg transition-all text-lg"
+        >
           Publier l'annonce
         </button>
       </form>

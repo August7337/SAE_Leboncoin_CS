@@ -5,74 +5,74 @@ const routes = [
   {
     path: '/',
     name: 'home',
-    component: () => import('../views/HomeView.vue')
+    component: () => import('../views/HomeView.vue'),
   },
 
   // --- Annonces ---
   {
     path: '/annonce/:id',
     name: 'annonce-detail',
-    component: () => import('../views/annonces/AnnonceView.vue')
+    component: () => import('../views/annonces/AnnonceView.vue'),
   },
   {
     path: '/create-annonce',
     name: 'create-annonce',
-    component: () => import('../views/annonces/CreateAnnonceView.vue')
+    component: () => import('../views/annonces/CreateAnnonceView.vue'),
   },
   {
     path: '/edit-annonce/:id',
     name: 'edit-annonce',
-    component: () => import('../views/annonces/EditAnnonceView.vue')
+    component: () => import('../views/annonces/EditAnnonceView.vue'),
   },
   {
     path: '/search',
     name: 'search',
-    component: () => import('../views/annonces/AnnonceSearchView.vue')
+    component: () => import('../views/annonces/AnnonceSearchView.vue'),
   },
 
   // --- Espace Compte (Account) ---
   {
     path: '/my-annonces',
     name: 'my-annonces',
-    component: () => import('../views/account/MyAnnoncesView.vue')
+    component: () => import('../views/account/MyAnnoncesView.vue'),
   },
   {
     path: '/messages',
     name: 'messages',
-    component: () => import('../views/account/MessagesView.vue')
+    component: () => import('../views/account/MessagesView.vue'),
   },
   {
     path: '/favorites',
     name: 'favorites',
-    component: () => import('../views/account/FavoritesView.vue')
+    component: () => import('../views/account/FavoritesView.vue'),
   },
   {
     path: '/settings',
     name: 'settings',
-    component: () => import('../views/account/AccountSettingsView.vue')
+    component: () => import('../views/account/AccountSettingsView.vue'),
   },
 
   // --- Profil & Sécurité ---
   {
     path: '/profil',
     name: 'profile',
-    component: () => import('../views/profile/ProfileView.vue')
+    component: () => import('../views/profile/ProfileView.vue'),
   },
   {
     path: '/edit-profile',
     name: 'edit-profile',
-    component: () => import('../views/profile/EditProfileView.vue')
+    component: () => import('../views/profile/EditProfileView.vue'),
   },
   {
     path: '/security',
     name: 'security',
-    component: () => import('../views/profile/SecurityView.vue')
-  }
+    component: () => import('../views/profile/SecurityView.vue'),
+  },
 ]
 
 const router = createRouter({
   history: createWebHistory(),
-  routes
+  routes,
 })
 
 export default router
