@@ -19,7 +19,7 @@ git status
 
 ## Dotnet ef
 
-0. Installation
+### 0. Installation
 ```
 dotnet tool install --global dotnet-ef --version 8.0.23
 ```
@@ -33,12 +33,12 @@ Si la suppression échoue car la migration a déjà été appliquée (partiellem
 dotnet ef database update 0 --project "LeboncoinAPI"
 ```
 
-### 2. Recrée la migration :
+### 2. Créer/Recréer la migration :
 ```
 dotnet ef migrations add migration-v1.0.0 --project "LeboncoinAPI"
 ```
 
-### 3. Vérifie le script :
+### 3. Vérifie le script de création :
 ```
 dotnet ef migrations script --project "LeboncoinAPI"
 ```
@@ -46,13 +46,4 @@ dotnet ef migrations script --project "LeboncoinAPI"
 ### 4. Applique à la base :
 ```
 dotnet ef database update --project "LeboncoinAPI"
-```
-
-```
-dotnet ef database
-```
-
-### 5. Générer le contrôleur
-```
-dotnet aspnet-codegenerator controller -name UtilisateursController -async -api -m Utilisateur -dc FilmRatingsDBContext -outDir Controllers
 ```
