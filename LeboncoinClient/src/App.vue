@@ -5,12 +5,14 @@ import Footer from './components/Footer.vue'
 
 <template>
   <div class="min-h-screen flex flex-col">
+  
     <Header />
 
     <main class="flex-grow">
       <router-view />
     </main>
 
+    
     <Footer />
   </div>
 </template>

@@ -1,0 +1,56 @@
+.create-container {
+  width: 500px;
+  margin: auto;
+  margin-top: 60px;
+  background: #f5f5f5;
+  padding: 30px;
+  border-radius: 10px;
+}
+
+.field {
+  margin-bottom: 15px;
+}
+
+input, textarea {
+  width: 100%;
+  padding: 10px;
+  margin-top: 5px;
+}
+
+textarea {
+  height: 120px;
+}
+
+button {
+  width: 100%;
+  padding: 12px;
+  background: #ff6e14;
+  border: none;
+  color: white;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #e45a00;
+}
+
+.success {
+  color: green;
+  margin-top: 15px;
+  text-align: center;
+}
+
+.error {
+  color: red;
+  margin-top: 15px;
+  text-align: center;
+}
+
+.checkbox {
+  margin-bottom: 10px;
+}
+
+span {
+  color: red;
+  font-size: 12px;
+}
