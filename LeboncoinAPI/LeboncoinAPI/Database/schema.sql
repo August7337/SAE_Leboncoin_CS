@@ -483,7 +483,7 @@ ALTER TABLE avis ADD CONSTRAINT "FK_avis_utilisateur_idutilisateur" FOREIGN KEY 
 ALTER TABLE cartebancaire ADD CONSTRAINT "FK_cartebancaire_utilisateur_idutilisateur" FOREIGN KEY (idutilisateur) REFERENCES utilisateur (idutilisateur) ON DELETE RESTRICT;
 
 INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-VALUES ('20260312122231_migration-v1.0.0', '8.0.23');
+VALUES ('20260312140947_migration-v1.0.0', '8.0.23');
 
 COMMIT;
 
