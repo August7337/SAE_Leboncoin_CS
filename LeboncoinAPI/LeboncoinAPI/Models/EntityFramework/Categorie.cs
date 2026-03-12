@@ -14,7 +14,7 @@ public partial class Categorie
     public int Idcategorie { get; set; }
 
     [Column("nomcategorie")]
-    [StringLength(24)]
+    [StringLength(50)]
     public string? Nomcategorie { get; set; }
 
     [InverseProperty("IdcategorieNavigation")]

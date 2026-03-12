@@ -9,9 +9,9 @@ namespace LeboncoinAPI.Models.DataManager;
 
 public class UtilisateurManager : IDataUtilisateurRepository<Utilisateur>
 {
-    private readonly LeboncoinDbContext _dbContext;
+    private readonly LeboncoinDBContext _dbContext;
 
-    public UtilisateurManager(LeboncoinDbContext dbContext)
+    public UtilisateurManager(LeboncoinDBContext dbContext)
     {
         _dbContext = dbContext;
     }

@@ -97,27 +97,27 @@ if ($LASTEXITCODE -ne 0) { Write-Error "Échec de la mise à jour de la base de 
 # ------------------------------------------------------------------------------
 # 4. INSERER LES DONNEES (SEED)
 # ------------------------------------------------------------------------------
-Write-Host "`n[4/4] Exécution du script d'insertions SQL ($InsertsFile)..." -ForegroundColor Yellow
+#Write-Host "`n[4/4] Exécution du script d'insertions SQL ($InsertsFile)..." -ForegroundColor Yellow
+#
+#$psqlPath = "C:\Program Files\PostgreSQL\17\bin\psql.exe"
 
-$psqlPath = "C:\Program Files\PostgreSQL\17\bin\psql.exe"
-
-if (Test-Path $InsertsFile) {
-    if (Test-Path $psqlPath) {
-        $connectionString = "host=$DbHost port=$DbPort dbname=$DbName user=$DbUser password=$DbPass"
+# if (Test-Path $InsertsFile) {
+#     if (Test-Path $psqlPath) {
+#         $connectionString = "host=$DbHost port=$DbPort dbname=$DbName user=$DbUser password=$DbPass"
         
-        & $psqlPath $connectionString -f $InsertsFile
+#         & $psqlPath $connectionString -f $InsertsFile
         
-        if ($LASTEXITCODE -ne 0) { 
-            Write-Host "      Des erreurs se sont produites durant l'insertion." -ForegroundColor Red
-        } else {
-            Write-Host "      Données insérées avec succès !" -ForegroundColor Green
-        }
-    } else {
-        Write-Error "psql.exe introuvable dans $psqlPath. Vérifie l'installation de Postgres 17."
-    }
-} else {
-    Write-Host "      Fichier $InsertsFile introuvable." -ForegroundColor Red
-}
+#         if ($LASTEXITCODE -ne 0) { 
+#             Write-Host "      Des erreurs se sont produites durant l'insertion." -ForegroundColor Red
+#         } else {
+#             Write-Host "      Données insérées avec succès !" -ForegroundColor Green
+#         }
+#     } else {
+#         Write-Error "psql.exe introuvable dans $psqlPath. Vérifie l'installation de Postgres 17."
+#     }
+# } else {
+#     Write-Host "      Fichier $InsertsFile introuvable." -ForegroundColor Red
+# }
 
 Write-Host "`n======================================================" -ForegroundColor Cyan
 Write-Host " PROCESSUS TERMINE AVEC SUCCES ! " -ForegroundColor Green
