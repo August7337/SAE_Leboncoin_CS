@@ -1,30 +1,32 @@
-﻿using LeboncoinAPI.Models.EntityFramework;
-using System;
+﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
 
 namespace LeboncoinAPI.Models.EntityFramework;
 
 [Table("professionnel")]
+[Index("Numsiret", Name = "professionnel_numsiret_key", IsUnique = true)]
 public partial class Professionnel
 {
     [Key]
     [Column("idutilisateur")]
-    public int UtilisateurId { get; set; }
+    public int Idutilisateur { get; set; }
 
-    [Column("numsiret", TypeName = "numeric(14)")]
-    public decimal NumSiret { get; set; }
+    [Column("numsiret")]
+    [Precision(14, 0)]
+    public decimal Numsiret { get; set; }
 
-    [Required]
     [Column("nomsociete")]
-    [StringLength(30, ErrorMessage = "Le nom ne doit pas dépasser 30 caractères")]
-    public string NomSociete { get; set; } = null!;
+    [StringLength(30)]
+    public string Nomsociete { get; set; } = null!;
 
-    [Required]
     [Column("secteuractivite")]
-    [StringLength(50, ErrorMessage = "Le secteur ne doit pas dépasser 50 caractères")]
-    public string SecteurActivite { get; set; } = null!;
+    [StringLength(50)]
+    public string Secteuractivite { get; set; } = null!;
 
-    [ForeignKey(nameof(UtilisateurId))]
-    public virtual Utilisateur UtilisateurBase { get; set; } = null!;
+    [ForeignKey("Idutilisateur")]
+    [InverseProperty("Professionnel")]
+    public virtual Utilisateur IdutilisateurNavigation { get; set; } = null!;
 }

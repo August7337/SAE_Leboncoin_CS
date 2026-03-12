@@ -50,14 +50,14 @@ public class AnnoncesController : ControllerBase
 
         await _dataRepository.AddAsync(annonce);
 
-        return CreatedAtAction(nameof(GetAnnonce), new { id = annonce.AnnonceId }, annonce);
+        return CreatedAtAction(nameof(GetAnnonce), new { id = annonce.Idannonce }, annonce);
     }
 
     // PUT: api/Annonces/5
     [HttpPut("{id}")]
     public async Task<IActionResult> PutAnnonce(int id, Annonce annonce)
     {
-        if (id != annonce.AnnonceId)
+        if (id != annonce.Idannonce)
         {
             return BadRequest();
         }

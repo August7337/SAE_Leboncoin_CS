@@ -1,36 +1,42 @@
-﻿using LeboncoinAPI.Models.EntityFramework;
-using System;
+﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
 
 namespace LeboncoinAPI.Models.EntityFramework;
 
 [Table("message")]
+[Index("Idutilisateurexpediteur", Name = "idx_message_idutilisateurexpediteur")]
+[Index("Idutilisateurreceveur", Name = "idx_message_idutilisateurreceveur")]
 public partial class Message
 {
     [Key]
     [Column("idmessage")]
-    public int MessageId { get; set; }
+    public int Idmessage { get; set; }
 
     [Column("idutilisateurreceveur")]
-    public int UtilisateurReceveurId { get; set; }
+    public int Idutilisateurreceveur { get; set; }
 
     [Column("iddate")]
-    public int DateId { get; set; }
+    public int Iddate { get; set; }
 
     [Column("idutilisateurexpediteur")]
-    public int UtilisateurExpediteurId { get; set; }
+    public int Idutilisateurexpediteur { get; set; }
 
-    [Required]
     [Column("contenumessage")]
-    [StringLength(1000,ErrorMessage ="Le message ne doit pas dépasser 1000 caractères")]
-    public string ContenuMessage { get; set; } = null!;
+    [StringLength(1000)]
+    public string Contenumessage { get; set; } = null!;
 
-    // --- Navigation Properties ---
+    [ForeignKey("Iddate")]
+    [InverseProperty("Messages")]
+    public virtual Date IddateNavigation { get; set; } = null!;
 
-    [ForeignKey(nameof(UtilisateurExpediteurId))]
-    public virtual Utilisateur Expediteur { get; set; } = null!;
+    [ForeignKey("Idutilisateurexpediteur")]
+    [InverseProperty("MessageIdutilisateurexpediteurNavigations")]
+    public virtual Utilisateur IdutilisateurexpediteurNavigation { get; set; } = null!;
 
-    [ForeignKey(nameof(UtilisateurReceveurId))]
-    public virtual Utilisateur Receveur { get; set; } = null!;
+    [ForeignKey("Idutilisateurreceveur")]
+    [InverseProperty("MessageIdutilisateurreceveurNavigations")]
+    public virtual Utilisateur IdutilisateurreceveurNavigation { get; set; } = null!;
 }

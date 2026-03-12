@@ -94,9 +94,8 @@ namespace LeboncoinAPI.Migrations
                         .HasColumnName("idheuredepart");
 
                     b.Property<string>("LienPhoto")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
                         .HasColumnName("lienphoto");
 
                     b.Property<int?>("MinimumNuitee")

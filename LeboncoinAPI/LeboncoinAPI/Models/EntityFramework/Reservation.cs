@@ -1,54 +1,68 @@
-﻿using LeboncoinAPI.Models.EntityFramework;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
 
 namespace LeboncoinAPI.Models.EntityFramework;
 
 [Table("reservation")]
+[Index("Idannonce", Name = "idx_reservation_idannonce")]
+[Index("Iddatedebutreservation", Name = "idx_reservation_iddatedebutres")]
+[Index("Iddatefinreservation", Name = "idx_reservation_iddatefinres")]
+[Index("Idutilisateur", Name = "idx_reservation_idutilisateur")]
 public partial class Reservation
 {
     [Key]
     [Column("idreservation")]
-    public int ReservationId { get; set; }
+    public int Idreservation { get; set; }
 
     [Column("idannonce")]
-    public int AnnonceId { get; set; }
+    public int Idannonce { get; set; }
 
     [Column("iddatedebutreservation")]
-    public int DateDebutId { get; set; }
+    public int Iddatedebutreservation { get; set; }
 
     [Column("iddatefinreservation")]
-    public int DateFinId { get; set; }
+    public int Iddatefinreservation { get; set; }
 
     [Column("idutilisateur")]
-    public int UtilisateurId { get; set; }
+    public int Idutilisateur { get; set; }
 
-    [Required]
     [Column("nomclient")]
-    [StringLength(50, ErrorMessage = "Le nom ne doit pas dépasser 50 caractères")]
-    public string NomClient { get; set; } = null!;
+    [StringLength(50)]
+    public string Nomclient { get; set; } = null!;
 
-    [Required]
     [Column("prenomclient")]
-    [StringLength(50, ErrorMessage = "Le prenom ne doit pas dépasser 50 caractères")]
-    public string PrenomClient { get; set; } = null!;
+    [StringLength(50)]
+    public string Prenomclient { get; set; } = null!;
 
-    [Column("telephoneclient", TypeName = "char(10)")]
-    [RegularExpression(@"^0[1-9][0-9]{8}$", ErrorMessage = "Le numéro de téléphone doit contenir 10 chiffres et commencer par 0.")]
-    public string? TelephoneClient { get; set; }
+    [Column("telephoneclient")]
+    [StringLength(10)]
+    public string? Telephoneclient { get; set; }
 
-    // --- Navigation Properties ---
-
-    [ForeignKey(nameof(AnnonceId))]
+    [ForeignKey("Idannonce")]
     [InverseProperty("Reservations")]
-    public virtual Annonce AnnonceConcernee { get; set; } = null!;
+    public virtual Annonce IdannonceNavigation { get; set; } = null!;
 
-    [ForeignKey(nameof(UtilisateurId))]
+    [ForeignKey("Iddatedebutreservation")]
+    [InverseProperty("ReservationIddatedebutreservationNavigations")]
+    public virtual Date IddatedebutreservationNavigation { get; set; } = null!;
+
+    [ForeignKey("Iddatefinreservation")]
+    [InverseProperty("ReservationIddatefinreservationNavigations")]
+    public virtual Date IddatefinreservationNavigation { get; set; } = null!;
+
+    [ForeignKey("Idutilisateur")]
     [InverseProperty("Reservations")]
-    public virtual Utilisateur Client { get; set; } = null!;
+    public virtual Utilisateur IdutilisateurNavigation { get; set; } = null!;
 
-    [InverseProperty("ReservationConcernee")]
+    [InverseProperty("IdreservationNavigation")]
     public virtual ICollection<Incident> Incidents { get; set; } = new List<Incident>();
+
+    [InverseProperty("IdreservationNavigation")]
+    public virtual ICollection<Inclure> Inclures { get; set; } = new List<Inclure>();
+
+    [InverseProperty("IdreservationNavigation")]
+    public virtual ICollection<Transaction> Transactions { get; set; } = new List<Transaction>();
 }

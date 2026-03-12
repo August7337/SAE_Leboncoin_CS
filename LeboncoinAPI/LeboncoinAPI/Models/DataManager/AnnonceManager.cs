@@ -8,9 +8,9 @@ namespace LeboncoinAPI.Models.DataManager;
 
 public class AnnonceManager : IDataRepository<Annonce>
 {
-    private readonly LeboncoinDBContext _dbContext;
+    private readonly LeboncoinDbContext _dbContext;
 
-    public AnnonceManager(LeboncoinDBContext dbContext)
+    public AnnonceManager(LeboncoinDbContext dbContext)
     {
         _dbContext = dbContext;
     }
@@ -27,7 +27,7 @@ public class AnnonceManager : IDataRepository<Annonce>
     {
         // Pour GetById avec Include, on utilise FirstOrDefaultAsync plutôt que FindAsync
         return await _dbContext.Annonces
-            .FirstOrDefaultAsync(a => a.AnnonceId == id);
+            .FirstOrDefaultAsync(a => a.Idannonce == id);
     }
 
     public async Task AddAsync(Annonce entity)

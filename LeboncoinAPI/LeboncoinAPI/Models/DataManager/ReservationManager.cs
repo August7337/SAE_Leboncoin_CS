@@ -8,9 +8,9 @@ namespace LeboncoinAPI.Models.DataManager;
 
 public class ReservationManager : IDataRepository<Reservation>
 {
-    private readonly LeboncoinDBContext _dbContext;
+    private readonly LeboncoinDbContext _dbContext;
 
-    public ReservationManager(LeboncoinDBContext dbContext)
+    public ReservationManager(LeboncoinDbContext dbContext)
     {
         _dbContext = dbContext;
     }
@@ -18,17 +18,13 @@ public class ReservationManager : IDataRepository<Reservation>
     public async Task<IEnumerable<Reservation>> GetAllAsync()
     {
         return await _dbContext.Reservations
-            .Include(r => r.Client)
-            .Include(r => r.AnnonceConcernee)
             .ToListAsync();
     }
 
     public async Task<Reservation?> GetByIdAsync(int id)
     {
         return await _dbContext.Reservations
-            .Include(r => r.Client)
-            .Include(r => r.AnnonceConcernee)
-            .FirstOrDefaultAsync(r => r.ReservationId == id);
+            .FirstOrDefaultAsync(r => r.Idreservation == id);
     }
 
     public async Task AddAsync(Reservation entity)

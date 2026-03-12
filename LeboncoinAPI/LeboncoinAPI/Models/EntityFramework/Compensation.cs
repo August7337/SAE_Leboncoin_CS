@@ -1,7 +1,8 @@
-﻿using LeboncoinAPI.Models.EntityFramework;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
 
 namespace LeboncoinAPI.Models.EntityFramework;
 
@@ -10,12 +11,13 @@ public partial class Compensation
 {
     [Key]
     [Column("idcompensation")]
-    public int CompensationId { get; set; }
+    public int Idcompensation { get; set; }
 
     [Column("nomcompensation")]
-    [StringLength(100, ErrorMessage = "Le nom ne doit pas dépasser 100 caractères")]
-    public string? NomCompensation { get; set; }
+    [StringLength(100)]
+    public string? Nomcompensation { get; set; }
 
-    // Table de liaison Many-to-Many "demander" (Incident <-> Compensation)
-    public virtual ICollection<Incident> IncidentsLies { get; set; } = new List<Incident>();
+    [ForeignKey("Idcompensation")]
+    [InverseProperty("Idcompensations")]
+    public virtual ICollection<Incident> Idincidents { get; set; } = new List<Incident>();
 }

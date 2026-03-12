@@ -9,9 +9,9 @@ namespace LeboncoinAPI.Models.DataManager;
 
 public class UtilisateurManager : IDataUtilisateurRepository<Utilisateur>
 {
-    private readonly LeboncoinDBContext _dbContext;
+    private readonly LeboncoinDbContext _dbContext;
 
-    public UtilisateurManager(LeboncoinDBContext dbContext)
+    public UtilisateurManager(LeboncoinDbContext dbContext)
     {
         _dbContext = dbContext;
     }
@@ -49,6 +49,6 @@ public class UtilisateurManager : IDataUtilisateurRepository<Utilisateur>
 
     public async Task<Utilisateur?> GetByEmailAsync(string email)
     {
-        return await _dbContext.Utilisateurs.FirstOrDefaultAsync(u=> u.Email.ToLower() == email.ToLower());
+        return await _dbContext.Utilisateurs.FirstOrDefaultAsync(u => u.Email.ToLower() == email.ToLower());
     }
 }

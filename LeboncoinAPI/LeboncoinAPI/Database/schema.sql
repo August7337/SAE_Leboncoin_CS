@@ -299,3 +299,20 @@ VALUES ('20260311103905_migration-v1.0.0', '8.0.23');
 
 COMMIT;
 
+START TRANSACTION;
+
+ALTER TABLE public.annonce ALTER COLUMN lienphoto TYPE character varying(200);
+ALTER TABLE public.annonce ALTER COLUMN lienphoto DROP NOT NULL;
+
+INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+VALUES ('20260311121339_migration-v1.0.1', '8.0.23');
+
+COMMIT;
+
+START TRANSACTION;
+
+INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+VALUES ('20260311121701_migration-v1.0.2', '8.0.23');
+
+COMMIT;
+
