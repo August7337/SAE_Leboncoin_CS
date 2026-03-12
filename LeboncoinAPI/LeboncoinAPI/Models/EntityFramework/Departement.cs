@@ -1,31 +1,37 @@
-﻿using LeboncoinAPI.Models.EntityFramework;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
 
 namespace LeboncoinAPI.Models.EntityFramework;
 
 [Table("departement")]
+[Index("Idregion", Name = "idx_departement_idregion")]
 public partial class Departement
 {
     [Key]
     [Column("iddepartement")]
-    public int DepartementId { get; set; }
+    public int Iddepartement { get; set; }
 
     [Column("idregion")]
-    public int RegionId { get; set; }
+    public int Idregion { get; set; }
 
     [Column("numerodepartement")]
-    [StringLength(3, ErrorMessage = "Le numero du département ne doit pas dépasser 3 caractères")]
-    public string? NumeroDepartement { get; set; }
+    [StringLength(3)]
+    public string? Numerodepartement { get; set; }
 
     [Column("nomdepartement")]
-    [StringLength(25, ErrorMessage = "Le nom du département ne doit pas dépasser 25 caractères")]
-    public string? NomDepartement { get; set; }
+    [StringLength(25)]
+    public string? Nomdepartement { get; set; }
 
-    [ForeignKey(nameof(RegionId))]
-    public virtual Region RegionAssociee { get; set; } = null!;
+    [ForeignKey("Idregion")]
+    [InverseProperty("Departements")]
+    public virtual Region IdregionNavigation { get; set; } = null!;
 
-    [InverseProperty("DepartementAssocie")]
+    [InverseProperty("IddepartementNavigation")]
+    public virtual ICollection<Recherche> Recherches { get; set; } = new List<Recherche>();
+
+    [InverseProperty("IddepartementNavigation")]
     public virtual ICollection<Ville> Villes { get; set; } = new List<Ville>();
 }

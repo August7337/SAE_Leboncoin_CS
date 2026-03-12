@@ -1,15 +1,15 @@
 <script setup>
-import { ref } from 'vue';
+import { ref } from 'vue'
 
 const user = ref({
   name: 'Tim',
   email: 'tim@example.com',
-  avatar: 'https://ui-avatars.com/api/?name=Tim&background=ea580c&color=fff'
-});
+  avatar: 'https://ui-avatars.com/api/?name=Tim&background=ea580c&color=fff',
+})
 
 const saveProfile = () => {
-  console.log("Profil mis à jour :", user.value);
-};
+  console.log('Profil mis à jour :', user.value)
+}
 </script>
 
 <template>
@@ -26,15 +26,26 @@ const saveProfile = () => {
         <div class="space-y-4">
           <div>
             <label class="block text-sm font-bold mb-2 text-gray-700">Nom complet</label>
-            <input v-model="user.name" type="text" class="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:border-[#ea580c] transition-all" />
+            <input
+              v-model="user.name"
+              type="text"
+              class="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:border-[#ea580c] transition-all"
+            />
           </div>
           <div>
             <label class="block text-sm font-bold mb-2 text-gray-700">Adresse email</label>
-            <input v-model="user.email" type="email" class="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:border-[#ea580c] transition-all" />
+            <input
+              v-model="user.email"
+              type="email"
+              class="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:border-[#ea580c] transition-all"
+            />
           </div>
         </div>
 
-        <button @click="saveProfile" class="w-full bg-[#ea580c] text-white font-black py-4 rounded-2xl shadow-lg shadow-orange-100 hover:bg-[#c2410c] transition-all">
+        <button
+          @click="saveProfile"
+          class="w-full bg-[#ea580c] text-white font-black py-4 rounded-2xl shadow-lg shadow-orange-100 hover:bg-[#c2410c] transition-all"
+        >
           Enregistrer les modifications
         </button>
       </div>

@@ -2,47 +2,49 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
 
 namespace LeboncoinAPI.Models.EntityFramework;
 
 [Table("utilisateur")]
+[Index("Idadresse", Name = "idx_utilisateur_idadresse")]
+[Index("Idcartebancaire", Name = "idx_utilisateur_idcartebancaire")]
+[Index("Iddate", Name = "idx_utilisateur_iddate")]
+[Index("Email", Name = "utilisateur_email_key", IsUnique = true)]
+[Index("Telephoneutilisateur", Name = "utilisateur_telephoneutilisateur_key", IsUnique = true)]
 public partial class Utilisateur
 {
     [Key]
     [Column("idutilisateur")]
-    public int UtilisateurId { get; set; }
+    public int Idutilisateur { get; set; }
 
     [Column("idadresse")]
-    public int AdresseId { get; set; }
+    public int Idadresse { get; set; }
+
+    [Column("idcartebancaire")]
+    public int? Idcartebancaire { get; set; }
 
     [Column("iddate")]
-    public int DateId { get; set; }
+    public int Iddate { get; set; }
 
-    [Required]
     [Column("pseudonyme")]
-    [StringLength(50, MinimumLength = 2, ErrorMessage = "Le pseudonyme doit faire entre 2 et 50 caractères.")]
+    [StringLength(50)]
     public string Pseudonyme { get; set; } = null!;
 
-    [Required]
     [Column("email")]
-    [EmailAddress(ErrorMessage = "Le format de l'adresse email est invalide.")]
     [StringLength(320)]
     public string Email { get; set; } = null!;
 
-    [Column("email_verified_at")]
+    [Column("email_verified_at", TypeName = "timestamp without time zone")]
     public DateTime? EmailVerifiedAt { get; set; }
 
-    [Required]
     [Column("password")]
     [StringLength(255)]
-    [RegularExpression(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{12,}$",
-        ErrorMessage = "Le mot de passe doit contenir au moins 12 caractères, une majuscule, une minuscule, un chiffre et un caractère spécial.")]
     public string Password { get; set; } = null!;
 
-    [Required]
-    [Column("telephoneutilisateur", TypeName = "char(10)")]
-    [RegularExpression(@"^0[1-9][0-9]{8}$", ErrorMessage = "Le numéro de téléphone doit contenir 10 chiffres et commencer par 0.")]
-    public string TelephoneUtilisateur { get; set; } = null!;
+    [Column("telephoneutilisateur")]
+    [StringLength(10)]
+    public string Telephoneutilisateur { get; set; } = null!;
 
     [Column("phone_verified")]
     public bool PhoneVerified { get; set; }
@@ -50,49 +52,74 @@ public partial class Utilisateur
     [Column("identity_verified")]
     public bool IdentityVerified { get; set; }
 
-    [Column("solde", TypeName = "decimal(10,2)")]
-    [Range(0, double.MaxValue, ErrorMessage = "Le solde ne peut pas être négatif.")]
+    [Column("solde")]
+    [Precision(10, 2)]
     public decimal Solde { get; set; }
 
     [Column("remember_token")]
-    [StringLength(100,ErrorMessage = "Le remember token ne peut pas dépasser 100 caractères")]
+    [StringLength(100)]
     public string? RememberToken { get; set; }
 
-    [Column("two_factor_secret", TypeName = "text")]
+    [Column("two_factor_secret")]
     public string? TwoFactorSecret { get; set; }
 
-    [Column("two_factor_recovery_codes", TypeName = "text")]
+    [Column("two_factor_recovery_codes")]
     public string? TwoFactorRecoveryCodes { get; set; }
 
-    [Column("two_factor_confirmed_at")]
+    [Column("two_factor_confirmed_at", TypeName = "timestamp without time zone")]
     public DateTime? TwoFactorConfirmedAt { get; set; }
 
     [Column("profile_photo_path")]
     [StringLength(2048)]
     public string? ProfilePhotoPath { get; set; }
 
-    // --- Navigation Properties ---
+    [InverseProperty("IdutilisateurNavigation")]
+    public virtual ICollection<Annonce> Annonces { get; set; } = new List<Annonce>();
 
-    [ForeignKey(nameof(AdresseId))]
-    public virtual Adresse AdresseUtilisateur { get; set; } = null!;
+    [InverseProperty("IdutilisateurNavigation")]
+    public virtual ICollection<Avi> Avis { get; set; } = new List<Avi>();
 
+    [InverseProperty("IdutilisateurNavigation")]
+    public virtual ICollection<Cartebancaire> Cartebancaires { get; set; } = new List<Cartebancaire>();
 
-    [ForeignKey(nameof(DateId))]
-    public virtual DateReference DateInscription { get; set; } = null!;
+    [ForeignKey("Idadresse")]
+    [InverseProperty("Utilisateurs")]
+    public virtual Adresse IdadresseNavigation { get; set; } = null!;
 
-    // 1 to 1 relationships (Particulier / Professionnel)
-    [InverseProperty("UtilisateurBase")]
-    public virtual Particulier? ProfilParticulier { get; set; }
+    [ForeignKey("Idcartebancaire")]
+    [InverseProperty("Utilisateurs")]
+    public virtual Cartebancaire? IdcartebancaireNavigation { get; set; }
 
-    [InverseProperty("UtilisateurBase")]
-    public virtual Professionnel? ProfilProfessionnel { get; set; }
+    [ForeignKey("Iddate")]
+    [InverseProperty("Utilisateurs")]
+    public virtual Date IddateNavigation { get; set; } = null!;
 
-    [InverseProperty("UtilisateurAuteur")]
-    public virtual ICollection<Annonce> AnnoncesPubliees { get; set; } = new List<Annonce>();
+    [InverseProperty("IdutilisateurNavigation")]
+    public virtual ICollection<Incident> Incidents { get; set; } = new List<Incident>();
 
-    [InverseProperty("Client")]
+    [InverseProperty("IdutilisateurexpediteurNavigation")]
+    public virtual ICollection<Message> MessageIdutilisateurexpediteurNavigations { get; set; } = new List<Message>();
+
+    [InverseProperty("IdutilisateurreceveurNavigation")]
+    public virtual ICollection<Message> MessageIdutilisateurreceveurNavigations { get; set; } = new List<Message>();
+
+    [InverseProperty("IdutilisateurNavigation")]
+    public virtual Particulier? Particulier { get; set; }
+
+    [InverseProperty("IdutilisateurNavigation")]
+    public virtual Professionnel? Professionnel { get; set; }
+
+    [InverseProperty("IdutilisateurNavigation")]
+    public virtual ICollection<Recherche> Recherches { get; set; } = new List<Recherche>();
+
+    [InverseProperty("IdutilisateurNavigation")]
     public virtual ICollection<Reservation> Reservations { get; set; } = new List<Reservation>();
 
-    // Table de liaison "favoriser"
-    public virtual ICollection<Annonce> AnnoncesFavorites { get; set; } = new List<Annonce>();
+    [ForeignKey("Idutilisateur")]
+    [InverseProperty("Idutilisateurs")]
+    public virtual ICollection<Annonce> Idannonces { get; set; } = new List<Annonce>();
+
+    [ForeignKey("Idutilisateur")]
+    [InverseProperty("Idutilisateurs")]
+    public virtual ICollection<Role> Idroles { get; set; } = new List<Role>();
 }

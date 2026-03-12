@@ -26,8 +26,12 @@
       </div>
       <div class="lg:col-span-1">
         <div class="sticky top-24 bg-white border border-gray-200 rounded-3xl p-6 shadow-xl">
-          <div class="text-3xl font-black mb-6">{{ annonce.prixnuitee }}€ <span class="text-sm font-normal">/ nuit</span></div>
-          <button class="w-full bg-[#ea580c] text-white font-black py-4 rounded-2xl">Réserver</button>
+          <div class="text-3xl font-black mb-6">
+            {{ annonce.prixnuitee }}€ <span class="text-sm font-normal">/ nuit</span>
+          </div>
+          <button class="w-full bg-[#ea580c] text-white font-black py-4 rounded-2xl">
+            Réserver
+          </button>
         </div>
       </div>
     </div>
@@ -35,11 +39,11 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
-import { useRoute } from 'vue-router';
-const route = useRoute();
-const loading = ref(true);
-const annonce = ref(null);
+import { ref, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
+const route = useRoute()
+const loading = ref(true)
+const annonce = ref(null)
 
 onMounted(() => {
   setTimeout(() => {
@@ -47,9 +51,9 @@ onMounted(() => {
       titreannonce: 'Villa Test',
       prixnuitee: '150',
       adresse: { ville: { nomville: 'Nice' } },
-      photos: [{ lienphoto: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800' }]
-    };
-    loading.value = false;
-  }, 500);
-});
+      photos: [{ lienphoto: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800' }],
+    }
+    loading.value = false
+  }, 500)
+})
 </script>

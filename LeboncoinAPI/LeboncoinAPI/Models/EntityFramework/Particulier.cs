@@ -1,36 +1,38 @@
-﻿using LeboncoinAPI.Models.EntityFramework;
-using System;
+﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
 
 namespace LeboncoinAPI.Models.EntityFramework;
 
 [Table("particulier")]
 public partial class Particulier
 {
-    // C'est à la fois une clé primaire et une clé étrangère vers Utilisateur
     [Key]
     [Column("idutilisateur")]
-    public int UtilisateurId { get; set; }
+    public int Idutilisateur { get; set; }
 
-    [Required]
     [Column("nomutilisateur")]
-    [StringLength(50, ErrorMessage = "Le nom ne doit pas dépasser 50 caractères")]
-    public string NomUtilisateur { get; set; } = null!;
+    [StringLength(50)]
+    public string Nomutilisateur { get; set; } = null!;
 
-    [Required]
     [Column("prenomutilisateur")]
-    [StringLength(50, ErrorMessage = "Le prenom ne doit pas dépasser 50 caractères")]
-    public string PrenomUtilisateur { get; set; } = null!;
+    [StringLength(50)]
+    public string Prenomutilisateur { get; set; } = null!;
 
-    [Required]
     [Column("civilite")]
-    [StringLength(15, ErrorMessage ="Le message ne doit pas dépasser 15 caractères")]
+    [StringLength(15)]
     public string Civilite { get; set; } = null!;
 
     [Column("iddate")]
-    public int DateNaissanceId { get; set; }
+    public int Iddate { get; set; }
 
-    [ForeignKey(nameof(UtilisateurId))]
-    public virtual Utilisateur UtilisateurBase { get; set; } = null!;
+    [ForeignKey("Iddate")]
+    [InverseProperty("Particuliers")]
+    public virtual Date IddateNavigation { get; set; } = null!;
+
+    [ForeignKey("Idutilisateur")]
+    [InverseProperty("Particulier")]
+    public virtual Utilisateur IdutilisateurNavigation { get; set; } = null!;
 }

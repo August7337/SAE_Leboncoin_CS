@@ -1,128 +1,140 @@
-﻿using LeboncoinAPI.Models.EntityFramework;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
 
 namespace LeboncoinAPI.Models.EntityFramework;
 
 [Table("annonce")]
+[Index("Capacite", Name = "idx_annonce_capacite")]
+[Index("Idadresse", Name = "idx_annonce_idadresse")]
+[Index("Iddate", Name = "idx_annonce_iddate")]
+[Index("Idheurearrivee", Name = "idx_annonce_idheurearrivee")]
+[Index("Idheuredepart", Name = "idx_annonce_idheuredepart")]
+[Index("Idtypehebergement", Name = "idx_annonce_idtypehebergement")]
+[Index("Idutilisateur", Name = "idx_annonce_idutilisateur")]
+[Index("Nbchambres", Name = "idx_annonce_nbchambres")]
+[Index("Prixnuitee", Name = "idx_annonce_prixnuitee")]
 public partial class Annonce
 {
     [Key]
     [Column("idannonce")]
-    [Required]
-    public int AnnonceId { get; set; }
+    public int Idannonce { get; set; }
 
     [Column("idadresse")]
-    public int AdresseId { get; set; }
+    public int Idadresse { get; set; }
 
     [Column("iddate")]
-    public int DateId { get; set; }
+    public int Iddate { get; set; }
 
     [Column("idheuredepart")]
-    public int HeureDepartId { get; set; }
+    public int Idheuredepart { get; set; }
 
     [Column("idtypehebergement")]
-    public int TypeHebergementId { get; set; }
+    public int Idtypehebergement { get; set; }
 
     [Column("idheurearrivee")]
-    public int HeureArriveeId { get; set; }
+    public int Idheurearrivee { get; set; }
 
     [Column("idutilisateur")]
-    public int UtilisateurId { get; set; }
+    public int Idutilisateur { get; set; }
 
-    [Required]
     [Column("titreannonce")]
-    [StringLength(50,ErrorMessage ="Le titre de l'annonce ne doit pas depasser 50 caractères")]
-    public string TitreAnnonce { get; set; } = null!;
+    [StringLength(50)]
+    public string Titreannonce { get; set; } = null!;
 
-    [Required]
     [Column("descriptionannonce")]
-    [StringLength(4000,ErrorMessage ="La description de l'annonce ne doit pas depasser 4000 caractères")]
-    public string DescriptionAnnonce { get; set; } = null!;
+    [StringLength(4000)]
+    public string Descriptionannonce { get; set; } = null!;
 
     [Column("nombreetoilesleboncoin")]
-    [Range(1, 5,ErrorMessage ="La note doit être compris entre 1 et 5")]
-    public int? NombreEtoilesLeBonCoin { get; set; }
+    public int? Nombreetoilesleboncoin { get; set; }
 
-
-    [Column("lienphoto")]
-    [StringLength(50, ErrorMessage = "Le lien de l'image ne peut pas depasser 50 caractères")]
-    public string LienPhoto { get; set; } 
-
-    [Column("montantacompte", TypeName = "decimal(10,2)")]
-    [Range(0, double.MaxValue,ErrorMessage ="Le montant acompte doit être un nombre positif")]
-    public decimal? MontantAcompte { get; set; }
+    [Column("montantacompte")]
+    [Precision(10, 2)]
+    public decimal? Montantacompte { get; set; }
 
     [Column("pourcentageacompte")]
-    [Range(0, 100,ErrorMessage = "Le pourcentage doit être compris entre 1 et 100")]
-    public int? PourcentageAcompte { get; set; }
+    public int? Pourcentageacompte { get; set; }
 
-    [Column("prixnuitee", TypeName = "decimal(10,2)")]
-    [Range(0.01, double.MaxValue, ErrorMessage = "Le prix de la nuitée doit être strictement positif.")]
-    public decimal PrixNuitee { get; set; }
+    [Column("prixnuitee")]
+    [Precision(10, 2)]
+    public decimal Prixnuitee { get; set; }
 
     [Column("capacite")]
-    [Range(1,int.MaxValue,ErrorMessage = "La capacité doit être supérieure ou egale à 1")]
     public int? Capacite { get; set; }
 
     [Column("nbchambres")]
-
-    public int? NbChambres { get; set; }
+    public int? Nbchambres { get; set; }
 
     [Column("minimumnuitee")]
-    [Range(1, int.MaxValue, ErrorMessage = "Le minimum de nuitée doit être supérieur ou egal à 1")]
-    public int? MinimumNuitee { get; set; }
+    public int? Minimumnuitee { get; set; }
 
     [Column("possibiliteanimaux")]
-    public bool PossibiliteAnimaux { get; set; }
+    public bool Possibiliteanimaux { get; set; }
 
     [Column("nombrebebesmax")]
-    [Range(0, int.MaxValue)]
-    public int? NombreBebesMax { get; set; }
+    public int? Nombrebebesmax { get; set; }
 
     [Column("possibilitefumeur")]
-    public bool PossibiliteFumeur { get; set; }
+    public bool Possibilitefumeur { get; set; }
 
     [Column("estverifie")]
-    public bool EstVerifie { get; set; }
+    public bool Estverifie { get; set; }
 
     [Column("smsverifie")]
-    public bool SmsVerifie { get; set; }
+    public bool Smsverifie { get; set; }
 
-    // --- Navigation Properties ---
+    [InverseProperty("IdannonceNavigation")]
+    public virtual ICollection<Avi> Avis { get; set; } = new List<Avi>();
 
-    [ForeignKey(nameof(UtilisateurId))]
-    [InverseProperty("AnnoncesPubliees")]
-    public virtual Utilisateur UtilisateurAuteur { get; set; } = null!;
-
-    [ForeignKey(nameof(AdresseId))]
-    public virtual Adresse AdresseAnnonce { get; set; } = null!;
-
-    [ForeignKey(nameof(DateId))]
-    public virtual DateReference DatePublication { get; set; } = null!;
-
-    [ForeignKey(nameof(HeureDepartId))]
-    public virtual Heure HeureDepart { get; set; } = null!;
-
-    [ForeignKey(nameof(HeureArriveeId))]
-    public virtual Heure HeureArrivee { get; set; } = null!;
-
-    [ForeignKey(nameof(TypeHebergementId))]
+    [ForeignKey("Idadresse")]
     [InverseProperty("Annonces")]
-    public virtual TypeHebergement TypeHebergementAssocie { get; set; } = null!;
+    public virtual Adresse IdadresseNavigation { get; set; } = null!;
 
-    // Collections inverses
-    [InverseProperty("AnnonceConcernee")]
+    [ForeignKey("Iddate")]
+    [InverseProperty("Annonces")]
+    public virtual Date IddateNavigation { get; set; } = null!;
+
+    [ForeignKey("Idheurearrivee")]
+    [InverseProperty("AnnonceIdheurearriveeNavigations")]
+    public virtual Heure IdheurearriveeNavigation { get; set; } = null!;
+
+    [ForeignKey("Idheuredepart")]
+    [InverseProperty("AnnonceIdheuredepartNavigations")]
+    public virtual Heure IdheuredepartNavigation { get; set; } = null!;
+
+    [ForeignKey("Idtypehebergement")]
+    [InverseProperty("Annonces")]
+    public virtual Typehebergement IdtypehebergementNavigation { get; set; } = null!;
+
+    [ForeignKey("Idutilisateur")]
+    [InverseProperty("Annonces")]
+    public virtual Utilisateur IdutilisateurNavigation { get; set; } = null!;
+
+    [InverseProperty("IdannonceNavigation")]
+    public virtual ICollection<Photo> Photos { get; set; } = new List<Photo>();
+
+    [InverseProperty("IdannonceNavigation")]
+    public virtual ICollection<Relier> Reliers { get; set; } = new List<Relier>();
+
+    [InverseProperty("IdannonceNavigation")]
     public virtual ICollection<Reservation> Reservations { get; set; } = new List<Reservation>();
 
-    [InverseProperty("AnnonceEvaluee")]
-    public virtual ICollection<Avis> Avis { get; set; } = new List<Avis>();
+    [ForeignKey("IdannonceB")]
+    [InverseProperty("IdannonceBs")]
+    public virtual ICollection<Annonce> IdannonceAs { get; set; } = new List<Annonce>();
 
-    // Table de liaison "favoriser"
-    public virtual ICollection<Utilisateur> UtilisateursFavoris { get; set; } = new List<Utilisateur>();
+    [ForeignKey("IdannonceA")]
+    [InverseProperty("IdannonceAs")]
+    public virtual ICollection<Annonce> IdannonceBs { get; set; } = new List<Annonce>();
 
-    // Table de liaison "proposer"
-    public virtual ICollection<Commodite> CommoditesProposees { get; set; } = new List<Commodite>();
+    [ForeignKey("Idannonce")]
+    [InverseProperty("Idannonces")]
+    public virtual ICollection<Commodite> Idcommodites { get; set; } = new List<Commodite>();
+
+    [ForeignKey("Idannonce")]
+    [InverseProperty("Idannonces")]
+    public virtual ICollection<Utilisateur> Idutilisateurs { get; set; } = new List<Utilisateur>();
 }

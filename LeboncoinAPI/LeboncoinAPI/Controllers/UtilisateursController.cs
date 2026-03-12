@@ -42,14 +42,12 @@ public class UtilisateursController : ControllerBase
 
     // GET: api/Utilisateurs/5
     [HttpGet("email/{email}")]
-    public async Task<ActionResult<Utilisateur>> GetUtilisateurByEmail(string email)
+    public async Task<IActionResult> GetUtilisateurByEmail(string email)
     {
         var utilisateur = await _dataRepository.GetByEmailAsync(email);
 
         if (utilisateur == null)
-        {
-            return NotFound("Utilisateur introuvable.");
-        }
+            return NotFound();
 
         return Ok(utilisateur);
     }
@@ -67,14 +65,14 @@ public class UtilisateursController : ControllerBase
         await _dataRepository.AddAsync(utilisateur);
 
         // Renvoie un code 201 Created avec l'URI de la nouvelle ressource
-        return CreatedAtAction(nameof(GetUtilisateurById), new { id = utilisateur.UtilisateurId }, utilisateur);
+        return CreatedAtAction(nameof(GetUtilisateurById), new { id = utilisateur.Idutilisateur }, utilisateur);
     }
 
     // PUT: api/Utilisateurs/5
     [HttpPut("{id}")]
     public async Task<IActionResult> PutUtilisateur(int id, Utilisateur utilisateur)
     {
-        if (id != utilisateur.UtilisateurId)
+        if (id != utilisateur.Idutilisateur)
         {
             return BadRequest("L'ID fourni dans l'URL ne correspond pas à l'ID de l'objet.");
         }

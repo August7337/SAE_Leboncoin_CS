@@ -46,14 +46,14 @@ public class ReservationsController : ControllerBase
 
         await _dataRepository.AddAsync(reservation);
 
-        return CreatedAtAction(nameof(GetReservation), new { id = reservation.ReservationId }, reservation);
+        return CreatedAtAction(nameof(GetReservation), new { id = reservation.Idreservation }, reservation);
     }
 
     // PUT: api/Reservations/5
     [HttpPut("{id}")]
     public async Task<IActionResult> PutReservation(int id, Reservation reservation)
     {
-        if (id != reservation.ReservationId) return BadRequest();
+        if (id != reservation.Idreservation) return BadRequest();
 
         var reservationToUpdate = await _dataRepository.GetByIdAsync(id);
         if (reservationToUpdate == null) return NotFound();

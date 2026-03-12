@@ -1,62 +1,69 @@
-﻿using LeboncoinAPI.Models.EntityFramework;
-using System;
+﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
 
 namespace LeboncoinAPI.Models.EntityFramework;
 
 [Table("incident")]
+[Index("Idreservation", Name = "idx_incident_idreservation")]
+[Index("Idutilisateur", Name = "idx_incident_idutilisateur")]
 public partial class Incident
 {
     [Key]
     [Column("idincident")]
-    public int IncidentId { get; set; }
+    public int Idincident { get; set; }
 
     [Column("idutilisateur")]
-    public int UtilisateurId { get; set; }
+    public int Idutilisateur { get; set; }
 
     [Column("idreservation")]
-    public int ReservationId { get; set; }
+    public int Idreservation { get; set; }
 
     [Column("iddate")]
-    public int DateId { get; set; }
+    public int Iddate { get; set; }
 
     [Column("motifincident")]
-    [StringLength(100,ErrorMessage ="Le motif ne doit pas depasser 100 caractères")]
-    public string? MotifIncident { get; set; }
+    [StringLength(100)]
+    public string? Motifincident { get; set; }
 
     [Column("descriptionincident")]
-    [StringLength(2000,ErrorMessage ="La description ne doit pas dépasser 2000 caractères")]
-    public string? DescriptionIncident { get; set; }
+    [StringLength(2000)]
+    public string? Descriptionincident { get; set; }
 
     [Column("etape")]
     public int Etape { get; set; }
 
     [Column("estclasse")]
-    public bool EstClasse { get; set; }
+    public bool Estclasse { get; set; }
 
     [Column("estrembourse")]
-    public bool EstRembourse { get; set; }
+    public bool Estrembourse { get; set; }
 
     [Column("estremisaucontentieux")]
-    public bool EstRemisAuContentieux { get; set; }
+    public bool Estremisaucontentieux { get; set; }
 
     [Column("explicationproprietaire")]
-    [StringLength(2000, ErrorMessage = "L'explication ne doit pas dépasser 2000 caractères")]
-    public string? ExplicationProprietaire { get; set; }
+    [StringLength(2000)]
+    public string? Explicationproprietaire { get; set; }
 
-    // --- Navigation Properties ---
-
-    [ForeignKey(nameof(ReservationId))]
+    [ForeignKey("Iddate")]
     [InverseProperty("Incidents")]
-    public virtual Reservation ReservationConcernee { get; set; } = null!;
+    public virtual Date IddateNavigation { get; set; } = null!;
 
-    [ForeignKey(nameof(UtilisateurId))]
-    public virtual Utilisateur UtilisateurDeclarant { get; set; } = null!;
+    [ForeignKey("Idreservation")]
+    [InverseProperty("Incidents")]
+    public virtual Reservation IdreservationNavigation { get; set; } = null!;
 
-    [ForeignKey(nameof(DateId))]
-    public virtual DateReference DateIncident { get; set; } = null!;
+    [ForeignKey("Idutilisateur")]
+    [InverseProperty("Incidents")]
+    public virtual Utilisateur IdutilisateurNavigation { get; set; } = null!;
 
-    // Table de liaison "demander" (Incident <-> Compensation)
-    public virtual ICollection<Compensation> CompensationsDemandees { get; set; } = new List<Compensation>();
+    [InverseProperty("IdincidentNavigation")]
+    public virtual ICollection<Photo> Photos { get; set; } = new List<Photo>();
+
+    [ForeignKey("Idincident")]
+    [InverseProperty("Idincidents")]
+    public virtual ICollection<Compensation> Idcompensations { get; set; } = new List<Compensation>();
 }

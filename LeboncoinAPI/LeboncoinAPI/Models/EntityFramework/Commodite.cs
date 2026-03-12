@@ -1,27 +1,35 @@
-﻿using LeboncoinAPI.Models.EntityFramework;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
 
 namespace LeboncoinAPI.Models.EntityFramework;
 
 [Table("commodite")]
+[Index("Idcategorie", Name = "idx_commodite_idcategorie")]
 public partial class Commodite
 {
     [Key]
     [Column("idcommodite")]
-    public int CommoditeId { get; set; }
+    public int Idcommodite { get; set; }
 
     [Column("idcategorie")]
-    public int CategorieId { get; set; }
+    public int Idcategorie { get; set; }
 
     [Column("nomcommodite")]
-    [StringLength(50,ErrorMessage ="Le nom ne doit pas dépasser 50 caractères")]
-    public string? NomCommodite { get; set; }
+    [StringLength(50)]
+    public string? Nomcommodite { get; set; }
 
-    [ForeignKey(nameof(CategorieId))]
-    public virtual Categorie CategorieCommodite { get; set; } = null!;
+    [ForeignKey("Idcategorie")]
+    [InverseProperty("Commodites")]
+    public virtual Categorie IdcategorieNavigation { get; set; } = null!;
 
-    // Table de liaison Many-to-Many "proposer" (Annonce <-> Commodite)
-    public virtual ICollection<Annonce> AnnoncesQuiProposent { get; set; } = new List<Annonce>();
+    [ForeignKey("Idcommodite")]
+    [InverseProperty("Idcommodites")]
+    public virtual ICollection<Annonce> Idannonces { get; set; } = new List<Annonce>();
+
+    [ForeignKey("Idcommodite")]
+    [InverseProperty("Idcommodites")]
+    public virtual ICollection<Recherche> Idrecherches { get; set; } = new List<Recherche>();
 }

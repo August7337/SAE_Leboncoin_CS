@@ -1,10 +1,16 @@
 <script setup>
-import AnnonceList from '../../components/AnnonceList.vue';
-import { ref } from 'vue';
+import AnnonceList from '../../components/AnnonceList.vue'
+import { ref } from 'vue'
 
 const favoris = ref([
-  { idannonce: 1, titreannonce: 'Villa Nice', prixnuitee: 150, adresse: { ville: { nomville: 'Nice' } }, photos: [{ lienphoto: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800' }] }
-]);
+  {
+    idannonce: 1,
+    titreannonce: 'Villa Nice',
+    prixnuitee: 150,
+    adresse: { ville: { nomville: 'Nice' } },
+    photos: [{ lienphoto: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800' }],
+  },
+])
 </script>
 
 <template>

@@ -1,17 +1,23 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
 
 namespace LeboncoinAPI.Models.EntityFramework;
 
 [Table("typevoyageur")]
-public partial class TypeVoyageur
+[Index("Nomtypevoyageur", Name = "typevoyageur_nomtypevoyageur_key", IsUnique = true)]
+public partial class Typevoyageur
 {
     [Key]
     [Column("idtypevoyageur")]
-    public int TypeVoyageurId { get; set; }
+    public int Idtypevoyageur { get; set; }
 
-    [Required]
     [Column("nomtypevoyageur")]
-    [StringLength(30, ErrorMessage = "Le nom ne doit pas dépasser 30 caractères")]
-    public string NomTypeVoyageur { get; set; } = null!;
+    [StringLength(30)]
+    public string Nomtypevoyageur { get; set; } = null!;
+
+    [InverseProperty("IdtypevoyageurNavigation")]
+    public virtual ICollection<Inclure> Inclures { get; set; } = new List<Inclure>();
 }
