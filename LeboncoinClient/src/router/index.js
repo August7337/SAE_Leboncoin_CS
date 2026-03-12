@@ -1,185 +1,85 @@
-import { createRouter, createWebHistory } from "vue-router"
-
-// Pages principales
-import HomeView from "../views/HomeView.vue"
-import DashboardView from "../views/DashboardView.vue"
-import NotFoundView from "../views/NotFoundView.vue"
-
-// Annonces
-import AnnonceView from "../views/annonces/AnnonceView.vue"
-import CreateAnnonceView from "../views/annonces/CreateAnnonceView.vue"
-import EditAnnonceView from "../views/annonces/EditAnnonceView.vue"
-import AnnonceSearchView from "../views/annonces/AnnonceSearchView.vue"
-
-// Auth
-import LoginView from "../views/auth/LoginView.vue"
-import RegisterView from "../views/auth/RegisterView.vue"
-import ForgotPasswordView from "../views/auth/ForgotPasswordView.vue"
-import ResetPasswordView from "../views/auth/ResetPasswordView.vue"
-import VerifyEmailView from "../views/auth/VerifyEmailView.vue"
-
-// Profil
-import ProfileView from "../views/profile/ProfileView.vue"
-import EditProfileView from "../views/profile/EditProfileView.vue"
-import SecurityView from "../views/profile/SecurityView.vue"
-
-// Compte
-import MyAnnoncesView from "../views/account/MyAnnoncesView.vue"
-import FavoritesView from "../views/account/FavoritesView.vue"
-import MessagesView from "../views/account/MessagesView.vue"
-import AccountSettingsView from "../views/account/AccountSettingsView.vue"
-
-// Messages
-import ConversationView from "../views/messages/ConversationView.vue"
-
-// Services
-import ServiceCatalogueView from "../views/services/ServiceCatalogueView.vue"
-import ServiceDetailView from "../views/services/ServiceDetailView.vue"
+import { createRouter, createWebHistory } from 'vue-router'
 
 const routes = [
-  // Home
+  // --- Accueil ---
   {
-    path: "/",
-    name: "home",
-    component: HomeView
+    path: '/',
+    name: 'home',
+    component: () => import('../views/HomeView.vue')
   },
 
+  // --- Annonces ---
   {
-    path: "/dashboard",
-    name: "dashboard",
-    component: DashboardView
+    path: '/annonce/:id',
+    name: 'annonce-detail',
+    component: () => import('../views/annonces/AnnonceView.vue')
+  },
+  {
+    path: '/create-annonce',
+    name: 'create-annonce',
+    component: () => import('../views/annonces/CreateAnnonceView.vue')
+  },
+  {
+    path: '/edit-annonce/:id',
+    name: 'edit-annonce',
+    component: () => import('../views/annonces/EditAnnonceView.vue')
+  },
+  {
+    path: '/search',
+    name: 'search',
+    component: () => import('../views/annonces/AnnonceSearchView.vue')
   },
 
-  // Annonces
+  // --- Espace Compte (Account) ---
   {
-    path: "/annonces",
-    name: "annonces-search",
-    component: AnnonceSearchView
+    path: '/my-annonces',
+    name: 'my-annonces',
+    component: () => import('../views/account/MyAnnoncesView.vue')
+  },
+  {
+    path: '/messages',
+    name: 'messages',
+    component: () => import('../views/account/MessagesView.vue')
+  },
+  {
+    path: '/login',
+    name: 'login',
+    component: () => import('../views/auth/LoginView.vue')
+  },
+  {
+    path: '/favorites',
+    name: 'favorites',
+    component: () => import('../views/account/FavoritesView.vue')
+  },
+  {
+    path: '/settings',
+    name: 'settings',
+    component: () => import('../views/account/AccountSettingsView.vue')
+  },
+  {
+    path: '/register',
+    name: 'register', 
+    component: () => import('../views/auth/RegisterView.vue')
   },
 
+  // --- Profil & Sécurité ---
   {
-    path: "/annonce/:id",
-    name: "annonce",
-    component: AnnonceView,
-    props: true
+    path: '/profil',
+    name: 'profile',
+    component: () => import('../views/profile/ProfileView.vue')
+  },
+  {
+    path: '/edit-profile',
+    name: 'edit-profile',
+    component: () => import('../views/profile/EditProfileView.vue')
+  },
+  {
+    path: '/security',
+    name: 'security',
+    component: () => import('../views/profile/SecurityView.vue')
   },
 
-  {
-    path: "/deposer",
-    name: "create-annonce",
-    component: CreateAnnonceView
-  },
 
-  {
-    path: "/annonce/edit/:id",
-    name: "edit-annonce",
-    component: EditAnnonceView,
-    props: true
-  },
-
-  // Auth
-  {
-    path: "/login",
-    name: "login",
-    component: LoginView
-  },
-
-  {
-    path: "/register",
-    name: "register",
-    component: RegisterView
-  },
-
-  {
-    path: "/forgot-password",
-    name: "forgot-password",
-    component: ForgotPasswordView
-  },
-
-  {
-    path: "/reset-password",
-    name: "reset-password",
-    component: ResetPasswordView
-  },
-
-  {
-    path: "/verify-email",
-    name: "verify-email",
-    component: VerifyEmailView
-  },
-
-  // Profil
-  {
-    path: "/profile",
-    name: "profile",
-    component: ProfileView
-  },
-
-  {
-    path: "/profile/edit",
-    name: "edit-profile",
-    component: EditProfileView
-  },
-
-  {
-    path: "/profile/security",
-    name: "security",
-    component: SecurityView
-  },
-
-  // Compte utilisateur
-  {
-    path: "/mes-annonces",
-    name: "my-annonces",
-    component: MyAnnoncesView
-  },
-
-  {
-    path: "/favoris",
-    name: "favorites",
-    component: FavoritesView
-  },
-
-  {
-    path: "/messages",
-    name: "messages",
-    component: MessagesView
-  },
-
-  {
-    path: "/compte",
-    name: "account-settings",
-    component: AccountSettingsView
-  },
-
-  // Conversation
-  {
-    path: "/conversation/:id",
-    name: "conversation",
-    component: ConversationView,
-    props: true
-  },
-
-  // Services
-  {
-    path: "/services",
-    name: "services",
-    component: ServiceCatalogueView
-  },
-
-  {
-    path: "/services/:id",
-    name: "service-detail",
-    component: ServiceDetailView,
-    props: true
-  },
-
-  // 404
-  {
-    path: "/:pathMatch(.*)*",
-    name: "not-found",
-    component: NotFoundView
-  }
 ]
 
 const router = createRouter({
