@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import { createRouter, createWebHistory } from 'vue-router'
+
 
 const routes = [
   // --- Accueil ---
@@ -36,6 +36,7 @@ const routes = [
     name: 'edit-annonce',
     component: () => import('../views/annonces/EditAnnonceView.vue'),
   },
+  {
     path: '/edit-annonce/:id',
     name: 'edit-annonce',
     component: () => import('../views/annonces/EditAnnonceView.vue')
@@ -45,7 +46,7 @@ const routes = [
     name: 'search',
     component: () => import('../views/annonces/AnnonceSearchView.vue'),
   },
-
+  {
   // --- Espace Compte (Account) ---
     path: '/search',
     name: 'search',
@@ -63,6 +64,7 @@ const routes = [
     name: 'messages',
     component: () => import('../views/account/MessagesView.vue'),
   },
+  {
     path: '/my-annonces',
     name: 'my-annonces',
     component: () => import('../views/account/MyAnnoncesView.vue')
@@ -118,6 +120,7 @@ const routes = [
     name: 'security',
     component: () => import('../views/profile/SecurityView.vue'),
   },
+  {
     path: '/edit-profile',
     name: 'edit-profile',
     component: () => import('../views/profile/EditProfileView.vue')
