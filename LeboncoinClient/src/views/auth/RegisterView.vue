@@ -156,7 +156,7 @@ const register = async () => {
       IddateNavigation: { } 
     }
 
-    const response = await axios.post("https://localhost:7057/api/Utilisateurs", payload);
+    const response = await axios.post("http://localhost:5150/api/Utilisateurs", payload);
     
     
     successMessage.value = "Inscription réussie !";

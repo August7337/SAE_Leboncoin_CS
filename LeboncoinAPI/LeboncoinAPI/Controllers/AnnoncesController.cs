@@ -1,8 +1,9 @@
-﻿using LeboncoinAPI.Models.EntityFramework;
+using LeboncoinAPI.Models.EntityFramework;
 using LeboncoinAPI.Models.Repository;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 
 namespace LeboncoinAPI.Controllers;
 
@@ -41,6 +42,7 @@ public class AnnoncesController : ControllerBase
 
     // POST: api/Annonces
     [HttpPost]
+    [Authorize]
     public async Task<ActionResult<Annonce>> PostAnnonce(Annonce annonce)
     {
         if (!ModelState.IsValid)
@@ -55,6 +57,7 @@ public class AnnoncesController : ControllerBase
 
     // PUT: api/Annonces/5
     [HttpPut("{id}")]
+    [Authorize]
     public async Task<IActionResult> PutAnnonce(int id, Annonce annonce)
     {
         if (id != annonce.Idannonce)
@@ -76,6 +79,7 @@ public class AnnoncesController : ControllerBase
 
     // DELETE: api/Annonces/5
     [HttpDelete("{id}")]
+    [Authorize]
     public async Task<IActionResult> DeleteAnnonce(int id)
     {
         var annonce = await _dataRepository.GetByIdAsync(id);

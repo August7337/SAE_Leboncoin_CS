@@ -1,9 +1,12 @@
-﻿using LeboncoinAPI.Models.EntityFramework;
+using LeboncoinAPI.Models.EntityFramework;
 using LeboncoinAPI.Models.Repository;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using Microsoft.Extensions.Configuration;
 namespace LeboncoinAPI.Controllers;
 
 [Route("api/[controller]")]
@@ -11,11 +14,12 @@ namespace LeboncoinAPI.Controllers;
 public class UtilisateursController : ControllerBase
 {
     private readonly IDataUtilisateurRepository<Utilisateur> _dataRepository;
+    private readonly IConfiguration _configuration;
 
-    // L'injection de dépendance fournit automatiquement l'instance d'UtilisateurManager
-    public UtilisateursController(IDataUtilisateurRepository<Utilisateur> dataRepository)
+    public UtilisateursController(IDataUtilisateurRepository<Utilisateur> dataRepository, IConfiguration configuration)
     {
         _dataRepository = dataRepository;
+        _configuration = configuration;
     }
 
     // GET: api/Utilisateurs
@@ -134,9 +138,30 @@ public class UtilisateursController : ControllerBase
             bool isValid = BCrypt.Net.BCrypt.Verify(loginRequest.Password, user.Password);
             if (!isValid) return BadRequest("Mot de passe incorrect.");
 
-      
+            var claims = new[]
+            {
+                new Claim(JwtRegisteredClaimNames.Sub, user.Email),
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+                new Claim(ClaimTypes.NameIdentifier, user.Idutilisateur.ToString()),
+                new Claim(ClaimTypes.Name, user.Pseudonyme)
+            };
+
+            var key = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+            var token = new JwtSecurityToken(
+                issuer: _configuration["Jwt:Issuer"],
+                audience: _configuration["Jwt:Audience"],
+                claims: claims,
+                expires: DateTime.UtcNow.AddDays(1),
+                signingCredentials: creds
+            );
+
+            var jwtToken = new JwtSecurityTokenHandler().WriteToken(token);
+
             return Ok(new
             {
+                token = jwtToken,
                 idutilisateur = user.Idutilisateur,
                 pseudonyme = user.Pseudonyme,
                 email = user.Email,

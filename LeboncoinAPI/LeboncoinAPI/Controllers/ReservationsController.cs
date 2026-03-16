@@ -1,8 +1,9 @@
-﻿using LeboncoinAPI.Models.EntityFramework;
+using LeboncoinAPI.Models.EntityFramework;
 using LeboncoinAPI.Models.Repository;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 
 namespace LeboncoinAPI.Controllers;
 
@@ -40,6 +41,7 @@ public class ReservationsController : ControllerBase
 
     // POST: api/Reservations
     [HttpPost]
+    [Authorize]
     public async Task<ActionResult<Reservation>> PostReservation(Reservation reservation)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -51,6 +53,7 @@ public class ReservationsController : ControllerBase
 
     // PUT: api/Reservations/5
     [HttpPut("{id}")]
+    [Authorize]
     public async Task<IActionResult> PutReservation(int id, Reservation reservation)
     {
         if (id != reservation.Idreservation) return BadRequest();
@@ -65,6 +68,7 @@ public class ReservationsController : ControllerBase
 
     // DELETE: api/Reservations/5
     [HttpDelete("{id}")]
+    [Authorize]
     public async Task<IActionResult> DeleteReservation(int id)
     {
         var reservation = await _dataRepository.GetByIdAsync(id);

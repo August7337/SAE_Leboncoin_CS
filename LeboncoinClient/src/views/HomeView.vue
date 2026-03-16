@@ -34,23 +34,23 @@ const isLoading = ref(false)
 const errorMessage = ref('')
 
 const mapAnnonceFromApi = (annonceApi) => ({
-  idannonce: annonceApi.annonceId,
-  titreannonce: annonceApi.titreAnnonce,
-  prixnuitee: annonceApi.prixNuitee,
-  nombreetoilesleboncoin: annonceApi.nombreEtoilesLeBonCoin,
+  idannonce: annonceApi.idannonce || annonceApi.annonceId,
+  titreannonce: annonceApi.titreannonce || annonceApi.titreAnnonce,
+  prixnuitee: annonceApi.prixnuitee || 0,
+  nombreetoilesleboncoin: annonceApi.nombreetoilesleboncoin || annonceApi.nombreEtoilesLeBonCoin,
   capacite: annonceApi.capacite,
   typehebergement: {
-    nomtypehebergement: annonceApi.typeHebergementAssocie?.nomTypeHebergement || 'Logement',
+    nomtypehebergement: annonceApi.typehebergement?.nomtypehebergement || 'Logement',
   },
-  adresse: annonceApi.adresseAnnonce
+  adresse: annonceApi.adresse
     ? {
         ville: {
-          nomville: annonceApi.adresseAnnonce.ville?.nomVille,
-          codepostal: annonceApi.adresseAnnonce.ville?.codePostal,
+          nomville: annonceApi.adresse.ville?.nomville,
+          codepostal: annonceApi.adresse.ville?.codepostal,
         },
       }
     : null,
-  photos: annonceApi.lienPhoto ? [{ lienphoto: buildAssetUrl(annonceApi.lienPhoto) }] : [],
+  photos: annonceApi.lienphoto || annonceApi.lienPhoto ? [{ lienphoto: buildAssetUrl(annonceApi.lienphoto || annonceApi.lienPhoto) }] : [],
 })
 
 const loadAnnonces = async () => {
