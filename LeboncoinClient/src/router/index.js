@@ -140,3 +140,17 @@ const router = createRouter({
 })
 
 export default router
+
+import { authState } from '@/auth';
+
+router.beforeEach((to, from, next) => {
+ 
+  const requiresAuth = to.matched.some(record => record.meta.requiresAuth);
+
+  if (requiresAuth && !authState.isLoggedIn()) {
+  
+    next({ name: 'login' });
+  } else {
+    next();
+  }
+});

@@ -27,22 +27,40 @@ async function login() {
     return
   }
 
+ 
+  if (emailExists.value) {
+    try {
+      const response = await axios.post(`https://localhost:7057/api/Utilisateurs/login`, {
+        email: form.email,
+        password: form.password
+      })
+      
+      localStorage.setItem('user', JSON.stringify(response.data));
+      alert("Connecté !");
+      router.push({ name: 'home' }); 
+} catch (error) {
+  if (error.response) {
+    
+    apiError.value = typeof error.response.data === 'string' 
+                     ? error.response.data 
+                     : "Erreur de connexion.";
+  } else {
+    apiError.value = "Le serveur est injoignable.";
+  }
+}
+    return;
+  }
+
+  
   try {
     const response = await axios.get(`https://localhost:7057/api/Utilisateurs/email/${form.email}`)
-
-    
     emailExists.value = true
-
   } catch (error) {
-    if (error.response) {
-      if (error.response.status === 404) {
-        
-        router.push({ name: 'register', query: { email: form.email } })
-      } else {
-        apiError.value = "Impossible de contacter le serveur, veuillez réessayer plus tard"
-      }
+    if (error.response?.status === 404) {
+      
+      router.push({ name: 'register', query: { email: form.email } })
     } else {
-      apiError.value = "Impossible de contacter le serveur, veuillez réessayer plus tard"
+      apiError.value = "Erreur serveur."
     }
   }
 }
