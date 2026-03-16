@@ -128,41 +128,47 @@ const register = async () => {
     const depKey = depCodeRaw.startsWith('0') ? depCodeRaw.substring(1) : depCodeRaw;
 
     const payload = {
-      Pseudonyme: form.pseudonyme,
-      Email: form.email,
-     
-      Telephoneutilisateur: form.telephoneUtilisateur, 
-      Password: form.password,
-      Solde: 0,
-      PhoneVerified: false,
-      IdentityVerified: false,
-      
-      
-      IdadresseNavigation: {
-        Nomrue: form.adresseUtilisateur.rue,
-        IdvilleNavigation: {
-          Nomville: form.adresseUtilisateur.ville,
-          Codepostal: cp,
-          Taxedesejour: 0, 
-          IddepartementNavigation: {
-            Numerodepartement: depCodeRaw,
-            Nomdepartement: departements[depKey] || "Inconnu",
-            IdregionNavigation: {
-              Nomregion: getRegionFromPostalCode(cp) || "Inconnue"
+      idadresse: 0,
+      iddate: 0,
+      pseudonyme: form.pseudonyme,
+      email: form.email,
+      telephoneutilisateur: form.telephoneUtilisateur,
+      password: form.password,
+      solde: 0,
+      phoneVerified: false,
+      identityVerified: false,
+
+      idadresseNavigation: {
+        idadresse: 0,
+        idville: 0,
+        nomrue: form.adresseUtilisateur.rue,
+        idvilleNavigation: {
+          idville: 0,
+          iddepartement: 0,
+          codepostal: cp,
+          nomville: form.adresseUtilisateur.ville,
+          taxedesejour: 0,
+          iddepartementNavigation: {
+            iddepartement: 0,
+            idregion: 0,
+            numerodepartement: depCodeRaw,
+            nomdepartement: departements[depKey] || "Inconnu",
+            idregionNavigation: {
+              idregion: 0,
+              nomregion: getRegionFromPostalCode(cp) || "Inconnue"
             }
           }
         }
       },
-      IddateNavigation: { } 
+
+      iddateNavigation: {
+        iddate: 0,
+        date1: new Date().toISOString().slice(0, 10)
+      }
     }
 
-    const response = await axios.post("https://localhost:7057/api/Utilisateurs", payload);
-    
-    
-    successMessage.value = "Inscription réussie !";
-    apiError.value = "";
-   
-
+    const response = await axios.post("https://localhost:7057/api/utilisateurs", payload);
+    // ... success logic
   } catch (error) {
    
     if (error.response && error.response.status === 400) {

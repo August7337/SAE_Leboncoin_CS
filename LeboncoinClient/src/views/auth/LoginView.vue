@@ -53,7 +53,11 @@ async function login() {
 
   
   try {
-    const response = await axios.get(`https://localhost:7057/api/Utilisateurs/email/${form.email}`)
+    await axios.get(
+      `https://localhost:7057/api/utilisateurs/email/${encodeURIComponent(form.email)}`,
+    )
+
+    
     emailExists.value = true
   } catch (error) {
     if (error.response?.status === 404) {
