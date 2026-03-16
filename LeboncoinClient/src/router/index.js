@@ -149,8 +149,8 @@ router.beforeEach((to, from, next) => {
 
   if (requiresAuth && !authState.isLoggedIn()) {
   
-    next({ name: 'login' });
+    return '/login'
   } else {
-    next();
-  }
+    return next() 
+  } 
 });
