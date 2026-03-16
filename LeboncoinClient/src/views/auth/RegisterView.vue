@@ -124,55 +124,52 @@ const register = async () => {
 
   try {
     const cp = form.adresseUtilisateur.codePostal;
-    // Remove leading zero for department lookup if needed (01 -> 1)
     const depCodeRaw = cp.substring(0, 2);
     const depKey = depCodeRaw.startsWith('0') ? depCodeRaw.substring(1) : depCodeRaw;
 
     const payload = {
       Pseudonyme: form.pseudonyme,
       Email: form.email,
-      TelephoneUtilisateur: form.telephoneUtilisateur,
+     
+      Telephoneutilisateur: form.telephoneUtilisateur, 
       Password: form.password,
       Solde: 0,
       PhoneVerified: false,
       IdentityVerified: false,
       
-      AdresseUtilisateur: {
-        NomRue: form.adresseUtilisateur.rue,
-        // We set IDs to 0 to tell the backend "This is new, please generate an ID"
-        AdresseId: 0, 
-        VilleAdresse: {
-          VilleId: 0,
-          NomVille: form.adresseUtilisateur.ville,
-          CodePostal: cp,
-          DepartementAssocie: {
-            DepartementId: 0,
-            NumeroDepartement: depCodeRaw,
-            // Access the dictionary safely
-            NomDepartement: departements[depKey] || "Inconnu",
-            RegionAssociee: {
-              RegionId: 0,
-              NomRegion: getRegionFromPostalCode(cp) || "Inconnue"
+      
+      IdadresseNavigation: {
+        Nomrue: form.adresseUtilisateur.rue,
+        IdvilleNavigation: {
+          Nomville: form.adresseUtilisateur.ville,
+          Codepostal: cp,
+          Taxedesejour: 0, 
+          IddepartementNavigation: {
+            Numerodepartement: depCodeRaw,
+            Nomdepartement: departements[depKey] || "Inconnu",
+            IdregionNavigation: {
+              Nomregion: getRegionFromPostalCode(cp) || "Inconnue"
             }
           }
         }
       },
-      
-      DateInscription: {
-        DateId: 0,
-        DateValeur: new Date().toISOString()
-      }
+      IddateNavigation: { } 
     }
 
     const response = await axios.post("https://localhost:7057/api/Utilisateurs", payload);
-    // ... success logic
+    
+    
+    successMessage.value = "Inscription réussie !";
+    apiError.value = "";
+   
+
   } catch (error) {
+   
     if (error.response && error.response.status === 400) {
-        // Handle specific "Already exists" errors
         const msg = error.response.data;
-        if (msg.includes("email")) {
+        if (typeof msg === 'string' && msg.includes("email")) {
             errors.email = msg;
-        } else if (msg.includes("téléphone")) {
+        } else if (typeof msg === 'string' && msg.includes("téléphone")) {
             errors.telephoneUtilisateur = msg;
         } else {
             apiError.value = msg;
@@ -181,8 +178,10 @@ const register = async () => {
         apiError.value = "Une erreur serveur est survenue.";
         console.error(error);
     }
+    
+  }
 }
-}
+
 
 
 
