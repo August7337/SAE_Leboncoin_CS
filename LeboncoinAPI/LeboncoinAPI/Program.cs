@@ -1,4 +1,4 @@
-﻿using LeboncoinAPI.Models.DataManager;
+using LeboncoinAPI.Models.DataManager;
 using LeboncoinAPI.Models.EntityFramework;
 using LeboncoinAPI.Models.Repository;
 using Microsoft.EntityFrameworkCore;
@@ -22,7 +22,7 @@ builder.Services.AddDbContext<LeboncoinDBContext>(options =>
     options.UseNpgsql(connectionString));
 
 builder.Services.AddScoped<IDataUtilisateurRepository<Utilisateur>, UtilisateurManager>();
-builder.Services.AddScoped<IDataRepository<Annonce>, AnnonceManager>();
+builder.Services.AddScoped<IAnnonceRepository, AnnonceManager>();
 builder.Services.AddScoped<IDataRepository<Reservation>, ReservationManager>();
 
 

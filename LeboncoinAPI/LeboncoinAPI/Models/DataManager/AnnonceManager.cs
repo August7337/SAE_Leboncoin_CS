@@ -1,12 +1,10 @@
-﻿using LeboncoinAPI.Models.EntityFramework;
+using LeboncoinAPI.Models.EntityFramework;
 using LeboncoinAPI.Models.Repository;
 using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace LeboncoinAPI.Models.DataManager;
 
-public class AnnonceManager : IDataRepository<Annonce>
+public class AnnonceManager : IAnnonceRepository
 {
     private readonly LeboncoinDBContext _dbContext;
 
@@ -17,17 +15,50 @@ public class AnnonceManager : IDataRepository<Annonce>
 
     public async Task<IEnumerable<Annonce>> GetAllAsync()
     {
-        // Utilisation de .Include() si tu souhaites charger directement les données liées 
-        // comme l'auteur ou l'adresse, utile pour éviter le N+1 query problem.
-        return await _dbContext.Annonces
-            .ToListAsync();
+        return await _dbContext.Annonces.ToListAsync();
     }
 
     public async Task<Annonce?> GetByIdAsync(int id)
     {
-        // Pour GetById avec Include, on utilise FirstOrDefaultAsync plutôt que FindAsync
         return await _dbContext.Annonces
             .FirstOrDefaultAsync(a => a.Idannonce == id);
+    }
+
+    public async Task<IEnumerable<AnnonceSearchResultDto>> GetByLocalisationAsync(string query)
+    {
+        var q = query?.Trim() ?? string.Empty;
+
+        var annonces = await _dbContext.Annonces
+            .Include(a => a.IdadresseNavigation)
+                .ThenInclude(adr => adr.IdvilleNavigation)
+                    .ThenInclude(v => v.IddepartementNavigation)
+            .Include(a => a.IdtypehebergementNavigation)
+            .Include(a => a.IddateNavigation)
+            .Where(a =>
+                string.IsNullOrEmpty(q) ||
+                (a.IdadresseNavigation.IdvilleNavigation.Nomville != null &&
+                 a.IdadresseNavigation.IdvilleNavigation.Nomville.ToLower().Contains(q.ToLower())) ||
+                (a.IdadresseNavigation.IdvilleNavigation.Codepostal != null &&
+                 a.IdadresseNavigation.IdvilleNavigation.Codepostal.ToLower().Contains(q.ToLower())) ||
+                (a.IdadresseNavigation.IdvilleNavigation.IddepartementNavigation.Nomdepartement != null &&
+                 a.IdadresseNavigation.IdvilleNavigation.IddepartementNavigation.Nomdepartement.ToLower().Contains(q.ToLower())) ||
+                (a.IdadresseNavigation.IdvilleNavigation.IddepartementNavigation.Numerodepartement != null &&
+                 a.IdadresseNavigation.IdvilleNavigation.IddepartementNavigation.Numerodepartement.ToLower().Contains(q.ToLower()))
+            )
+            .ToListAsync();
+
+        return annonces.Select(a => new AnnonceSearchResultDto
+        {
+            Idannonce = a.Idannonce,
+            Titreannonce = a.Titreannonce,
+            TypeHebergement = a.IdtypehebergementNavigation?.Nomtypehebergement,
+            Adresse = FormatAdresse(a.IdadresseNavigation),
+            Nomville = a.IdadresseNavigation?.IdvilleNavigation?.Nomville,
+            Codepostal = a.IdadresseNavigation?.IdvilleNavigation?.Codepostal,
+            DateDepot = a.IddateNavigation?.Date1,
+            Prixnuitee = a.Prixnuitee,
+            Lienphoto = a.Lienphoto,
+        });
     }
 
     public async Task AddAsync(Annonce entity)
@@ -46,5 +77,16 @@ public class AnnonceManager : IDataRepository<Annonce>
     {
         _dbContext.Annonces.Remove(entity);
         await _dbContext.SaveChangesAsync();
+    }
+
+    private static string? FormatAdresse(Adresse? adresse)
+    {
+        if (adresse == null) return null;
+
+        var parts = new List<string>();
+        if (adresse.Numerorue.HasValue) parts.Add(adresse.Numerorue.Value.ToString());
+        if (!string.IsNullOrWhiteSpace(adresse.Nomrue)) parts.Add(adresse.Nomrue);
+
+        return parts.Count > 0 ? string.Join(" ", parts) : null;
     }
 }

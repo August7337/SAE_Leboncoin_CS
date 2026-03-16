@@ -1,8 +1,6 @@
-﻿using LeboncoinAPI.Models.EntityFramework;
+using LeboncoinAPI.Models.EntityFramework;
 using LeboncoinAPI.Models.Repository;
 using Microsoft.AspNetCore.Mvc;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace LeboncoinAPI.Controllers;
 
@@ -10,26 +8,34 @@ namespace LeboncoinAPI.Controllers;
 [ApiController]
 public class AnnoncesController : ControllerBase
 {
-    private readonly IDataRepository<Annonce> _dataRepository;
+    private readonly IAnnonceRepository _annonceRepository;
 
-    public AnnoncesController(IDataRepository<Annonce> dataRepository)
+    public AnnoncesController(IAnnonceRepository annonceRepository)
     {
-        _dataRepository = dataRepository;
+        _annonceRepository = annonceRepository;
     }
 
     // GET: api/Annonces
     [HttpGet]
     public async Task<ActionResult<IEnumerable<Annonce>>> GetAnnonces()
     {
-        var annonces = await _dataRepository.GetAllAsync();
+        var annonces = await _annonceRepository.GetAllAsync();
         return Ok(annonces);
+    }
+
+    // GET: api/Annonces/search?q={query}
+    [HttpGet("search")]
+    public async Task<ActionResult<IEnumerable<AnnonceSearchResultDto>>> SearchAnnonces([FromQuery] string q = "")
+    {
+        var results = await _annonceRepository.GetByLocalisationAsync(q);
+        return Ok(results);
     }
 
     // GET: api/Annonces/5
     [HttpGet("{id}")]
     public async Task<ActionResult<Annonce>> GetAnnonce(int id)
     {
-        var annonce = await _dataRepository.GetByIdAsync(id);
+        var annonce = await _annonceRepository.GetByIdAsync(id);
 
         if (annonce == null)
         {
@@ -48,7 +54,7 @@ public class AnnoncesController : ControllerBase
             return BadRequest(ModelState);
         }
 
-        await _dataRepository.AddAsync(annonce);
+        await _annonceRepository.AddAsync(annonce);
 
         return CreatedAtAction(nameof(GetAnnonce), new { id = annonce.Idannonce }, annonce);
     }
@@ -62,14 +68,14 @@ public class AnnoncesController : ControllerBase
             return BadRequest();
         }
 
-        var annonceToUpdate = await _dataRepository.GetByIdAsync(id);
+        var annonceToUpdate = await _annonceRepository.GetByIdAsync(id);
 
         if (annonceToUpdate == null)
         {
             return NotFound();
         }
 
-        await _dataRepository.UpdateAsync(annonceToUpdate, annonce);
+        await _annonceRepository.UpdateAsync(annonceToUpdate, annonce);
 
         return NoContent();
     }
@@ -78,14 +84,14 @@ public class AnnoncesController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteAnnonce(int id)
     {
-        var annonce = await _dataRepository.GetByIdAsync(id);
+        var annonce = await _annonceRepository.GetByIdAsync(id);
 
         if (annonce == null)
         {
             return NotFound();
         }
 
-        await _dataRepository.DeleteAsync(annonce);
+        await _annonceRepository.DeleteAsync(annonce);
 
         return NoContent();
     }
