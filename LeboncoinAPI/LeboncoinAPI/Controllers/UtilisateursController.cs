@@ -1,9 +1,11 @@
-﻿using LeboncoinAPI.Models.EntityFramework;
+﻿using LeboncoinAPI.Models.DataManager;
+using LeboncoinAPI.Models.DTOs;
+using LeboncoinAPI.Models.EntityFramework;
 using LeboncoinAPI.Models.Repository;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-
 namespace LeboncoinAPI.Controllers;
 
 [Route("api/[controller]")]
@@ -12,7 +14,7 @@ public class UtilisateursController : ControllerBase
 {
     private readonly IDataUtilisateurRepository<Utilisateur> _dataRepository;
 
-    // L'injection de dépendance fournit automatiquement l'instance d'UtilisateurManager
+    
     public UtilisateursController(IDataUtilisateurRepository<Utilisateur> dataRepository)
     {
         _dataRepository = dataRepository;
@@ -27,7 +29,7 @@ public class UtilisateursController : ControllerBase
     }
 
     // GET: api/Utilisateurs/5
-    [HttpGet("{id}")]
+    [HttpGet("{id:int}")]
     public async Task<ActionResult<Utilisateur>> GetUtilisateurById(int id)
     {
         var utilisateur = await _dataRepository.GetByIdAsync(id);
@@ -44,7 +46,8 @@ public class UtilisateursController : ControllerBase
     [HttpGet("email/{email}")]
     public async Task<IActionResult> GetUtilisateurByEmail(string email)
     {
-        var utilisateur = await _dataRepository.GetByEmailAsync(email);
+        var decodedEmail = System.Net.WebUtility.UrlDecode(email);
+        var utilisateur = await _dataRepository.GetByEmailAsync(decodedEmail);
 
         if (utilisateur == null)
             return NotFound();
@@ -88,7 +91,8 @@ public class UtilisateursController : ControllerBase
     }
 
     // PUT: api/Utilisateurs/5
-    [HttpPut("{id}")]
+    [HttpPut("{id:int" +
+        "}")]
     public async Task<IActionResult> PutUtilisateur(int id, Utilisateur utilisateur)
     {
         if (id != utilisateur.Idutilisateur)
@@ -109,7 +113,7 @@ public class UtilisateursController : ControllerBase
     }
 
     // DELETE: api/Utilisateurs/5
-    [HttpDelete("{id}")]
+    [HttpDelete("{id:int}")]
     public async Task<IActionResult> DeleteUtilisateur(int id)
     {
         var utilisateur = await _dataRepository.GetByIdAsync(id);
@@ -134,7 +138,7 @@ public class UtilisateursController : ControllerBase
             bool isValid = BCrypt.Net.BCrypt.Verify(loginRequest.Password, user.Password);
             if (!isValid) return BadRequest("Mot de passe incorrect.");
 
-      
+
             return Ok(new
             {
                 idutilisateur = user.Idutilisateur,
@@ -145,7 +149,7 @@ public class UtilisateursController : ControllerBase
                 phoneVerified = user.PhoneVerified,
                 identityVerified = user.IdentityVerified,
                 profilePhoto = user.ProfilePhotoPath
-              
+
             });
         }
         catch (BCrypt.Net.SaltParseException)
@@ -156,6 +160,44 @@ public class UtilisateursController : ControllerBase
         {
             return StatusCode(500, "Une erreur interne est survenue.");
         }
+    }
+    [HttpPost("register")]
+    public async Task<IActionResult> Register([FromBody] Models.DTOs.RegisterRequest dto)
+    {
+      
+        var match = Regex.Match(dto.Rue, @"^(\d+)\s*(.*)$");
+        int num = match.Success ? int.Parse(match.Groups[1].Value) : 0;
+        string street = match.Success ? match.Groups[2].Value : dto.Rue;
+
+        string depCode = dto.CodePostal.Length >= 2 ? dto.CodePostal.Substring(0, 2) : "00";
+
+        var entity = new Utilisateur
+        {
+            Pseudonyme = dto.Pseudonyme,
+            Email = dto.Email,
+            Telephoneutilisateur = dto.Telephoneutilisateur,
+            Password = dto.Password, 
+            IdadresseNavigation = new Adresse
+            {
+                Numerorue = num,
+                Nomrue = street,
+                IdvilleNavigation = new Ville
+                {
+                    Nomville = dto.Ville,
+                    Codepostal = dto.CodePostal,
+                    IddepartementNavigation = new Departement
+                    {
+                        Numerodepartement = depCode,
+                        Nomdepartement = "Temp", 
+                        IdregionNavigation = new Region { Nomregion = "Temp" } 
+                    }
+                }
+            },
+            IddateNavigation = new Date() 
+        };
+
+        await _dataRepository.AddAsync(entity);
+        return Ok(new { message = "Inscription réussie" });
     }
 
 
