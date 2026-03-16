@@ -8,9 +8,9 @@ namespace LeboncoinAPI.Models.DataManager;
 
 public class ReservationManager : IDataRepository<Reservation>
 {
-    private readonly LeboncoinDbContext _dbContext;
+    private readonly LeboncoinDBContext _dbContext;
 
-    public ReservationManager(LeboncoinDbContext dbContext)
+    public ReservationManager(LeboncoinDBContext dbContext)
     {
         _dbContext = dbContext;
     }

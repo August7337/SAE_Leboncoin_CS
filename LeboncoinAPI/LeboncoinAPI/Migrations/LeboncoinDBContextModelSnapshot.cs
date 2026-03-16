@@ -17,440 +17,585 @@ namespace LeboncoinAPI.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasDefaultSchema("public")
                 .HasAnnotation("ProductVersion", "8.0.23")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("AnnonceAnnonce", b =>
+                {
+                    b.Property<int>("IdannonceA")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("IdannonceB")
+                        .HasColumnType("integer");
+
+                    b.HasKey("IdannonceA", "IdannonceB");
+
+                    b.HasIndex("IdannonceB");
+
+                    b.ToTable("ressembler", (string)null);
+                });
+
+            modelBuilder.Entity("AnnonceCommodite", b =>
+                {
+                    b.Property<int>("Idannonce")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Idcommodite")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Idannonce", "Idcommodite");
+
+                    b.HasIndex("Idcommodite");
+
+                    b.ToTable("AnnonceCommodite");
+                });
+
+            modelBuilder.Entity("AnnonceUtilisateur", b =>
+                {
+                    b.Property<int>("Idannonce")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Idutilisateur")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Idannonce", "Idutilisateur");
+
+                    b.HasIndex("Idutilisateur");
+
+                    b.ToTable("AnnonceUtilisateur");
+                });
+
+            modelBuilder.Entity("CommoditeRecherche", b =>
+                {
+                    b.Property<int>("Idcommodite")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Idrecherche")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Idcommodite", "Idrecherche");
+
+                    b.HasIndex("Idrecherche");
+
+                    b.ToTable("filtrer", (string)null);
+                });
+
+            modelBuilder.Entity("CompensationIncident", b =>
+                {
+                    b.Property<int>("Idcompensation")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Idincident")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Idcompensation", "Idincident");
+
+                    b.HasIndex("Idincident");
+
+                    b.ToTable("demander", (string)null);
+                });
+
             modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.Adresse", b =>
                 {
-                    b.Property<int>("AdresseId")
+                    b.Property<int>("Idadresse")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
                         .HasColumnName("idadresse");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("AdresseId"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Idadresse"));
 
-                    b.Property<string>("NomRue")
+                    b.Property<int>("Idville")
+                        .HasColumnType("integer")
+                        .HasColumnName("idville");
+
+                    b.Property<string>("Nomrue")
                         .HasMaxLength(39)
                         .HasColumnType("character varying(39)")
                         .HasColumnName("nomrue");
 
-                    b.Property<int?>("NumeroRue")
+                    b.Property<int?>("Numerorue")
                         .HasColumnType("integer")
                         .HasColumnName("numerorue");
 
-                    b.Property<int>("VilleId")
-                        .HasColumnType("integer")
-                        .HasColumnName("idville");
+                    b.HasKey("Idadresse");
 
-                    b.HasKey("AdresseId");
+                    b.HasIndex(new[] { "Idville" }, "idx_adresse_idville");
 
-                    b.HasIndex("VilleId");
-
-                    b.ToTable("adresse", "public");
+                    b.ToTable("adresse");
                 });
 
             modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.Annonce", b =>
                 {
-                    b.Property<int>("AnnonceId")
+                    b.Property<int>("Idannonce")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
                         .HasColumnName("idannonce");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("AnnonceId"));
-
-                    b.Property<int>("AdresseId")
-                        .HasColumnType("integer")
-                        .HasColumnName("idadresse");
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Idannonce"));
 
                     b.Property<int?>("Capacite")
                         .HasColumnType("integer")
                         .HasColumnName("capacite");
 
-                    b.Property<int>("DateId")
-                        .HasColumnType("integer")
-                        .HasColumnName("iddate");
-
-                    b.Property<string>("DescriptionAnnonce")
+                    b.Property<string>("Descriptionannonce")
                         .IsRequired()
                         .HasMaxLength(4000)
                         .HasColumnType("character varying(4000)")
                         .HasColumnName("descriptionannonce");
 
-                    b.Property<bool>("EstVerifie")
-                        .ValueGeneratedOnAdd()
+                    b.Property<bool>("Estverifie")
                         .HasColumnType("boolean")
-                        .HasDefaultValue(false)
                         .HasColumnName("estverifie");
 
-                    b.Property<int>("HeureArriveeId")
+                    b.Property<int>("Idadresse")
+                        .HasColumnType("integer")
+                        .HasColumnName("idadresse");
+
+                    b.Property<int>("Iddate")
+                        .HasColumnType("integer")
+                        .HasColumnName("iddate");
+
+                    b.Property<int>("Idheurearrivee")
                         .HasColumnType("integer")
                         .HasColumnName("idheurearrivee");
 
-                    b.Property<int>("HeureDepartId")
+                    b.Property<int>("Idheuredepart")
                         .HasColumnType("integer")
                         .HasColumnName("idheuredepart");
 
-                    b.Property<string>("LienPhoto")
+                    b.Property<int>("Idtypehebergement")
+                        .HasColumnType("integer")
+                        .HasColumnName("idtypehebergement");
+
+                    b.Property<int>("Idutilisateur")
+                        .HasColumnType("integer")
+                        .HasColumnName("idutilisateur");
+
+                    b.Property<string>("Lienphoto")
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)")
                         .HasColumnName("lienphoto");
 
-                    b.Property<int?>("MinimumNuitee")
+                    b.Property<int?>("Minimumnuitee")
                         .HasColumnType("integer")
                         .HasColumnName("minimumnuitee");
 
-                    b.Property<decimal?>("MontantAcompte")
-                        .HasColumnType("decimal(10,2)")
+                    b.Property<decimal?>("Montantacompte")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)")
                         .HasColumnName("montantacompte");
 
-                    b.Property<int?>("NbChambres")
+                    b.Property<int?>("Nbchambres")
                         .HasColumnType("integer")
                         .HasColumnName("nbchambres");
 
-                    b.Property<int?>("NombreBebesMax")
+                    b.Property<int?>("Nombrebebesmax")
                         .HasColumnType("integer")
                         .HasColumnName("nombrebebesmax");
 
-                    b.Property<int?>("NombreEtoilesLeBonCoin")
+                    b.Property<int?>("Nombreetoilesleboncoin")
                         .HasColumnType("integer")
                         .HasColumnName("nombreetoilesleboncoin");
 
-                    b.Property<bool>("PossibiliteAnimaux")
+                    b.Property<bool>("Possibiliteanimaux")
                         .HasColumnType("boolean")
                         .HasColumnName("possibiliteanimaux");
 
-                    b.Property<bool>("PossibiliteFumeur")
+                    b.Property<bool>("Possibilitefumeur")
                         .HasColumnType("boolean")
                         .HasColumnName("possibilitefumeur");
 
-                    b.Property<int?>("PourcentageAcompte")
+                    b.Property<int?>("Pourcentageacompte")
                         .HasColumnType("integer")
                         .HasColumnName("pourcentageacompte");
 
-                    b.Property<decimal>("PrixNuitee")
-                        .HasColumnType("decimal(10,2)")
+                    b.Property<decimal>("Prixnuitee")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)")
                         .HasColumnName("prixnuitee");
 
-                    b.Property<bool>("SmsVerifie")
-                        .ValueGeneratedOnAdd()
+                    b.Property<bool>("Smsverifie")
                         .HasColumnType("boolean")
-                        .HasDefaultValue(false)
                         .HasColumnName("smsverifie");
 
-                    b.Property<string>("TitreAnnonce")
+                    b.Property<string>("Titreannonce")
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)")
                         .HasColumnName("titreannonce");
 
-                    b.Property<int>("TypeHebergementId")
-                        .HasColumnType("integer")
-                        .HasColumnName("idtypehebergement");
+                    b.HasKey("Idannonce");
 
-                    b.Property<int>("UtilisateurId")
-                        .HasColumnType("integer")
-                        .HasColumnName("idutilisateur");
+                    b.HasIndex(new[] { "Capacite" }, "idx_annonce_capacite");
 
-                    b.HasKey("AnnonceId")
-                        .HasName("pk_annonce");
+                    b.HasIndex(new[] { "Idadresse" }, "idx_annonce_idadresse");
 
-                    b.HasIndex("AdresseId");
+                    b.HasIndex(new[] { "Iddate" }, "idx_annonce_iddate");
 
-                    b.HasIndex("DateId");
+                    b.HasIndex(new[] { "Idheurearrivee" }, "idx_annonce_idheurearrivee");
 
-                    b.HasIndex("HeureArriveeId");
+                    b.HasIndex(new[] { "Idheuredepart" }, "idx_annonce_idheuredepart");
 
-                    b.HasIndex("HeureDepartId");
+                    b.HasIndex(new[] { "Idtypehebergement" }, "idx_annonce_idtypehebergement");
 
-                    b.HasIndex("TypeHebergementId");
+                    b.HasIndex(new[] { "Idutilisateur" }, "idx_annonce_idutilisateur");
 
-                    b.HasIndex("UtilisateurId");
+                    b.HasIndex(new[] { "Nbchambres" }, "idx_annonce_nbchambres");
 
-                    b.ToTable("annonce", "public");
+                    b.HasIndex(new[] { "Prixnuitee" }, "idx_annonce_prixnuitee");
+
+                    b.ToTable("annonce");
                 });
 
-            modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.Avis", b =>
+            modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.Avi", b =>
                 {
-                    b.Property<int>("AvisId")
+                    b.Property<int>("Idavis")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
                         .HasColumnName("idavis");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("AvisId"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Idavis"));
 
-                    b.Property<int>("AnnonceId")
+                    b.Property<int>("Idannonce")
                         .HasColumnType("integer")
                         .HasColumnName("idannonce");
 
-                    b.Property<int>("DateId")
+                    b.Property<int>("Iddate")
                         .HasColumnType("integer")
                         .HasColumnName("iddate");
 
-                    b.Property<decimal>("NombreEtoiles")
-                        .HasColumnType("decimal(2,1)")
+                    b.Property<int>("Idutilisateur")
+                        .HasColumnType("integer")
+                        .HasColumnName("idutilisateur");
+
+                    b.Property<decimal>("Nombreetoiles")
+                        .HasPrecision(2, 1)
+                        .HasColumnType("numeric(2,1)")
                         .HasColumnName("nombreetoiles");
 
-                    b.Property<string>("TexteAvis")
+                    b.Property<string>("Texteavis")
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
                         .HasColumnName("texteavis");
 
-                    b.Property<int>("UtilisateurId")
+                    b.HasKey("Idavis");
+
+                    b.HasIndex("Idannonce");
+
+                    b.HasIndex("Iddate");
+
+                    b.HasIndex("Idutilisateur");
+
+                    b.ToTable("avis");
+                });
+
+            modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.Cartebancaire", b =>
+                {
+                    b.Property<int>("Idcartebancaire")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("idcartebancaire");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Idcartebancaire"));
+
+                    b.Property<DateOnly?>("Dateexpiration")
+                        .HasColumnType("date")
+                        .HasColumnName("dateexpiration");
+
+                    b.Property<int>("Idutilisateur")
                         .HasColumnType("integer")
                         .HasColumnName("idutilisateur");
 
-                    b.HasKey("AvisId");
+                    b.Property<string>("Nomtitulaire")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("nomtitulaire");
 
-                    b.HasIndex("AnnonceId");
+                    b.Property<decimal?>("Numerocartebancaire")
+                        .HasPrecision(16)
+                        .HasColumnType("numeric(16,0)")
+                        .HasColumnName("numerocartebancaire");
 
-                    b.HasIndex("UtilisateurId");
+                    b.Property<decimal?>("Numerocvv")
+                        .HasPrecision(3)
+                        .HasColumnType("numeric(3,0)")
+                        .HasColumnName("numerocvv");
 
-                    b.ToTable("avis", "public");
+                    b.Property<string>("Prenomtitulaire")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("prenomtitulaire");
+
+                    b.HasKey("Idcartebancaire");
+
+                    b.HasIndex("Idutilisateur");
+
+                    b.ToTable("cartebancaire");
                 });
 
             modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.Categorie", b =>
                 {
-                    b.Property<int>("CategorieId")
+                    b.Property<int>("Idcategorie")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
                         .HasColumnName("idcategorie");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("CategorieId"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Idcategorie"));
 
-                    b.Property<string>("NomCategorie")
-                        .HasMaxLength(24)
-                        .HasColumnType("character varying(24)")
+                    b.Property<string>("Nomcategorie")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
                         .HasColumnName("nomcategorie");
 
-                    b.HasKey("CategorieId");
+                    b.HasKey("Idcategorie");
 
-                    b.ToTable("categorie", "public");
+                    b.ToTable("categorie");
                 });
 
             modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.Commodite", b =>
                 {
-                    b.Property<int>("CommoditeId")
+                    b.Property<int>("Idcommodite")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
                         .HasColumnName("idcommodite");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("CommoditeId"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Idcommodite"));
 
-                    b.Property<int>("CategorieId")
+                    b.Property<int>("Idcategorie")
                         .HasColumnType("integer")
                         .HasColumnName("idcategorie");
 
-                    b.Property<string>("NomCommodite")
+                    b.Property<string>("Nomcommodite")
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)")
                         .HasColumnName("nomcommodite");
 
-                    b.HasKey("CommoditeId");
+                    b.HasKey("Idcommodite");
 
-                    b.HasIndex("CategorieId");
+                    b.HasIndex(new[] { "Idcategorie" }, "idx_commodite_idcategorie");
 
-                    b.ToTable("commodite", "public");
+                    b.ToTable("commodite");
                 });
 
             modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.Compensation", b =>
                 {
-                    b.Property<int>("CompensationId")
+                    b.Property<int>("Idcompensation")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
                         .HasColumnName("idcompensation");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("CompensationId"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Idcompensation"));
 
-                    b.Property<string>("NomCompensation")
+                    b.Property<string>("Nomcompensation")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
                         .HasColumnName("nomcompensation");
 
-                    b.HasKey("CompensationId");
+                    b.HasKey("Idcompensation");
 
-                    b.ToTable("compensation", "public");
+                    b.ToTable("compensation");
                 });
 
-            modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.DateReference", b =>
+            modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.Date", b =>
                 {
-                    b.Property<int>("DateId")
+                    b.Property<int>("Iddate")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
                         .HasColumnName("iddate");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("DateId"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Iddate"));
 
-                    b.Property<DateTime?>("DateValeur")
+                    b.Property<DateOnly?>("Date1")
                         .HasColumnType("date")
                         .HasColumnName("date");
 
-                    b.HasKey("DateId");
+                    b.HasKey("Iddate");
 
-                    b.ToTable("date", "public");
+                    b.HasIndex(new[] { "Date1" }, "idx_date_date");
+
+                    b.ToTable("date");
                 });
 
             modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.Departement", b =>
                 {
-                    b.Property<int>("DepartementId")
+                    b.Property<int>("Iddepartement")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
                         .HasColumnName("iddepartement");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("DepartementId"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Iddepartement"));
 
-                    b.Property<string>("NomDepartement")
+                    b.Property<int>("Idregion")
+                        .HasColumnType("integer")
+                        .HasColumnName("idregion");
+
+                    b.Property<string>("Nomdepartement")
                         .HasMaxLength(25)
                         .HasColumnType("character varying(25)")
                         .HasColumnName("nomdepartement");
 
-                    b.Property<string>("NumeroDepartement")
+                    b.Property<string>("Numerodepartement")
                         .HasMaxLength(3)
                         .HasColumnType("character varying(3)")
                         .HasColumnName("numerodepartement");
 
-                    b.Property<int>("RegionId")
-                        .HasColumnType("integer")
-                        .HasColumnName("idregion");
+                    b.HasKey("Iddepartement");
 
-                    b.HasKey("DepartementId");
+                    b.HasIndex(new[] { "Idregion" }, "idx_departement_idregion");
 
-                    b.HasIndex("RegionId");
-
-                    b.ToTable("departement", "public");
+                    b.ToTable("departement");
                 });
 
             modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.Heure", b =>
                 {
-                    b.Property<int>("HeureId")
+                    b.Property<int>("Idheure")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
                         .HasColumnName("idheure");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("HeureId"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Idheure"));
 
-                    b.Property<TimeSpan>("HeureValeur")
-                        .HasColumnType("time")
+                    b.Property<TimeOnly>("Heure1")
+                        .HasColumnType("time without time zone")
                         .HasColumnName("heure");
 
-                    b.HasKey("HeureId");
+                    b.HasKey("Idheure");
 
-                    b.ToTable("heure", "public");
+                    b.ToTable("heure");
                 });
 
             modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.Incident", b =>
                 {
-                    b.Property<int>("IncidentId")
+                    b.Property<int>("Idincident")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
                         .HasColumnName("idincident");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("IncidentId"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Idincident"));
 
-                    b.Property<int>("DateId")
-                        .HasColumnType("integer")
-                        .HasColumnName("iddate");
-
-                    b.Property<string>("DescriptionIncident")
+                    b.Property<string>("Descriptionincident")
                         .HasMaxLength(2000)
                         .HasColumnType("character varying(2000)")
                         .HasColumnName("descriptionincident");
 
-                    b.Property<bool>("EstClasse")
-                        .ValueGeneratedOnAdd()
+                    b.Property<bool?>("Estclasse")
                         .HasColumnType("boolean")
-                        .HasDefaultValue(false)
                         .HasColumnName("estclasse");
 
-                    b.Property<bool>("EstRembourse")
-                        .ValueGeneratedOnAdd()
+                    b.Property<bool?>("Estrembourse")
                         .HasColumnType("boolean")
-                        .HasDefaultValue(false)
                         .HasColumnName("estrembourse");
 
-                    b.Property<bool>("EstRemisAuContentieux")
-                        .ValueGeneratedOnAdd()
+                    b.Property<bool?>("Estremisaucontentieux")
                         .HasColumnType("boolean")
-                        .HasDefaultValue(false)
                         .HasColumnName("estremisaucontentieux");
 
-                    b.Property<int>("Etape")
-                        .ValueGeneratedOnAdd()
+                    b.Property<int?>("Etape")
                         .HasColumnType("integer")
-                        .HasDefaultValue(1)
                         .HasColumnName("etape");
 
-                    b.Property<string>("ExplicationProprietaire")
+                    b.Property<string>("Explicationproprietaire")
                         .HasMaxLength(2000)
                         .HasColumnType("character varying(2000)")
                         .HasColumnName("explicationproprietaire");
 
-                    b.Property<string>("MotifIncident")
+                    b.Property<int>("Iddate")
+                        .HasColumnType("integer")
+                        .HasColumnName("iddate");
+
+                    b.Property<int>("Idreservation")
+                        .HasColumnType("integer")
+                        .HasColumnName("idreservation");
+
+                    b.Property<int>("Idutilisateur")
+                        .HasColumnType("integer")
+                        .HasColumnName("idutilisateur");
+
+                    b.Property<string>("Lienphotoincident")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("lienphotoincident");
+
+                    b.Property<string>("Motifincident")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
                         .HasColumnName("motifincident");
 
-                    b.Property<int>("ReservationId")
+                    b.HasKey("Idincident");
+
+                    b.HasIndex("Iddate");
+
+                    b.HasIndex(new[] { "Idreservation" }, "idx_incident_idreservation");
+
+                    b.HasIndex(new[] { "Idutilisateur" }, "idx_incident_idutilisateur");
+
+                    b.ToTable("incident");
+                });
+
+            modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.Inclure", b =>
+                {
+                    b.Property<int>("Idreservation")
                         .HasColumnType("integer")
                         .HasColumnName("idreservation");
 
-                    b.Property<int>("UtilisateurId")
+                    b.Property<int>("Idtypevoyageur")
                         .HasColumnType("integer")
-                        .HasColumnName("idutilisateur");
+                        .HasColumnName("idtypevoyageur");
 
-                    b.HasKey("IncidentId")
-                        .HasName("pk_incident");
+                    b.Property<int>("Nombrevoyageur")
+                        .HasColumnType("integer")
+                        .HasColumnName("nombrevoyageur");
 
-                    b.HasIndex("DateId");
+                    b.HasKey("Idreservation", "Idtypevoyageur");
 
-                    b.HasIndex("ReservationId");
+                    b.HasIndex(new[] { "Idtypevoyageur" }, "idx_inclure_idtypevoyageur");
 
-                    b.HasIndex("UtilisateurId");
-
-                    b.ToTable("incident", "public");
+                    b.ToTable("inclure");
                 });
 
             modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.Message", b =>
                 {
-                    b.Property<int>("MessageId")
+                    b.Property<int>("Idmessage")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
                         .HasColumnName("idmessage");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("MessageId"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Idmessage"));
 
-                    b.Property<string>("ContenuMessage")
+                    b.Property<string>("Contenumessage")
                         .IsRequired()
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)")
                         .HasColumnName("contenumessage");
 
-                    b.Property<int>("DateId")
+                    b.Property<int>("Iddate")
                         .HasColumnType("integer")
                         .HasColumnName("iddate");
 
-                    b.Property<int>("UtilisateurExpediteurId")
+                    b.Property<int>("Idutilisateurexpediteur")
                         .HasColumnType("integer")
                         .HasColumnName("idutilisateurexpediteur");
 
-                    b.Property<int>("UtilisateurReceveurId")
+                    b.Property<int>("Idutilisateurreceveur")
                         .HasColumnType("integer")
                         .HasColumnName("idutilisateurreceveur");
 
-                    b.HasKey("MessageId");
+                    b.HasKey("Idmessage");
 
-                    b.HasIndex("UtilisateurExpediteurId");
+                    b.HasIndex("Iddate");
 
-                    b.HasIndex("UtilisateurReceveurId");
+                    b.HasIndex(new[] { "Idutilisateurexpediteur" }, "idx_message_idutilisateurexpediteur");
 
-                    b.ToTable("message", "public");
+                    b.HasIndex(new[] { "Idutilisateurreceveur" }, "idx_message_idutilisateurreceveur");
+
+                    b.ToTable("message");
                 });
 
             modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.Particulier", b =>
                 {
-                    b.Property<int>("UtilisateurId")
+                    b.Property<int>("Idutilisateur")
                         .HasColumnType("integer")
                         .HasColumnName("idutilisateur");
 
@@ -460,188 +605,366 @@ namespace LeboncoinAPI.Migrations
                         .HasColumnType("character varying(15)")
                         .HasColumnName("civilite");
 
-                    b.Property<int>("DateNaissanceId")
+                    b.Property<int>("Iddate")
                         .HasColumnType("integer")
                         .HasColumnName("iddate");
 
-                    b.Property<string>("NomUtilisateur")
+                    b.Property<string>("Nomutilisateur")
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)")
                         .HasColumnName("nomutilisateur");
 
-                    b.Property<string>("PrenomUtilisateur")
+                    b.Property<string>("Prenomutilisateur")
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)")
                         .HasColumnName("prenomutilisateur");
 
-                    b.HasKey("UtilisateurId");
+                    b.HasKey("Idutilisateur");
 
-                    b.ToTable("particulier", "public");
+                    b.HasIndex("Iddate");
+
+                    b.ToTable("particulier");
+                });
+
+            modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.Permission", b =>
+                {
+                    b.Property<int>("Idpermission")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("idpermission");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Idpermission"));
+
+                    b.Property<string>("Nompermission")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("nompermission");
+
+                    b.HasKey("Idpermission");
+
+                    b.ToTable("permission");
                 });
 
             modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.Professionnel", b =>
                 {
-                    b.Property<int>("UtilisateurId")
+                    b.Property<int>("Idutilisateur")
                         .HasColumnType("integer")
                         .HasColumnName("idutilisateur");
 
-                    b.Property<string>("NomSociete")
+                    b.Property<string>("Nomsociete")
                         .IsRequired()
                         .HasMaxLength(30)
                         .HasColumnType("character varying(30)")
                         .HasColumnName("nomsociete");
 
-                    b.Property<decimal>("NumSiret")
-                        .HasColumnType("numeric(14)")
+                    b.Property<decimal>("Numsiret")
+                        .HasPrecision(14)
+                        .HasColumnType("numeric(14,0)")
                         .HasColumnName("numsiret");
 
-                    b.Property<string>("SecteurActivite")
+                    b.Property<string>("Secteuractivite")
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)")
                         .HasColumnName("secteuractivite");
 
-                    b.HasKey("UtilisateurId");
+                    b.HasKey("Idutilisateur");
 
-                    b.HasIndex("NumSiret")
+                    b.HasIndex(new[] { "Numsiret" }, "professionnel_numsiret_key")
                         .IsUnique();
 
-                    b.ToTable("professionnel", "public");
+                    b.ToTable("professionnel");
+                });
+
+            modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.Recherche", b =>
+                {
+                    b.Property<int>("Idrecherche")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("idrecherche");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Idrecherche"));
+
+                    b.Property<int?>("Capaciteminimumvoyageur")
+                        .HasColumnType("integer")
+                        .HasColumnName("capaciteminimumvoyageur");
+
+                    b.Property<int?>("Iddatedebutrecherche")
+                        .HasColumnType("integer")
+                        .HasColumnName("iddatedebutrecherche");
+
+                    b.Property<int?>("Iddatefinrecherche")
+                        .HasColumnType("integer")
+                        .HasColumnName("iddatefinrecherche");
+
+                    b.Property<int?>("Iddepartement")
+                        .HasColumnType("integer")
+                        .HasColumnName("iddepartement");
+
+                    b.Property<int?>("Idregion")
+                        .HasColumnType("integer")
+                        .HasColumnName("idregion");
+
+                    b.Property<int>("Idutilisateur")
+                        .HasColumnType("integer")
+                        .HasColumnName("idutilisateur");
+
+                    b.Property<int?>("Idville")
+                        .HasColumnType("integer")
+                        .HasColumnName("idville");
+
+                    b.Property<int?>("Nombremaximumchambre")
+                        .HasColumnType("integer")
+                        .HasColumnName("nombremaximumchambre");
+
+                    b.Property<int?>("Nombreminimumchambre")
+                        .HasColumnType("integer")
+                        .HasColumnName("nombreminimumchambre");
+
+                    b.Property<bool>("Paiementenligne")
+                        .HasColumnType("boolean")
+                        .HasColumnName("paiementenligne");
+
+                    b.Property<decimal?>("Prixmaximum")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)")
+                        .HasColumnName("prixmaximum");
+
+                    b.Property<decimal?>("Prixminimum")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)")
+                        .HasColumnName("prixminimum");
+
+                    b.HasKey("Idrecherche");
+
+                    b.HasIndex("Iddatedebutrecherche");
+
+                    b.HasIndex("Iddatefinrecherche");
+
+                    b.HasIndex("Iddepartement");
+
+                    b.HasIndex("Idregion");
+
+                    b.HasIndex("Idutilisateur");
+
+                    b.HasIndex("Idville");
+
+                    b.ToTable("recherche");
                 });
 
             modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.Region", b =>
                 {
-                    b.Property<int>("RegionId")
+                    b.Property<int>("Idregion")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
                         .HasColumnName("idregion");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("RegionId"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Idregion"));
 
-                    b.Property<string>("NomRegion")
+                    b.Property<string>("Nomregion")
                         .IsRequired()
                         .HasMaxLength(30)
                         .HasColumnType("character varying(30)")
                         .HasColumnName("nomregion");
 
-                    b.HasKey("RegionId");
+                    b.HasKey("Idregion");
 
-                    b.ToTable("region", "public");
+                    b.HasIndex(new[] { "Nomregion" }, "region_nomregion_key")
+                        .IsUnique();
+
+                    b.ToTable("region");
+                });
+
+            modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.Relier", b =>
+                {
+                    b.Property<int>("Idannonce")
+                        .HasColumnType("integer")
+                        .HasColumnName("idannonce");
+
+                    b.Property<int>("Iddate")
+                        .HasColumnType("integer")
+                        .HasColumnName("iddate");
+
+                    b.Property<bool>("Estdisponible")
+                        .HasColumnType("boolean")
+                        .HasColumnName("estdisponible");
+
+                    b.HasKey("Idannonce", "Iddate");
+
+                    b.HasIndex(new[] { "Iddate" }, "idx_relier_iddate");
+
+                    b.ToTable("relier");
                 });
 
             modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.Reservation", b =>
                 {
-                    b.Property<int>("ReservationId")
+                    b.Property<int>("Idreservation")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
                         .HasColumnName("idreservation");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("ReservationId"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Idreservation"));
 
-                    b.Property<int>("AnnonceId")
+                    b.Property<int>("Idannonce")
                         .HasColumnType("integer")
                         .HasColumnName("idannonce");
 
-                    b.Property<int>("DateDebutId")
+                    b.Property<int>("Iddatedebutreservation")
                         .HasColumnType("integer")
                         .HasColumnName("iddatedebutreservation");
 
-                    b.Property<int>("DateFinId")
+                    b.Property<int>("Iddatefinreservation")
                         .HasColumnType("integer")
                         .HasColumnName("iddatefinreservation");
 
-                    b.Property<string>("NomClient")
+                    b.Property<int>("Idutilisateur")
+                        .HasColumnType("integer")
+                        .HasColumnName("idutilisateur");
+
+                    b.Property<string>("Nomclient")
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)")
                         .HasColumnName("nomclient");
 
-                    b.Property<string>("PrenomClient")
+                    b.Property<string>("Prenomclient")
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)")
                         .HasColumnName("prenomclient");
 
-                    b.Property<string>("TelephoneClient")
-                        .HasColumnType("char(10)")
+                    b.Property<string>("Telephoneclient")
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
                         .HasColumnName("telephoneclient");
 
-                    b.Property<int>("UtilisateurId")
-                        .HasColumnType("integer")
-                        .HasColumnName("idutilisateur");
+                    b.HasKey("Idreservation");
 
-                    b.HasKey("ReservationId");
+                    b.HasIndex(new[] { "Idannonce" }, "idx_reservation_idannonce");
 
-                    b.HasIndex("AnnonceId");
+                    b.HasIndex(new[] { "Iddatedebutreservation" }, "idx_reservation_iddatedebutres");
 
-                    b.HasIndex("UtilisateurId");
+                    b.HasIndex(new[] { "Iddatefinreservation" }, "idx_reservation_iddatefinres");
 
-                    b.ToTable("reservation", "public");
+                    b.HasIndex(new[] { "Idutilisateur" }, "idx_reservation_idutilisateur");
+
+                    b.ToTable("reservation");
                 });
 
-            modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.TypeHebergement", b =>
+            modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.Role", b =>
                 {
-                    b.Property<int>("TypeHebergementId")
+                    b.Property<int>("Idrole")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("idrole");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Idrole"));
+
+                    b.Property<string>("Nomrole")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("nomrole");
+
+                    b.HasKey("Idrole");
+
+                    b.ToTable("role");
+                });
+
+            modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.Transaction", b =>
+                {
+                    b.Property<int>("Idtransaction")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("idtransaction");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Idtransaction"));
+
+                    b.Property<int>("Idcartebancaire")
+                        .HasColumnType("integer")
+                        .HasColumnName("idcartebancaire");
+
+                    b.Property<int>("Iddate")
+                        .HasColumnType("integer")
+                        .HasColumnName("iddate");
+
+                    b.Property<int>("Idreservation")
+                        .HasColumnType("integer")
+                        .HasColumnName("idreservation");
+
+                    b.Property<decimal>("Montanttransaction")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)")
+                        .HasColumnName("montanttransaction");
+
+                    b.HasKey("Idtransaction");
+
+                    b.HasIndex(new[] { "Idcartebancaire" }, "idx_transaction_idcartebancaire");
+
+                    b.HasIndex(new[] { "Iddate" }, "idx_transaction_iddate");
+
+                    b.HasIndex(new[] { "Idreservation" }, "idx_transaction_idreservation");
+
+                    b.ToTable("transaction");
+                });
+
+            modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.Typehebergement", b =>
+                {
+                    b.Property<int>("Idtypehebergement")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
                         .HasColumnName("idtypehebergement");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("TypeHebergementId"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Idtypehebergement"));
 
-                    b.Property<int>("CategorieId")
+                    b.Property<int>("Idcategorie")
                         .HasColumnType("integer")
                         .HasColumnName("idcategorie");
 
-                    b.Property<string>("NomTypeHebergement")
+                    b.Property<string>("Nomtypehebergement")
                         .HasMaxLength(30)
                         .HasColumnType("character varying(30)")
                         .HasColumnName("nomtypehebergement");
 
-                    b.HasKey("TypeHebergementId");
+                    b.HasKey("Idtypehebergement");
 
-                    b.HasIndex("CategorieId");
+                    b.HasIndex(new[] { "Idcategorie" }, "idx_typehebergement_idcategorie");
 
-                    b.ToTable("typehebergement", "public");
+                    b.ToTable("typehebergement");
                 });
 
-            modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.TypeVoyageur", b =>
+            modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.Typevoyageur", b =>
                 {
-                    b.Property<int>("TypeVoyageurId")
+                    b.Property<int>("Idtypevoyageur")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
                         .HasColumnName("idtypevoyageur");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("TypeVoyageurId"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Idtypevoyageur"));
 
-                    b.Property<string>("NomTypeVoyageur")
+                    b.Property<string>("Nomtypevoyageur")
                         .IsRequired()
                         .HasMaxLength(30)
                         .HasColumnType("character varying(30)")
                         .HasColumnName("nomtypevoyageur");
 
-                    b.HasKey("TypeVoyageurId");
+                    b.HasKey("Idtypevoyageur");
 
-                    b.ToTable("typevoyageur", "public");
+                    b.HasIndex(new[] { "Nomtypevoyageur" }, "typevoyageur_nomtypevoyageur_key")
+                        .IsUnique();
+
+                    b.ToTable("typevoyageur");
                 });
 
             modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.Utilisateur", b =>
                 {
-                    b.Property<int>("UtilisateurId")
+                    b.Property<int>("Idutilisateur")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
                         .HasColumnName("idutilisateur");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("UtilisateurId"));
-
-                    b.Property<int>("AdresseId")
-                        .HasColumnType("integer")
-                        .HasColumnName("idadresse");
-
-                    b.Property<int>("DateId")
-                        .HasColumnType("integer")
-                        .HasColumnName("iddate");
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Idutilisateur"));
 
                     b.Property<string>("Email")
                         .IsRequired()
@@ -650,13 +973,23 @@ namespace LeboncoinAPI.Migrations
                         .HasColumnName("email");
 
                     b.Property<DateTime?>("EmailVerifiedAt")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("email_verified_at");
 
+                    b.Property<int>("Idadresse")
+                        .HasColumnType("integer")
+                        .HasColumnName("idadresse");
+
+                    b.Property<int?>("Idcartebancaire")
+                        .HasColumnType("integer")
+                        .HasColumnName("idcartebancaire");
+
+                    b.Property<int>("Iddate")
+                        .HasColumnType("integer")
+                        .HasColumnName("iddate");
+
                     b.Property<bool>("IdentityVerified")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
-                        .HasDefaultValue(false)
                         .HasColumnName("identity_verified");
 
                     b.Property<string>("Password")
@@ -666,9 +999,7 @@ namespace LeboncoinAPI.Migrations
                         .HasColumnName("password");
 
                     b.Property<bool>("PhoneVerified")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
-                        .HasDefaultValue(false)
                         .HasColumnName("phone_verified");
 
                     b.Property<string>("ProfilePhotoPath")
@@ -688,18 +1019,18 @@ namespace LeboncoinAPI.Migrations
                         .HasColumnName("remember_token");
 
                     b.Property<decimal>("Solde")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("decimal(10,2)")
-                        .HasDefaultValue(0m)
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)")
                         .HasColumnName("solde");
 
-                    b.Property<string>("TelephoneUtilisateur")
+                    b.Property<string>("Telephoneutilisateur")
                         .IsRequired()
-                        .HasColumnType("char(10)")
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
                         .HasColumnName("telephoneutilisateur");
 
                     b.Property<DateTime?>("TwoFactorConfirmedAt")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("two_factor_confirmed_at");
 
                     b.Property<string>("TwoFactorRecoveryCodes")
@@ -710,430 +1041,741 @@ namespace LeboncoinAPI.Migrations
                         .HasColumnType("text")
                         .HasColumnName("two_factor_secret");
 
-                    b.HasKey("UtilisateurId")
-                        .HasName("pk_utilisateur");
+                    b.HasKey("Idutilisateur");
 
-                    b.HasIndex("AdresseId");
+                    b.HasIndex(new[] { "Idadresse" }, "idx_utilisateur_idadresse");
 
-                    b.HasIndex("DateId");
+                    b.HasIndex(new[] { "Idcartebancaire" }, "idx_utilisateur_idcartebancaire");
 
-                    b.HasIndex("Email")
-                        .IsUnique()
-                        .HasDatabaseName("uq_utilisateur_email");
+                    b.HasIndex(new[] { "Iddate" }, "idx_utilisateur_iddate");
 
-                    b.HasIndex("TelephoneUtilisateur")
-                        .IsUnique()
-                        .HasDatabaseName("uq_utilisateur_telephone");
+                    b.HasIndex(new[] { "Email" }, "utilisateur_email_key")
+                        .IsUnique();
 
-                    b.ToTable("utilisateur", "public");
+                    b.HasIndex(new[] { "Telephoneutilisateur" }, "utilisateur_telephoneutilisateur_key")
+                        .IsUnique();
+
+                    b.ToTable("utilisateur");
                 });
 
             modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.Ville", b =>
                 {
-                    b.Property<int>("VilleId")
+                    b.Property<int>("Idville")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
                         .HasColumnName("idville");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("VilleId"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Idville"));
 
-                    b.Property<string>("CodePostal")
+                    b.Property<string>("Codepostal")
                         .IsRequired()
-                        .HasColumnType("char(5)")
+                        .HasMaxLength(5)
+                        .HasColumnType("character varying(5)")
                         .HasColumnName("codepostal");
 
-                    b.Property<int>("DepartementId")
+                    b.Property<int>("Iddepartement")
                         .HasColumnType("integer")
                         .HasColumnName("iddepartement");
 
-                    b.Property<string>("NomVille")
+                    b.Property<string>("Nomville")
                         .IsRequired()
                         .HasMaxLength(40)
                         .HasColumnType("character varying(40)")
                         .HasColumnName("nomville");
 
-                    b.Property<decimal>("TaxeDeSejour")
-                        .HasColumnType("decimal(10,2)")
+                    b.Property<decimal>("Taxedesejour")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)")
                         .HasColumnName("taxedesejour");
 
-                    b.HasKey("VilleId");
+                    b.HasKey("Idville");
 
-                    b.HasIndex("DepartementId");
+                    b.HasIndex(new[] { "Iddepartement" }, "idx_ville_iddepartement");
 
-                    b.ToTable("ville", "public");
+                    b.ToTable("ville");
                 });
 
-            modelBuilder.Entity("demander", b =>
+            modelBuilder.Entity("PermissionRole", b =>
                 {
-                    b.Property<int>("idincident")
+                    b.Property<int>("Idpermission")
                         .HasColumnType("integer");
 
-                    b.Property<int>("idcompensation")
+                    b.Property<int>("Idrole")
                         .HasColumnType("integer");
 
-                    b.HasKey("idincident", "idcompensation")
-                        .HasName("pk_demander");
+                    b.HasKey("Idpermission", "Idrole");
 
-                    b.HasIndex("idcompensation");
+                    b.HasIndex("Idrole");
 
-                    b.ToTable("demander", "public");
+                    b.ToTable("permettre", (string)null);
                 });
 
-            modelBuilder.Entity("favoriser", b =>
+            modelBuilder.Entity("RechercheTypehebergement", b =>
                 {
-                    b.Property<int>("idutilisateur")
+                    b.Property<int>("Idrecherche")
                         .HasColumnType("integer");
 
-                    b.Property<int>("idannonce")
+                    b.Property<int>("Idtypehebergement")
                         .HasColumnType("integer");
 
-                    b.HasKey("idutilisateur", "idannonce")
-                        .HasName("pk_favoriser");
+                    b.HasKey("Idrecherche", "Idtypehebergement");
 
-                    b.HasIndex("idannonce");
+                    b.HasIndex("Idtypehebergement");
 
-                    b.ToTable("favoriser", "public");
+                    b.ToTable("cibler", (string)null);
                 });
 
-            modelBuilder.Entity("proposer", b =>
+            modelBuilder.Entity("RoleUtilisateur", b =>
                 {
-                    b.Property<int>("idcommodite")
+                    b.Property<int>("Idrole")
                         .HasColumnType("integer");
 
-                    b.Property<int>("idannonce")
+                    b.Property<int>("Idutilisateur")
                         .HasColumnType("integer");
 
-                    b.HasKey("idcommodite", "idannonce")
-                        .HasName("pk_proposer");
+                    b.HasKey("Idrole", "Idutilisateur");
 
-                    b.HasIndex("idannonce");
+                    b.HasIndex("Idutilisateur");
 
-                    b.ToTable("proposer", "public");
+                    b.ToTable("attribuer", (string)null);
+                });
+
+            modelBuilder.Entity("AnnonceAnnonce", b =>
+                {
+                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Annonce", null)
+                        .WithMany()
+                        .HasForeignKey("IdannonceA")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Annonce", null)
+                        .WithMany()
+                        .HasForeignKey("IdannonceB")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("AnnonceCommodite", b =>
+                {
+                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Annonce", null)
+                        .WithMany()
+                        .HasForeignKey("Idannonce")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Commodite", null)
+                        .WithMany()
+                        .HasForeignKey("Idcommodite")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("AnnonceUtilisateur", b =>
+                {
+                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Annonce", null)
+                        .WithMany()
+                        .HasForeignKey("Idannonce")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Utilisateur", null)
+                        .WithMany()
+                        .HasForeignKey("Idutilisateur")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("CommoditeRecherche", b =>
+                {
+                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Commodite", null)
+                        .WithMany()
+                        .HasForeignKey("Idcommodite")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Recherche", null)
+                        .WithMany()
+                        .HasForeignKey("Idrecherche")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("CompensationIncident", b =>
+                {
+                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Compensation", null)
+                        .WithMany()
+                        .HasForeignKey("Idcompensation")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Incident", null)
+                        .WithMany()
+                        .HasForeignKey("Idincident")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.Adresse", b =>
                 {
-                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Ville", "VilleAdresse")
+                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Ville", "IdvilleNavigation")
                         .WithMany("Adresses")
-                        .HasForeignKey("VilleId")
+                        .HasForeignKey("Idville")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("VilleAdresse");
+                    b.Navigation("IdvilleNavigation");
                 });
 
             modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.Annonce", b =>
                 {
-                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Adresse", "AdresseAnnonce")
-                        .WithMany()
-                        .HasForeignKey("AdresseId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("LeboncoinAPI.Models.EntityFramework.DateReference", "DatePublication")
-                        .WithMany()
-                        .HasForeignKey("DateId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Heure", "HeureArrivee")
-                        .WithMany()
-                        .HasForeignKey("HeureArriveeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Heure", "HeureDepart")
-                        .WithMany()
-                        .HasForeignKey("HeureDepartId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("LeboncoinAPI.Models.EntityFramework.TypeHebergement", "TypeHebergementAssocie")
+                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Adresse", "IdadresseNavigation")
                         .WithMany("Annonces")
-                        .HasForeignKey("TypeHebergementId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasForeignKey("Idadresse")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Utilisateur", "UtilisateurAuteur")
-                        .WithMany("AnnoncesPubliees")
-                        .HasForeignKey("UtilisateurId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Date", "IddateNavigation")
+                        .WithMany("Annonces")
+                        .HasForeignKey("Iddate")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("AdresseAnnonce");
+                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Heure", "IdheurearriveeNavigation")
+                        .WithMany("AnnonceIdheurearriveeNavigations")
+                        .HasForeignKey("Idheurearrivee")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
-                    b.Navigation("DatePublication");
+                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Heure", "IdheuredepartNavigation")
+                        .WithMany("AnnonceIdheuredepartNavigations")
+                        .HasForeignKey("Idheuredepart")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
-                    b.Navigation("HeureArrivee");
+                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Typehebergement", "IdtypehebergementNavigation")
+                        .WithMany("Annonces")
+                        .HasForeignKey("Idtypehebergement")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
-                    b.Navigation("HeureDepart");
+                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Utilisateur", "IdutilisateurNavigation")
+                        .WithMany("Annonces")
+                        .HasForeignKey("Idutilisateur")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
-                    b.Navigation("TypeHebergementAssocie");
+                    b.Navigation("IdadresseNavigation");
 
-                    b.Navigation("UtilisateurAuteur");
+                    b.Navigation("IddateNavigation");
+
+                    b.Navigation("IdheurearriveeNavigation");
+
+                    b.Navigation("IdheuredepartNavigation");
+
+                    b.Navigation("IdtypehebergementNavigation");
+
+                    b.Navigation("IdutilisateurNavigation");
                 });
 
-            modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.Avis", b =>
+            modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.Avi", b =>
                 {
-                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Annonce", "AnnonceEvaluee")
+                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Annonce", "IdannonceNavigation")
                         .WithMany("Avis")
-                        .HasForeignKey("AnnonceId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasForeignKey("Idannonce")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Utilisateur", "AuteurAvis")
-                        .WithMany()
-                        .HasForeignKey("UtilisateurId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Date", "IddateNavigation")
+                        .WithMany("Avis")
+                        .HasForeignKey("Iddate")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("AnnonceEvaluee");
+                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Utilisateur", "IdutilisateurNavigation")
+                        .WithMany("Avis")
+                        .HasForeignKey("Idutilisateur")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
-                    b.Navigation("AuteurAvis");
+                    b.Navigation("IdannonceNavigation");
+
+                    b.Navigation("IddateNavigation");
+
+                    b.Navigation("IdutilisateurNavigation");
+                });
+
+            modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.Cartebancaire", b =>
+                {
+                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Utilisateur", "IdutilisateurNavigation")
+                        .WithMany("Cartebancaires")
+                        .HasForeignKey("Idutilisateur")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("IdutilisateurNavigation");
                 });
 
             modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.Commodite", b =>
                 {
-                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Categorie", "CategorieCommodite")
+                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Categorie", "IdcategorieNavigation")
                         .WithMany("Commodites")
-                        .HasForeignKey("CategorieId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasForeignKey("Idcategorie")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("CategorieCommodite");
+                    b.Navigation("IdcategorieNavigation");
                 });
 
             modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.Departement", b =>
                 {
-                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Region", "RegionAssociee")
+                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Region", "IdregionNavigation")
                         .WithMany("Departements")
-                        .HasForeignKey("RegionId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasForeignKey("Idregion")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("RegionAssociee");
+                    b.Navigation("IdregionNavigation");
                 });
 
             modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.Incident", b =>
                 {
-                    b.HasOne("LeboncoinAPI.Models.EntityFramework.DateReference", "DateIncident")
-                        .WithMany()
-                        .HasForeignKey("DateId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Reservation", "ReservationConcernee")
+                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Date", "IddateNavigation")
                         .WithMany("Incidents")
-                        .HasForeignKey("ReservationId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasForeignKey("Iddate")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Utilisateur", "UtilisateurDeclarant")
-                        .WithMany()
-                        .HasForeignKey("UtilisateurId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Reservation", "IdreservationNavigation")
+                        .WithMany("Incidents")
+                        .HasForeignKey("Idreservation")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("DateIncident");
+                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Utilisateur", "IdutilisateurNavigation")
+                        .WithMany("Incidents")
+                        .HasForeignKey("Idutilisateur")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
-                    b.Navigation("ReservationConcernee");
+                    b.Navigation("IddateNavigation");
 
-                    b.Navigation("UtilisateurDeclarant");
+                    b.Navigation("IdreservationNavigation");
+
+                    b.Navigation("IdutilisateurNavigation");
+                });
+
+            modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.Inclure", b =>
+                {
+                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Reservation", "IdreservationNavigation")
+                        .WithMany("Inclures")
+                        .HasForeignKey("Idreservation")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Typevoyageur", "IdtypevoyageurNavigation")
+                        .WithMany("Inclures")
+                        .HasForeignKey("Idtypevoyageur")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("IdreservationNavigation");
+
+                    b.Navigation("IdtypevoyageurNavigation");
                 });
 
             modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.Message", b =>
                 {
-                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Utilisateur", "Expediteur")
-                        .WithMany()
-                        .HasForeignKey("UtilisateurExpediteurId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Date", "IddateNavigation")
+                        .WithMany("Messages")
+                        .HasForeignKey("Iddate")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Utilisateur", "Receveur")
-                        .WithMany()
-                        .HasForeignKey("UtilisateurReceveurId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Utilisateur", "IdutilisateurexpediteurNavigation")
+                        .WithMany("MessageIdutilisateurexpediteurNavigations")
+                        .HasForeignKey("Idutilisateurexpediteur")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("Expediteur");
+                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Utilisateur", "IdutilisateurreceveurNavigation")
+                        .WithMany("MessageIdutilisateurreceveurNavigations")
+                        .HasForeignKey("Idutilisateurreceveur")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
-                    b.Navigation("Receveur");
+                    b.Navigation("IddateNavigation");
+
+                    b.Navigation("IdutilisateurexpediteurNavigation");
+
+                    b.Navigation("IdutilisateurreceveurNavigation");
                 });
 
             modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.Particulier", b =>
                 {
-                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Utilisateur", "UtilisateurBase")
-                        .WithOne("ProfilParticulier")
-                        .HasForeignKey("LeboncoinAPI.Models.EntityFramework.Particulier", "UtilisateurId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Date", "IddateNavigation")
+                        .WithMany("Particuliers")
+                        .HasForeignKey("Iddate")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("UtilisateurBase");
+                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Utilisateur", "IdutilisateurNavigation")
+                        .WithOne("Particulier")
+                        .HasForeignKey("LeboncoinAPI.Models.EntityFramework.Particulier", "Idutilisateur")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("IddateNavigation");
+
+                    b.Navigation("IdutilisateurNavigation");
                 });
 
             modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.Professionnel", b =>
                 {
-                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Utilisateur", "UtilisateurBase")
-                        .WithOne("ProfilProfessionnel")
-                        .HasForeignKey("LeboncoinAPI.Models.EntityFramework.Professionnel", "UtilisateurId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Utilisateur", "IdutilisateurNavigation")
+                        .WithOne("Professionnel")
+                        .HasForeignKey("LeboncoinAPI.Models.EntityFramework.Professionnel", "Idutilisateur")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("UtilisateurBase");
+                    b.Navigation("IdutilisateurNavigation");
+                });
+
+            modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.Recherche", b =>
+                {
+                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Date", "IddatedebutrechercheNavigation")
+                        .WithMany("RechercheIddatedebutrechercheNavigations")
+                        .HasForeignKey("Iddatedebutrecherche")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Date", "IddatefinrechercheNavigation")
+                        .WithMany("RechercheIddatefinrechercheNavigations")
+                        .HasForeignKey("Iddatefinrecherche")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Departement", "IddepartementNavigation")
+                        .WithMany("Recherches")
+                        .HasForeignKey("Iddepartement")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Region", "IdregionNavigation")
+                        .WithMany("Recherches")
+                        .HasForeignKey("Idregion")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Utilisateur", "IdutilisateurNavigation")
+                        .WithMany("Recherches")
+                        .HasForeignKey("Idutilisateur")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Ville", "IdvilleNavigation")
+                        .WithMany("Recherches")
+                        .HasForeignKey("Idville")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("IddatedebutrechercheNavigation");
+
+                    b.Navigation("IddatefinrechercheNavigation");
+
+                    b.Navigation("IddepartementNavigation");
+
+                    b.Navigation("IdregionNavigation");
+
+                    b.Navigation("IdutilisateurNavigation");
+
+                    b.Navigation("IdvilleNavigation");
+                });
+
+            modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.Relier", b =>
+                {
+                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Annonce", "IdannonceNavigation")
+                        .WithMany("Reliers")
+                        .HasForeignKey("Idannonce")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Date", "IddateNavigation")
+                        .WithMany("Reliers")
+                        .HasForeignKey("Iddate")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("IdannonceNavigation");
+
+                    b.Navigation("IddateNavigation");
                 });
 
             modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.Reservation", b =>
                 {
-                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Annonce", "AnnonceConcernee")
+                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Annonce", "IdannonceNavigation")
                         .WithMany("Reservations")
-                        .HasForeignKey("AnnonceId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasForeignKey("Idannonce")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Utilisateur", "Client")
-                        .WithMany("Reservations")
-                        .HasForeignKey("UtilisateurId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Date", "IddatedebutreservationNavigation")
+                        .WithMany("ReservationIddatedebutreservationNavigations")
+                        .HasForeignKey("Iddatedebutreservation")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("AnnonceConcernee");
+                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Date", "IddatefinreservationNavigation")
+                        .WithMany("ReservationIddatefinreservationNavigations")
+                        .HasForeignKey("Iddatefinreservation")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
-                    b.Navigation("Client");
+                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Utilisateur", "IdutilisateurNavigation")
+                        .WithMany("Reservations")
+                        .HasForeignKey("Idutilisateur")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("IdannonceNavigation");
+
+                    b.Navigation("IddatedebutreservationNavigation");
+
+                    b.Navigation("IddatefinreservationNavigation");
+
+                    b.Navigation("IdutilisateurNavigation");
                 });
 
-            modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.TypeHebergement", b =>
+            modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.Transaction", b =>
                 {
-                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Categorie", "CategorieHebergement")
-                        .WithMany("TypesHebergements")
-                        .HasForeignKey("CategorieId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Cartebancaire", "IdcartebancaireNavigation")
+                        .WithMany("Transactions")
+                        .HasForeignKey("Idcartebancaire")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("CategorieHebergement");
+                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Date", "IddateNavigation")
+                        .WithMany("Transactions")
+                        .HasForeignKey("Iddate")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Reservation", "IdreservationNavigation")
+                        .WithMany("Transactions")
+                        .HasForeignKey("Idreservation")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("IdcartebancaireNavigation");
+
+                    b.Navigation("IddateNavigation");
+
+                    b.Navigation("IdreservationNavigation");
+                });
+
+            modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.Typehebergement", b =>
+                {
+                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Categorie", "IdcategorieNavigation")
+                        .WithMany("Typehebergements")
+                        .HasForeignKey("Idcategorie")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("IdcategorieNavigation");
                 });
 
             modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.Utilisateur", b =>
                 {
-                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Adresse", "AdresseUtilisateur")
-                        .WithMany()
-                        .HasForeignKey("AdresseId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Adresse", "IdadresseNavigation")
+                        .WithMany("Utilisateurs")
+                        .HasForeignKey("Idadresse")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("LeboncoinAPI.Models.EntityFramework.DateReference", "DateInscription")
-                        .WithMany()
-                        .HasForeignKey("DateId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Cartebancaire", "IdcartebancaireNavigation")
+                        .WithMany("Utilisateurs")
+                        .HasForeignKey("Idcartebancaire")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Date", "IddateNavigation")
+                        .WithMany("Utilisateurs")
+                        .HasForeignKey("Iddate")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("AdresseUtilisateur");
+                    b.Navigation("IdadresseNavigation");
 
-                    b.Navigation("DateInscription");
+                    b.Navigation("IdcartebancaireNavigation");
+
+                    b.Navigation("IddateNavigation");
                 });
 
             modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.Ville", b =>
                 {
-                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Departement", "DepartementAssocie")
+                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Departement", "IddepartementNavigation")
                         .WithMany("Villes")
-                        .HasForeignKey("DepartementId")
+                        .HasForeignKey("Iddepartement")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("IddepartementNavigation");
+                });
+
+            modelBuilder.Entity("PermissionRole", b =>
+                {
+                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Permission", null)
+                        .WithMany()
+                        .HasForeignKey("Idpermission")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("DepartementAssocie");
+                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Role", null)
+                        .WithMany()
+                        .HasForeignKey("Idrole")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
-            modelBuilder.Entity("demander", b =>
+            modelBuilder.Entity("RechercheTypehebergement", b =>
                 {
-                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Compensation", null)
+                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Recherche", null)
                         .WithMany()
-                        .HasForeignKey("idcompensation")
+                        .HasForeignKey("Idrecherche")
                         .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("fk_demander_compensation");
+                        .IsRequired();
 
-                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Incident", null)
+                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Typehebergement", null)
                         .WithMany()
-                        .HasForeignKey("idincident")
+                        .HasForeignKey("Idtypehebergement")
                         .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("fk_demander_incident");
+                        .IsRequired();
                 });
 
-            modelBuilder.Entity("favoriser", b =>
+            modelBuilder.Entity("RoleUtilisateur", b =>
                 {
-                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Annonce", null)
+                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Role", null)
                         .WithMany()
-                        .HasForeignKey("idannonce")
+                        .HasForeignKey("Idrole")
                         .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("fk_favorise_favoriser_annonce");
+                        .IsRequired();
 
                     b.HasOne("LeboncoinAPI.Models.EntityFramework.Utilisateur", null)
                         .WithMany()
-                        .HasForeignKey("idutilisateur")
+                        .HasForeignKey("Idutilisateur")
                         .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("fk_favorise_favoriser_utilisateur");
+                        .IsRequired();
                 });
 
-            modelBuilder.Entity("proposer", b =>
+            modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.Adresse", b =>
                 {
-                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Annonce", null)
-                        .WithMany()
-                        .HasForeignKey("idannonce")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("fk_proposer_proposer2_annonce");
+                    b.Navigation("Annonces");
 
-                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Commodite", null)
-                        .WithMany()
-                        .HasForeignKey("idcommodite")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("fk_proposer_proposer_commodit");
+                    b.Navigation("Utilisateurs");
                 });
 
             modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.Annonce", b =>
                 {
                     b.Navigation("Avis");
 
+                    b.Navigation("Reliers");
+
                     b.Navigation("Reservations");
+                });
+
+            modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.Cartebancaire", b =>
+                {
+                    b.Navigation("Transactions");
+
+                    b.Navigation("Utilisateurs");
                 });
 
             modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.Categorie", b =>
                 {
                     b.Navigation("Commodites");
 
-                    b.Navigation("TypesHebergements");
+                    b.Navigation("Typehebergements");
+                });
+
+            modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.Date", b =>
+                {
+                    b.Navigation("Annonces");
+
+                    b.Navigation("Avis");
+
+                    b.Navigation("Incidents");
+
+                    b.Navigation("Messages");
+
+                    b.Navigation("Particuliers");
+
+                    b.Navigation("RechercheIddatedebutrechercheNavigations");
+
+                    b.Navigation("RechercheIddatefinrechercheNavigations");
+
+                    b.Navigation("Reliers");
+
+                    b.Navigation("ReservationIddatedebutreservationNavigations");
+
+                    b.Navigation("ReservationIddatefinreservationNavigations");
+
+                    b.Navigation("Transactions");
+
+                    b.Navigation("Utilisateurs");
                 });
 
             modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.Departement", b =>
                 {
+                    b.Navigation("Recherches");
+
                     b.Navigation("Villes");
+                });
+
+            modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.Heure", b =>
+                {
+                    b.Navigation("AnnonceIdheurearriveeNavigations");
+
+                    b.Navigation("AnnonceIdheuredepartNavigations");
                 });
 
             modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.Region", b =>
                 {
                     b.Navigation("Departements");
+
+                    b.Navigation("Recherches");
                 });
 
             modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.Reservation", b =>
                 {
                     b.Navigation("Incidents");
+
+                    b.Navigation("Inclures");
+
+                    b.Navigation("Transactions");
                 });
 
-            modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.TypeHebergement", b =>
+            modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.Typehebergement", b =>
                 {
                     b.Navigation("Annonces");
                 });
 
+            modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.Typevoyageur", b =>
+                {
+                    b.Navigation("Inclures");
+                });
+
             modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.Utilisateur", b =>
                 {
-                    b.Navigation("AnnoncesPubliees");
+                    b.Navigation("Annonces");
 
-                    b.Navigation("ProfilParticulier");
+                    b.Navigation("Avis");
 
-                    b.Navigation("ProfilProfessionnel");
+                    b.Navigation("Cartebancaires");
+
+                    b.Navigation("Incidents");
+
+                    b.Navigation("MessageIdutilisateurexpediteurNavigations");
+
+                    b.Navigation("MessageIdutilisateurreceveurNavigations");
+
+                    b.Navigation("Particulier");
+
+                    b.Navigation("Professionnel");
+
+                    b.Navigation("Recherches");
 
                     b.Navigation("Reservations");
                 });
@@ -1141,6 +1783,8 @@ namespace LeboncoinAPI.Migrations
             modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.Ville", b =>
                 {
                     b.Navigation("Adresses");
+
+                    b.Navigation("Recherches");
                 });
 #pragma warning restore 612, 618
         }

@@ -8,9 +8,9 @@ namespace LeboncoinAPI.Models.DataManager;
 
 public class AnnonceManager : IDataRepository<Annonce>
 {
-    private readonly LeboncoinDbContext _dbContext;
+    private readonly LeboncoinDBContext _dbContext;
 
-    public AnnonceManager(LeboncoinDbContext dbContext)
+    public AnnonceManager(LeboncoinDBContext dbContext)
     {
         _dbContext = dbContext;
     }
