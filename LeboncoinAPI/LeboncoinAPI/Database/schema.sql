@@ -487,3 +487,10 @@ VALUES ('20260312140947_migration-v1.0.0', '8.0.23');
 
 COMMIT;
 
+START TRANSACTION;
+
+INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+VALUES ('20260314162338_migration-v1.0.1', '8.0.23');
+
+COMMIT;
+
