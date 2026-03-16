@@ -33,24 +33,51 @@ const annonces = ref([])
 const isLoading = ref(false)
 const errorMessage = ref('')
 
+const getFirstDefined = (source, keys, fallback = null) => {
+  for (const key of keys) {
+    const value = source?.[key]
+    if (value !== undefined && value !== null) {
+      return value
+    }
+  }
+
+  return fallback
+}
+
 const mapAnnonceFromApi = (annonceApi) => ({
-  idannonce: annonceApi.annonceId,
-  titreannonce: annonceApi.titreAnnonce,
-  prixnuitee: annonceApi.prixNuitee,
-  nombreetoilesleboncoin: annonceApi.nombreEtoilesLeBonCoin,
+  idannonce: getFirstDefined(annonceApi, ['idannonce', 'annonceId']),
+  titreannonce: getFirstDefined(annonceApi, ['titreannonce', 'titreAnnonce'], 'Sans titre'),
+  prixnuitee: getFirstDefined(annonceApi, ['prixnuitee', 'prixNuitee'], 0),
+  nombreetoilesleboncoin: getFirstDefined(annonceApi, [
+    'nombreetoilesleboncoin',
+    'nombreEtoilesLeBonCoin',
+  ]),
   capacite: annonceApi.capacite,
   typehebergement: {
-    nomtypehebergement: annonceApi.typeHebergementAssocie?.nomTypeHebergement || 'Logement',
+    nomtypehebergement:
+      annonceApi.idtypehebergementNavigation?.nomtypehebergement ||
+      annonceApi.typeHebergementAssocie?.nomTypeHebergement ||
+      'Logement',
   },
-  adresse: annonceApi.adresseAnnonce
+  adresse:
+    annonceApi.idadresseNavigation || annonceApi.adresseAnnonce
     ? {
         ville: {
-          nomville: annonceApi.adresseAnnonce.ville?.nomVille,
-          codepostal: annonceApi.adresseAnnonce.ville?.codePostal,
+          nomville:
+            annonceApi.idadresseNavigation?.idvilleNavigation?.nomville ||
+            annonceApi.adresseAnnonce?.ville?.nomVille ||
+            null,
+          codepostal:
+            annonceApi.idadresseNavigation?.idvilleNavigation?.codepostal ||
+            annonceApi.adresseAnnonce?.ville?.codePostal ||
+            null,
         },
       }
     : null,
-  photos: annonceApi.lienPhoto ? [{ lienphoto: buildAssetUrl(annonceApi.lienPhoto) }] : [],
+  photos:
+    getFirstDefined(annonceApi, ['lienphoto', 'lienPhoto'])
+      ? [{ lienphoto: buildAssetUrl(getFirstDefined(annonceApi, ['lienphoto', 'lienPhoto'])) }]
+      : [],
 })
 
 const loadAnnonces = async () => {

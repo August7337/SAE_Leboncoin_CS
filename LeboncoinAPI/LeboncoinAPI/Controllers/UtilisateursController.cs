@@ -62,10 +62,29 @@ public class UtilisateursController : ControllerBase
             return BadRequest(ModelState);
         }
 
-        await _dataRepository.AddAsync(utilisateur);
+     
+        var existingEmail = await _dataRepository.GetByEmailAsync(utilisateur.Email);
+        if (existingEmail != null)
+        {
+            return BadRequest("Cet email est déjà utilisé.");
+        }
 
-        // Renvoie un code 201 Created avec l'URI de la nouvelle ressource
-        return CreatedAtAction(nameof(GetUtilisateurById), new { id = utilisateur.Idutilisateur }, utilisateur);
+       
+        var allUsers = await _dataRepository.GetAllAsync();
+        if (allUsers.Any(u => u.Telephoneutilisateur == utilisateur.Telephoneutilisateur))
+        {
+            return BadRequest("Ce numéro de téléphone est déjà utilisé.");
+        }
+
+        try
+        {
+            await _dataRepository.AddAsync(utilisateur);
+            return CreatedAtAction(nameof(GetUtilisateurById), new { id = utilisateur.Idutilisateur }, utilisateur);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, "Une erreur serveur est survenue.");
+        }
     }
 
     // PUT: api/Utilisateurs/5
@@ -103,5 +122,46 @@ public class UtilisateursController : ControllerBase
         await _dataRepository.DeleteAsync(utilisateur);
 
         return NoContent();
+    }
+    [HttpPost("login")]
+    public async Task<IActionResult> Login([FromBody] LoginRequest loginRequest)
+    {
+        var user = await _dataRepository.GetByEmailAsync(loginRequest.Email);
+        if (user == null) return NotFound("Utilisateur non trouvé.");
+
+        try
+        {
+            bool isValid = BCrypt.Net.BCrypt.Verify(loginRequest.Password, user.Password);
+            if (!isValid) return BadRequest("Mot de passe incorrect.");
+
+      
+            return Ok(new
+            {
+                idutilisateur = user.Idutilisateur,
+                pseudonyme = user.Pseudonyme,
+                email = user.Email,
+                telephone = user.Telephoneutilisateur,
+                solde = user.Solde,
+                phoneVerified = user.PhoneVerified,
+                identityVerified = user.IdentityVerified,
+                profilePhoto = user.ProfilePhotoPath
+              
+            });
+        }
+        catch (BCrypt.Net.SaltParseException)
+        {
+            return BadRequest("Format de sécurité obsolète.");
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, "Une erreur interne est survenue.");
+        }
+    }
+
+
+    public class LoginRequest
+    {
+        public string Email { get; set; }
+        public string Password { get; set; }
     }
 }
