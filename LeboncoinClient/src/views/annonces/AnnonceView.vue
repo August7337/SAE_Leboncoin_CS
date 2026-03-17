@@ -17,13 +17,36 @@
       </p>
     </div>
 
-    <div class="rounded-3xl overflow-hidden shadow-sm mb-8 bg-gray-100">
-      <img
-        v-if="annonce.lienphoto"
-        :src="annonce.lienphoto"
-        :alt="annonce.titreannonce"
-        class="w-full h-[400px] object-cover"
-      />
+    <div v-if="annonce.photos?.length" class="relative mb-8">
+      <div class="overflow-hidden rounded-3xl shadow-sm bg-gray-100">
+        <div
+          class="flex transition-transform duration-500"
+          :style="{ transform: `translateX(-${currentIndex * 100}%)` }"
+        >
+          <div
+            v-for="(photo, index) in annonce.photos"
+            :key="index"
+            class="flex-shrink-0 w-full h-[400px]"
+          >
+            <img :src="photo.lienphoto" :alt="annonce.titreannonce" class="w-full h-full object-cover" />
+          </div>
+        </div>
+      </div>
+
+      <button
+        v-if="annonce.photos.length > 1"
+        @click="prevImage"
+        class="absolute top-1/2 left-2 -translate-y-1/2 bg-white/80 rounded-full p-2 shadow hover:bg-white"
+      >
+        ‹
+      </button>
+      <button
+        v-if="annonce.photos.length > 1"
+        @click="nextImage"
+        class="absolute top-1/2 right-2 -translate-y-1/2 bg-white/80 rounded-full p-2 shadow hover:bg-white"
+      >
+        ›
+      </button>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-10">
@@ -58,6 +81,19 @@ import annoncesService from '@/services/annoncesService'
 const route = useRoute()
 const loading = ref(true)
 const annonce = ref(null)
+
+const currentIndex = ref(0)
+
+const nextImage = () => {
+  if (!annonce.value.photos) return
+  currentIndex.value = (currentIndex.value + 1) % annonce.value.photos.length
+}
+
+const prevImage = () => {
+  if (!annonce.value.photos) return
+  currentIndex.value =
+    (currentIndex.value - 1 + annonce.value.photos.length) % annonce.value.photos.length
+}
 
 onMounted(async () => {
   try {
