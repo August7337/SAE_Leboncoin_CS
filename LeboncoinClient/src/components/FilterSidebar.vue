@@ -52,10 +52,9 @@
             </div>
           </div>
         </div>
-
         <!-- Type d'hébergement -->
         <div class="py-6 border-b border-gray-200 border-t">
-          <div @click="showTypes = !showTypes" class="cursor-pointer group">
+          <div @click="showSection.types = !showSection.types" class="cursor-pointer group">
             <div class="flex items-center justify-between">
               <div class="flex items-start gap-4">
                 <div class="pt-1 text-slate-600">
@@ -72,13 +71,13 @@
               </div>
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" 
                 class="w-5 h-5 text-gray-400 transition-transform duration-200"
-                :class="showTypes ? 'rotate-180' : ''">
+                :class="showSection.types ? 'rotate-180' : ''">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
               </svg>
             </div>
           </div>
 
-          <div v-show="showTypes" class="mt-5 space-y-4 pl-10">
+          <div v-show="showSection.types" class="mt-5 space-y-4 pl-10">
             <label v-for="type in typesHebergement" :key="type.idtypehebergement" class="flex items-center cursor-pointer group">
               <input 
                 type="checkbox" 
@@ -147,6 +146,52 @@
           </div>
         </div>
 
+        <!-- Dynamic Commodity Categories -->
+        <div v-for="cat in commoditeCategories" :key="cat.id" class="py-6 border-b border-gray-200">
+          <div @click="showSection['cat' + cat.id] = !showSection['cat' + cat.id]" class="cursor-pointer group">
+            <div class="flex items-center justify-between">
+              <div class="flex items-start gap-4">
+                <div class="pt-1 text-slate-600">
+                  <!-- Dynamic Icons based on Category -->
+                  <svg v-if="cat.id === 1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 18.75a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 0 1-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 0 0-3.213-9.193 2.056 2.056 0 0 0-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 0 0-10.026 0 1.106 1.106 0 0 0-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12" />
+                  </svg>
+                  <svg v-else-if="cat.id === 2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8.288 15.038a5.25 5.25 0 017.424 0M5.106 11.856c3.807-3.808 9.98-3.808 13.788 0M1.924 8.674c5.565-5.565 14.587-5.565 20.152 0M12.53 18.22l-.53.53-.53-.53a.75.75 0 011.06 0z" />
+                  </svg>
+                  <svg v-else xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+                  </svg>
+                </div>
+                <div>
+                  <div class="text-lg font-medium text-slate-800 group-hover:underline decoration-1 underline-offset-2">{{ cat.nom }}</div>
+                  <div class="text-sm text-gray-500 mt-1">
+                    {{ (localFilters.commoditeIds || []).filter(id => cat.items.some(i => i.id === id)).length > 0 
+                        ? (localFilters.commoditeIds || []).filter(id => cat.items.some(i => i.id === id)).length + ' sélectionné(s)' 
+                        : 'Plusieurs options disponibles...' }}
+                  </div>
+                </div>
+              </div>
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" 
+                class="w-5 h-5 text-gray-400 transition-transform duration-200"
+                :class="showSection['cat' + cat.id] ? 'rotate-180' : ''">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+              </svg>
+            </div>
+          </div>
+
+          <div v-show="showSection['cat' + cat.id]" class="mt-5 space-y-4 pl-10">
+            <label v-for="item in cat.items" :key="item.id" class="flex items-center cursor-pointer group">
+              <input 
+                type="checkbox" 
+                :value="item.id" 
+                v-model="localFilters.commoditeIds"
+                class="w-5 h-5 border-gray-300 rounded text-orange-600 focus:ring-orange-500"
+              >
+              <span class="ml-4 text-lg text-slate-700 flex-1">{{ item.nom }}</span>
+            </label>
+          </div>
+        </div>
       </div>
 
       <!-- Footer -->
@@ -184,30 +229,55 @@ const props = defineProps({
       minPrice: null,
       maxPrice: null,
       nbChambres: 0,
-      typeHebergementIds: []
+      typeHebergementIds: [],
+      commoditeIds: []
     })
   }
 })
 
 const emit = defineEmits(['close', 'apply'])
 
-const showTypes = ref(false)
+const showSection = ref({
+  types: false,
+  cat1: false, // Services
+  cat2: false, // Equipements
+  cat3: false  // Exterieur
+})
+
 const typesHebergement = ref([])
+const commoditeCategories = ref([])
 const localFilters = ref({ ...props.initialFilters })
 
 watch(() => props.isOpen, (newVal) => {
   if (newVal) {
-    localFilters.value = { ...props.initialFilters, typeHebergementIds: [...props.initialFilters.typeHebergementIds] }
-    loadTypes()
+    localFilters.value = { 
+      ...props.initialFilters, 
+      typeHebergementIds: [...(props.initialFilters.typeHebergementIds || [])],
+      commoditeIds: [...(props.initialFilters.commoditeIds || [])]
+    }
+    loadData()
   }
 })
 
-const loadTypes = async () => {
+const loadData = async () => {
   try {
-    const data = await annoncesService.getTypeHebergements()
-    typesHebergement.value = data
+    const [types, commos] = await Promise.all([
+      annoncesService.getTypeHebergements(),
+      annoncesService.getCommoditesByCategories()
+    ])
+    typesHebergement.value = types
+    commoditeCategories.value = commos
   } catch (error) {
-    console.error('Erreur lors du chargement des types:', error)
+    console.error('Erreur lors du chargement des données:', error)
+  }
+}
+
+const toggleCommodite = (id) => {
+  const index = localFilters.value.commoditeIds.indexOf(id)
+  if (index === -1) {
+    localFilters.value.commoditeIds.push(id)
+  } else {
+    localFilters.value.commoditeIds.splice(index, 1)
   }
 }
 
@@ -218,7 +288,8 @@ const resetFilters = () => {
     minPrice: null,
     maxPrice: null,
     nbChambres: 0,
-    typeHebergementIds: []
+    typeHebergementIds: [],
+    commoditeIds: []
   }
 }
 
@@ -227,7 +298,7 @@ const applyFilters = () => {
   emit('close')
 }
 
-onMounted(loadTypes)
+onMounted(loadData)
 </script>
 
 <style scoped>

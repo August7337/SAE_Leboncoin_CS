@@ -12,11 +12,14 @@ export const annoncesService = {
     if (filters.nbChambres) url += `&nbChambres=${filters.nbChambres}`
     if (filters.typeHebergementIds && filters.typeHebergementIds.length > 0)
       url += `&typeHebergementIds=${filters.typeHebergementIds.join(',')}`
+    if (filters.commoditeIds && filters.commoditeIds.length > 0)
+      url += `&commoditeIds=${filters.commoditeIds.join(',')}`
     if (filters.dateArrivee) url += `&dateArrivee=${filters.dateArrivee}`
     if (filters.dateDepart) url += `&dateDepart=${filters.dateDepart}`
     return getJson(url)
   },
   getTypeHebergements: () => getJson('/api/TypeHebergements'),
+  getCommoditesByCategories: () => getJson('/api/Commodites/by-categories'),
 }
 
 export default annoncesService

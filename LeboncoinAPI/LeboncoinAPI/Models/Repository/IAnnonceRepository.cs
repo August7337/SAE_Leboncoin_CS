@@ -11,5 +11,6 @@ public interface IAnnonceRepository : IDataRepository<Annonce>
         int? nbChambres = null,
         List<int>? typeHebergementIds = null,
         DateTime? dateArrivee = null,
-        DateTime? dateDepart = null);
+        DateTime? dateDepart = null,
+        List<int>? commoditeIds = null);
 }

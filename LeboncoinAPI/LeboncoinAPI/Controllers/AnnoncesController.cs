@@ -32,7 +32,8 @@ public class AnnoncesController : ControllerBase
         [FromQuery] int? nbChambres = null,
         [FromQuery] string? typeHebergementIds = null,
         [FromQuery] DateTime? dateArrivee = null,
-        [FromQuery] DateTime? dateDepart = null)
+        [FromQuery] DateTime? dateDepart = null,
+        [FromQuery] string? commoditeIds = null)
     {
         List<int>? typeIds = null;
         if (!string.IsNullOrEmpty(typeHebergementIds))
@@ -40,7 +41,13 @@ public class AnnoncesController : ControllerBase
             typeIds = typeHebergementIds.Split(',').Select(int.Parse).ToList();
         }
 
-        var results = await _annonceRepository.GetByLocalisationAsync(q, minPrice, maxPrice, nbChambres, typeIds, dateArrivee, dateDepart);
+        List<int>? commoIds = null;
+        if (!string.IsNullOrEmpty(commoditeIds))
+        {
+            commoIds = commoditeIds.Split(',').Select(int.Parse).ToList();
+        }
+
+        var results = await _annonceRepository.GetByLocalisationAsync(q, minPrice, maxPrice, nbChambres, typeIds, dateArrivee, dateDepart, commoIds);
         return Ok(results);
     }
 

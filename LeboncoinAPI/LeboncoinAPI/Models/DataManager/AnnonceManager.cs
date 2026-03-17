@@ -31,7 +31,8 @@ public class AnnonceManager : IAnnonceRepository
         int? nbChambres = null,
         List<int>? typeHebergementIds = null,
         DateTime? dateArrivee = null,
-        DateTime? dateDepart = null)
+        DateTime? dateDepart = null,
+        List<int>? commoditeIds = null)
     {
         var q = query?.Trim() ?? string.Empty;
 
@@ -41,6 +42,7 @@ public class AnnonceManager : IAnnonceRepository
                     .ThenInclude(v => v.IddepartementNavigation)
             .Include(a => a.IdtypehebergementNavigation)
             .Include(a => a.IddateNavigation)
+            .Include(a => a.Idcommodites)
             .AsQueryable();
 
         // Filtrage par localisation
@@ -81,6 +83,15 @@ public class AnnonceManager : IAnnonceRepository
         if (typeHebergementIds != null && typeHebergementIds.Any())
         {
             queryable = queryable.Where(a => typeHebergementIds.Contains(a.Idtypehebergement));
+        }
+
+        // Filtre Commodités (Doit avoir TOUTES les commodités sélectionnées)
+        if (commoditeIds != null && commoditeIds.Any())
+        {
+            foreach (var commoditeId in commoditeIds)
+            {
+                queryable = queryable.Where(a => a.Idcommodites.Any(c => c.Idcommodite == commoditeId));
+            }
         }
 
         // Filtrage par dates (basique : exclure les annonces ayant une réservation qui chevauche)

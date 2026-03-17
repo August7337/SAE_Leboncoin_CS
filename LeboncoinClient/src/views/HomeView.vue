@@ -125,7 +125,8 @@ const filters = ref({
   minPrice: null,
   maxPrice: null,
   nbChambres: 0,
-  typeHebergementIds: []
+  typeHebergementIds: [],
+  commoditeIds: []
 })
 
 let searchTimeout = null
