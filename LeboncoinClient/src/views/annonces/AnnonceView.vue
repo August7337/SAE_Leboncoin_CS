@@ -81,7 +81,6 @@ import axios from 'axios'
 const route = useRoute()
 const annonce = ref(null)
 const loading = ref(true)
-const annonce = ref(null)
 
 const currentIndex = ref(0)
 
