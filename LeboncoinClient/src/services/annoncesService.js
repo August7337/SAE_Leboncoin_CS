@@ -5,10 +5,18 @@ const BASE_PATH = '/api/annonces'
 export const annoncesService = {
   getAll: () => getJson(BASE_PATH),
   getById: (id) => getJson(`${BASE_PATH}/${id}`),
-  searchByLocation: (query) => getJson(`${BASE_PATH}/search?q=${encodeURIComponent(query ?? '')}`),
-  create: (annonce) => postJson(BASE_PATH, annonce),
-  update: (id, annonce) => putJson(`${BASE_PATH}/${id}`, annonce),
-  remove: (id) => deleteRequest(`${BASE_PATH}/${id}`),
+  searchByLocation: (query, filters = {}) => {
+    let url = `${BASE_PATH}/search?q=${encodeURIComponent(query ?? '')}`
+    if (filters.minPrice) url += `&minPrice=${filters.minPrice}`
+    if (filters.maxPrice) url += `&maxPrice=${filters.maxPrice}`
+    if (filters.nbChambres) url += `&nbChambres=${filters.nbChambres}`
+    if (filters.typeHebergementIds && filters.typeHebergementIds.length > 0)
+      url += `&typeHebergementIds=${filters.typeHebergementIds.join(',')}`
+    if (filters.dateArrivee) url += `&dateArrivee=${filters.dateArrivee}`
+    if (filters.dateDepart) url += `&dateDepart=${filters.dateDepart}`
+    return getJson(url)
+  },
+  getTypeHebergements: () => getJson('/api/TypeHebergements'),
 }
 
 export default annoncesService

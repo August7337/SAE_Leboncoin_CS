@@ -42,22 +42,22 @@
           </div>
 
           <!-- Boutons Filtres -->
-          <button class="filter-btn">
+          <button @click="openSidebar" class="filter-btn">
             <span>Dates</span>
             <svg class="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M8.25 4.5l7.5 7.5-7.5 7.5"/></svg>
           </button>
 
-          <button class="filter-btn">
+          <button @click="openSidebar" class="filter-btn">
             <span>Prix</span>
             <svg class="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M8.25 4.5l7.5 7.5-7.5 7.5"/></svg>
           </button>
 
-          <button class="filter-btn">
+          <button @click="openSidebar" class="filter-btn">
             <span>Chambres</span>
             <svg class="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M8.25 4.5l7.5 7.5-7.5 7.5"/></svg>
           </button>
 
-          <button class="filter-btn bg-slate-50 border-slate-200">
+          <button @click="openSidebar" class="filter-btn bg-slate-50 border-slate-200">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
                 stroke="currentColor" class="w-5 h-5 text-slate-600">
                 <path stroke-linecap="round" stroke-linejoin="round"
@@ -92,16 +92,25 @@
       
       <div v-else class="bg-white rounded-3xl p-12 text-center shadow-sm border border-gray-100">
         <h2 class="text-xl font-bold text-gray-900">Aucun résultat trouvé</h2>
-        <p class="text-gray-500 mt-2">Essayez de modifier votre recherche.</p>
+        <p class="text-gray-500 mt-2">Essayez de modifier votre recherche ou vos filtres.</p>
       </div>
 
     </div>
+
+    <!-- Sidebar de Filtres -->
+    <FilterSidebar 
+      :isOpen="isSidebarOpen" 
+      :initialFilters="filters"
+      @close="isSidebarOpen = false"
+      @apply="applyFilters"
+    />
   </div>
 </template>
 
 <script setup>
 import { onMounted, ref } from 'vue'
 import AnnonceList from '../components/AnnonceList.vue'
+import FilterSidebar from '../components/FilterSidebar.vue'
 import { buildAssetUrl } from '../services/api'
 import annoncesService from '../services/annoncesService'
 
@@ -109,10 +118,19 @@ const annonces = ref([])
 const isLoading = ref(false)
 const errorMessage = ref('')
 const searchQuery = ref('')
+const isSidebarOpen = ref(false)
+const filters = ref({
+  dateArrivee: '',
+  dateDepart: '',
+  minPrice: null,
+  maxPrice: null,
+  nbChambres: 0,
+  typeHebergementIds: []
+})
+
 let searchTimeout = null
 
 const mapAnnonceFromApi = (annonceApi) => {
-  // Mapping flexible selon si c'est searchResultDto ou entité Annonce
   return {
     idannonce: annonceApi.idannonce || annonceApi.annonceId,
     titreannonce: annonceApi.titreannonce || annonceApi.titreAnnonce || 'Sans titre',
@@ -141,8 +159,7 @@ const performSearch = async () => {
   errorMessage.value = ''
 
   try {
-    // Utiliser searchByLocation même pour tout afficher (q vide)
-    const data = await annoncesService.searchByLocation(searchQuery.value)
+    const data = await annoncesService.searchByLocation(searchQuery.value, filters.value)
     annonces.value = Array.isArray(data) ? data.map(mapAnnonceFromApi) : []
   } catch (error) {
     console.error(error)
@@ -159,8 +176,46 @@ const onSearchInput = () => {
   }, 400)
 }
 
+const openSidebar = () => {
+  isSidebarOpen.value = true
+}
+
+const applyFilters = (newFilters) => {
+  filters.value = newFilters
+  performSearch()
+}
+
 onMounted(performSearch)
 </script>
+
+<style scoped>
+.filter-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1.25rem;
+  background-color: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 15px;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  transition: background-color 0.2s;
+  font-size: 0.875rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.filter-btn:hover {
+  background-color: #f8fafc;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+</style>
 
 <style scoped>
 .filter-btn {
