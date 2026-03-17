@@ -1,35 +1,68 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, onMounted } from 'vue'
 import AnnonceList from '../../components/AnnonceList.vue'
-
-const allAnnonces = ref([
-  {
-    idannonce: 1,
-    titreannonce: 'Villa Nice',
-    prixnuitee: 150,
-    adresse: { ville: { nomville: 'Nice' } },
-    photos: [{ lienphoto: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800' }],
-    nombreetoilesleboncoin: 4.5,
-  },
-  {
-    idannonce: 2,
-    titreannonce: 'Appart Paris',
-    prixnuitee: 90,
-    adresse: { ville: { nomville: 'Paris' } },
-    photos: [{ lienphoto: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800' }],
-    nombreetoilesleboncoin: 4.0,
-  },
-])
+import annoncesService from '../../services/annoncesService'
+import { buildAssetUrl } from '../../services/api'
 
 const searchQuery = ref('')
+const filteredAnnonces = ref([])
+const isLoading = ref(false)
+const errorMessage = ref('')
+let searchTimeout = null
 
-const filteredAnnonces = computed(() => {
-  if (!searchQuery.value) return allAnnonces.value
-  return allAnnonces.value.filter(
-    (a) =>
-      a.adresse.ville.nomville.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-      a.titreannonce.toLowerCase().includes(searchQuery.value.toLowerCase()),
-  )
+const mapAnnonceFromApi = (annonceApi) => {
+  return {
+    idannonce: annonceApi.idannonce,
+    titreannonce: annonceApi.titreannonce || 'Sans titre',
+    prixnuitee: annonceApi.prixnuitee || 0,
+    capacite: annonceApi.capacite,
+    typehebergement: {
+      nomtypehebergement: annonceApi.typeHebergement || 'Logement',
+    },
+    adresse: annonceApi.nomville ? {
+      ville: {
+        nomville: annonceApi.nomville,
+        codepostal: annonceApi.codepostal,
+      },
+      adresseComplete: annonceApi.adresse
+    } : null,
+    photos: annonceApi.lienphoto
+      ? [{ lienphoto: buildAssetUrl(annonceApi.lienphoto) }]
+      : [],
+    dateDepot: annonceApi.dateDepot ? new Date(annonceApi.dateDepot).toLocaleDateString('fr-FR') : null,
+    nombreetoilesleboncoin: annonceApi.nombreetoilesleboncoin
+  }
+}
+
+const performSearch = async () => {
+  isLoading.value = true
+  errorMessage.value = ''
+
+  try {
+    const data = await annoncesService.searchByLocation(searchQuery.value)
+    filteredAnnonces.value = Array.isArray(data) ? data.map(mapAnnonceFromApi) : []
+  } catch (error) {
+    console.error(error)
+    errorMessage.value = 'Impossible de charger les annonces.'
+  } finally {
+    isLoading.value = false
+  }
+}
+
+const onSearchInput = () => {
+  if (searchTimeout) clearTimeout(searchTimeout)
+  searchTimeout = setTimeout(() => {
+    performSearch()
+  }, 400)
+}
+
+const clearSearch = () => {
+  searchQuery.value = ''
+  performSearch()
+}
+
+onMounted(() => {
+  performSearch()
 })
 </script>
 
@@ -40,6 +73,7 @@ const filteredAnnonces = computed(() => {
         <div class="relative flex items-center group">
           <input
             v-model="searchQuery"
+            @input="onSearchInput"
             type="text"
             placeholder="Où cherchez-vous ? (ex: Nice, Paris...)"
             class="w-full pl-14 pr-4 py-4 bg-gray-100 rounded-2xl border-2 border-transparent focus:border-[#ea580c] focus:bg-white focus:ring-0 outline-none transition-all text-lg"
@@ -67,7 +101,7 @@ const filteredAnnonces = computed(() => {
           <h1 class="text-2xl font-black text-gray-900">
             {{ searchQuery ? `Résultats pour "${searchQuery}"` : 'Toutes les annonces' }}
           </h1>
-          <p class="text-gray-500 font-medium">
+          <p class="text-gray-500 font-medium" v-if="!isLoading && !errorMessage">
             {{ filteredAnnonces.length }} logements disponibles
           </p>
         </div>
@@ -86,7 +120,15 @@ const filteredAnnonces = computed(() => {
         </div>
       </div>
 
-      <div v-if="filteredAnnonces.length > 0">
+      <div v-if="isLoading" class="text-center py-12 text-gray-500 italic">
+        Recherche en cours...
+      </div>
+      
+      <div v-else-if="errorMessage" class="text-center py-12 text-red-600 font-medium">
+        {{ errorMessage }}
+      </div>
+
+      <div v-else-if="filteredAnnonces.length > 0">
         <AnnonceList :annonces="filteredAnnonces" />
       </div>
 
@@ -115,7 +157,7 @@ const filteredAnnonces = computed(() => {
         <p class="text-gray-500 mt-2">
           Essayez de modifier votre recherche ou de supprimer les filtres.
         </p>
-        <button @click="searchQuery = ''" class="mt-6 text-[#ea580c] font-black hover:underline">
+        <button @click="clearSearch" class="mt-6 text-[#ea580c] font-black hover:underline">
           Voir toutes les annonces
         </button>
       </div>

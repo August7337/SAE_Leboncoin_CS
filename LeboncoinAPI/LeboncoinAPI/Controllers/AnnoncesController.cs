@@ -1,8 +1,6 @@
-﻿using LeboncoinAPI.Models.EntityFramework;
+using LeboncoinAPI.Models.EntityFramework;
 using LeboncoinAPI.Models.Repository;
 using Microsoft.AspNetCore.Mvc;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace LeboncoinAPI.Controllers;
 
@@ -10,26 +8,47 @@ namespace LeboncoinAPI.Controllers;
 [ApiController]
 public class AnnoncesController : ControllerBase
 {
-    private readonly IDataRepository<Annonce> _dataRepository;
+    private readonly IAnnonceRepository _annonceRepository;
 
-    public AnnoncesController(IDataRepository<Annonce> dataRepository)
+    public AnnoncesController(IAnnonceRepository annonceRepository)
     {
-        _dataRepository = dataRepository;
+        _annonceRepository = annonceRepository;
     }
 
     // GET: api/Annonces
     [HttpGet]
     public async Task<ActionResult<IEnumerable<Annonce>>> GetAnnonces()
     {
-        var annonces = await _dataRepository.GetAllAsync();
+        var annonces = await _annonceRepository.GetAllAsync();
         return Ok(annonces);
+    }
+
+    // GET: api/Annonces/search?q={query}&minPrice=10&maxPrice=500&nbChambres=2&typeHebergementIds=1,2&dateArrivee=2024-01-01&dateDepart=2024-01-10
+    [HttpGet("search")]
+    public async Task<ActionResult<IEnumerable<AnnonceSearchResultDto>>> SearchAnnonces(
+        [FromQuery] string q = "",
+        [FromQuery] decimal? minPrice = null,
+        [FromQuery] decimal? maxPrice = null,
+        [FromQuery] int? nbChambres = null,
+        [FromQuery] string? typeHebergementIds = null,
+        [FromQuery] DateTime? dateArrivee = null,
+        [FromQuery] DateTime? dateDepart = null)
+    {
+        List<int>? typeIds = null;
+        if (!string.IsNullOrEmpty(typeHebergementIds))
+        {
+            typeIds = typeHebergementIds.Split(',').Select(int.Parse).ToList();
+        }
+
+        var results = await _annonceRepository.GetByLocalisationAsync(q, minPrice, maxPrice, nbChambres, typeIds, dateArrivee, dateDepart);
+        return Ok(results);
     }
 
     // GET: api/Annonces/5
     [HttpGet("{id}")]
     public async Task<ActionResult<Annonce>> GetAnnonce(int id)
     {
-        var annonce = await _dataRepository.GetByIdAsync(id);
+        var annonce = await _annonceRepository.GetByIdAsync(id);
 
         if (annonce == null)
         {
@@ -48,7 +67,7 @@ public class AnnoncesController : ControllerBase
             return BadRequest(ModelState);
         }
 
-        await _dataRepository.AddAsync(annonce);
+        await _annonceRepository.AddAsync(annonce);
 
         return CreatedAtAction(nameof(GetAnnonce), new { id = annonce.Idannonce }, annonce);
     }
@@ -62,14 +81,14 @@ public class AnnoncesController : ControllerBase
             return BadRequest();
         }
 
-        var annonceToUpdate = await _dataRepository.GetByIdAsync(id);
+        var annonceToUpdate = await _annonceRepository.GetByIdAsync(id);
 
         if (annonceToUpdate == null)
         {
             return NotFound();
         }
 
-        await _dataRepository.UpdateAsync(annonceToUpdate, annonce);
+        await _annonceRepository.UpdateAsync(annonceToUpdate, annonce);
 
         return NoContent();
     }
@@ -78,14 +97,14 @@ public class AnnoncesController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteAnnonce(int id)
     {
-        var annonce = await _dataRepository.GetByIdAsync(id);
+        var annonce = await _annonceRepository.GetByIdAsync(id);
 
         if (annonce == null)
         {
             return NotFound();
         }
 
-        await _dataRepository.DeleteAsync(annonce);
+        await _annonceRepository.DeleteAsync(annonce);
 
         return NoContent();
     }

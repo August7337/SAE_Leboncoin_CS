@@ -1,5 +1,19 @@
 <template>
   <div class="register-container">
+
+    <div v-if="loginSuccess" class="fixed inset-0 flex items-center justify-center bg-white/95 z-50 transition-opacity">
+      <div class="text-center">
+        <div class="w-20 h-20 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
+           <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-[#ea580c]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
+        <h2 class="text-2xl font-bold text-gray-900">Bienvenue, {{ authState.user?.pseudonyme }} !</h2>
+        <p class="text-gray-500 mt-2">Votre compte a été créé avec succès.</p>
+      </div>
+    </div>
+
+
     <h1>Créer un compte</h1>
 
     <form @submit.prevent="register">
@@ -9,11 +23,16 @@
         <span v-if="errors.pseudonyme">{{ errors.pseudonyme }}</span>
       </div>
 
-      <div class="field">
-        <label>Email</label>
-        <input v-model="form.email" type="email" />
-        <span v-if="errors.email">{{ errors.email }}</span>
-      </div>
+<div class="field">
+  <label>Email</label>
+  <input 
+    v-model="form.email" 
+    type="text" 
+    :class="{ 'error': errors.email }"
+    placeholder="exemple@mail.com"
+  />
+  <span v-if="errors.email" class="error-text">{{ errors.email }}</span>
+</div>
 
       <div class="field">
         <label>Téléphone</label>
@@ -29,17 +48,35 @@
         <span v-if="errors.adresseUtilisateur">{{ errors.adresseUtilisateur }}</span>
       </div>
 
-      <div class="field">
-        <label>Mot de passe</label>
-        <input v-model="form.password" type="password" />
-        <span v-if="errors.password">{{ errors.password }}</span>
-      </div>
+<div class="field">
+  <label>Mot de passe</label>
+  <div class="password-wrapper">
+    <input 
+      v-model="form.password" 
+      :type="showPassword ? 'text' : 'password'" 
+      :class="{ 'error': errors.password }"
+    />
+    <button type="button" class="toggle-btn" @click="showPassword = !showPassword">
+      {{ showPassword ? 'Masquer' : 'Afficher' }}
+    </button>
+  </div>
+  <span v-if="errors.password">{{ errors.password }}</span>
+</div>
 
-      <div class="field">
-        <label>Confirmer le mot de passe</label>
-        <input v-model="form.passwordConfirm" type="password" />
-        <span v-if="errors.passwordConfirm">{{ errors.passwordConfirm }}</span>
-      </div>
+<div class="field">
+  <label>Confirmer le mot de passe</label>
+  <div class="password-wrapper">
+    <input 
+      v-model="form.passwordConfirm" 
+      :type="showPasswordConfirm ? 'text' : 'password'" 
+      :class="{ 'error': errors.passwordConfirm }"
+    />
+    <button type="button" class="toggle-btn" @click="showPasswordConfirm = !showPasswordConfirm">
+      {{ showPasswordConfirm ? 'Masquer' : 'Afficher' }}
+    </button>
+  </div>
+  <span v-if="errors.passwordConfirm">{{ errors.passwordConfirm }}</span>
+</div>
 
       <button type="submit">S'inscrire</button>
     </form>
@@ -51,11 +88,16 @@
 
 <script setup>
 import { reactive, ref, onMounted } from "vue"
-import { useRoute } from "vue-router"
+import { useRoute,useRouter } from "vue-router"
 import axios from "axios"
+import { authState } from '@/auth.js'
 
+
+const showPassword = ref(false)
+const showPasswordConfirm = ref(false)
+const loginSuccess = ref(false)
 const route = useRoute()
-
+const router = useRouter()
 const form = reactive({
   pseudonyme: "",
   email: "",
@@ -88,11 +130,24 @@ const validate = () => {
   let valid = true
 
   if (!form.pseudonyme) { errors.pseudonyme = "Le pseudonyme est requis"; valid = false; }
-  if (!form.email) { errors.email = "Email requis"; valid = false; }
+  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!form.email) { 
+    errors.email = "Email requis"; 
+    valid = false; 
+  } else if (!emailPattern.test(form.email)) {
+    errors.email = "Format email invalide (ex: nom@domaine.com)";
+    valid = false;
+  }
   
-  if (!form.telephoneUtilisateur || !/^0\d{9}$/.test(form.telephoneUtilisateur)) {
-    errors.telephoneUtilisateur = "Le numéro de téléphone doit contenir 10 chiffres et commencer par 0"
-    valid = false
+const rawPhone = form.telephoneUtilisateur.replace(/[\s.-]/g, ""); 
+  const phonePattern = /^0[1-9]\d{8}$/;
+  
+  if (!form.telephoneUtilisateur) {
+    errors.telephoneUtilisateur = "Téléphone requis";
+    valid = false;
+  } else if (!phonePattern.test(rawPhone)) {
+    errors.telephoneUtilisateur = "Format invalide (ex: 0612345678)";
+    valid = false;
   }
 
   if (!form.adresseUtilisateur.rue || !form.adresseUtilisateur.ville || !form.adresseUtilisateur.codePostal) {
@@ -122,53 +177,33 @@ const validate = () => {
 const register = async () => {
   if (!validate()) return
 
-  try {
+  try { 
+    const cleanPhone = form.telephoneUtilisateur.replace(/[\s.-]/g, "");
     const cp = form.adresseUtilisateur.codePostal;
     const depCodeRaw = cp.substring(0, 2);
     const depKey = depCodeRaw.startsWith('0') ? depCodeRaw.substring(1) : depCodeRaw;
 
     const payload = {
-      idadresse: 0,
-      iddate: 0,
       pseudonyme: form.pseudonyme,
       email: form.email,
-      telephoneutilisateur: form.telephoneUtilisateur,
+      telephoneutilisateur: cleanPhone,
       password: form.password,
-      solde: 0,
-      phoneVerified: false,
-      identityVerified: false,
-
-      idadresseNavigation: {
-        idadresse: 0,
-        idville: 0,
-        nomrue: form.adresseUtilisateur.rue,
-        idvilleNavigation: {
-          idville: 0,
-          iddepartement: 0,
-          codepostal: cp,
-          nomville: form.adresseUtilisateur.ville,
-          taxedesejour: 0,
-          iddepartementNavigation: {
-            iddepartement: 0,
-            idregion: 0,
-            numerodepartement: depCodeRaw,
-            nomdepartement: departements[depKey] || "Inconnu",
-            idregionNavigation: {
-              idregion: 0,
-              nomregion: getRegionFromPostalCode(cp) || "Inconnue"
-            }
-          }
-        }
-      },
-
-      iddateNavigation: {
-        iddate: 0,
-        date1: new Date().toISOString().slice(0, 10)
-      }
+      rue: form.adresseUtilisateur.rue,
+      ville: form.adresseUtilisateur.ville,
+      codePostal: form.adresseUtilisateur.codePostal
     }
 
-    const response = await axios.post("https://localhost:7057/api/utilisateurs", payload);
-    // ... success logic
+    const response = await axios.post("https://localhost:7057/api/Utilisateurs/register", payload);
+    authState.setUser(response.data);
+    loginSuccess.value = true;
+    successMessage.value = "Inscription réussie !";
+    apiError.value = "";
+    loginSuccess.value = true;
+      
+      setTimeout(() => {
+        router.push({ name: 'home' });
+      }, 800);
+
   } catch (error) {
    
     if (error.response && error.response.status === 400) {
@@ -192,152 +227,82 @@ const register = async () => {
 
 
 </script>
-<script>
 
-export function getDepartementFromPostalCode(codePostal) {
-  if (!codePostal) return null;
-  
-
-  if (codePostal.startsWith('20')) {
-
-    return codePostal.startsWith('201') || codePostal.startsWith('200') ? '2A' : '2B';
-  }
-  
-  
-  return codePostal.substring(0, 2);
-}
-
-
-export function getRegionFromPostalCode(codePostal) {
-  const dep = getDepartementFromPostalCode(codePostal);
-  if (!dep) return null;
-
-  for (const [region, deps] of Object.entries(regions)) {
-  
-    if (deps.includes(dep) || deps.includes(Number(dep))) {
-      return region;
-    }
-  }
-
-  return "Région Inconnue"; 
-}
-
-
-export const departements = {
-  1: "Ain",
-  2: "Aisne",
-  3: "Allier",
-  4: "Alpes-de-Haute-Provence",
-  5: "Hautes-Alpes",
-  6: "Alpes-Maritimes",
-  7: "Ardèche",
-  8: "Ardennes",
-  9: "Ariège",
-  10: "Aube",
-  11: "Aude",
-  12: "Aveyron",
-  13: "Bouches-du-Rhône",
-  14: "Calvados",
-  15: "Cantal",
-  16: "Charente",
-  17: "Charente-Maritime",
-  18: "Cher",
-  19: "Corrèze",
-  21: "Côte-d'Or",
-  22: "Côtes-d'Armor",
-  23: "Creuse",
-  24: "Dordogne",
-  25: "Doubs",
-  26: "Drôme",
-  27: "Eure",
-  28: "Eure-et-Loir",
-  29: "Finistère",
-  30: "Gard",
-  31: "Haute-Garonne",
-  32: "Gers",
-  33: "Gironde",
-  34: "Hérault",
-  35: "Ille-et-Vilaine",
-  36: "Indre",
-  37: "Indre-et-Loire",
-  38: "Isère",
-  39: "Jura",
-  40: "Landes",
-  41: "Loir-et-Cher",
-  42: "Loire",
-  43: "Haute-Loire",
-  44: "Loire-Atlantique",
-  45: "Loiret",
-  46: "Lot",
-  47: "Lot-et-Garonne",
-  48: "Lozère",
-  49: "Maine-et-Loire",
-  50: "Manche",
-  51: "Marne",
-  52: "Haute-Marne",
-  53: "Mayenne",
-  54: "Meurthe-et-Moselle",
-  55: "Meuse",
-  56: "Morbihan",
-  57: "Moselle",
-  58: "Nièvre",
-  59: "Nord",
-  60: "Oise",
-  61: "Orne",
-  62: "Pas-de-Calais",
-  63: "Puy-de-Dôme",
-  64: "Pyrénées-Atlantiques",
-  65: "Hautes-Pyrénées",
-  66: "Pyrénées-Orientales",
-  67: "Bas-Rhin",
-  68: "Haut-Rhin",
-  69: "Rhône",
-  70: "Haute-Saône",
-  71: "Saône-et-Loire",
-  72: "Sarthe",
-  73: "Savoie",
-  74: "Haute-Savoie",
-  75: "Paris",
-  76: "Seine-Maritime",
-  77: "Seine-et-Marne",
-  78: "Yvelines",
-  79: "Deux-Sèvres",
-  80: "Somme",
-  81: "Tarn",
-  82: "Tarn-et-Garonne",
-  83: "Var",
-  84: "Vaucluse",
-  85: "Vendée",
-  86: "Vienne",
-  87: "Haute-Vienne",
-  88: "Vosges",
-  89: "Yonne",
-  90: "Territoire de Belfort",
-  91: "Essonne",
-  92: "Hauts-de-Seine",
-  93: "Seine-Saint-Denis",
-  94: "Val-de-Marne",
-  95: "Val-d'Oise"
-}
-export const regions = {
-  "Auvergne-Rhône-Alpes": [1,3,7,15,26,38,42,43,63,69,73,74],
-  "Bourgogne-Franche-Comté": [21,25,39,58,70,71,89,90],
-  "Bretagne": [22,29,35,56],
-  "Centre-Val de Loire": [18,28,36,37,41,45],
-  "Corse": ["2A","2B"],
-  "Grand Est": [8,10,51,52,54,55,57,67,68,88],
-  "Hauts-de-France": [2,59,60,62,80],
-  "Île-de-France": [75,77,78,91,92,93,94,95],
-  "Normandie": [14,27,50,61,76],
-  "Nouvelle-Aquitaine": [16,17,19,23,24,33,40,47,64,79,86,87],
-  "Occitanie": [9,11,12,30,31,32,34,46,48,65,66,81,82],
-  "Pays de la Loire": [44,49,53,72,85],
-  "Provence-Alpes-Côte d'Azur": [4,5,6,13,83,84]
-}
-
-</script>
 
 <style scoped>
+/* Fix text alignment: ensuring labels and errors are left-aligned */
+.field {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  margin-bottom: 15px;
+}
+
+.field label {
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+/* Password positioning */
+.password-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.password-wrapper input {
+  padding-right: 80px; /* Make room for the button */
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.toggle-btn {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #ea580c; /* leboncoin orange */
+  font-size: 12px;
+  font-weight: bold;
+  cursor: pointer;
+  width: auto; /* Overrides your global button width */
+  padding: 5px;
+}
+
+.toggle-btn:hover {
+  background: none;
+  text-decoration: underline;
+}
+
+/* Remove any remaining centering */
+.error, span {
+  text-align: left;
+  width: 100%;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: .5; }
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+
+.fixed {
+  position: fixed;
+}
+.inset-0 {
+  top: 0; right: 0; bottom: 0; left: 0;
+}
+.z-50 {
+  z-index: 50;
+}
+.bg-white\/95 {
+  background-color: rgba(255, 255, 255, 0.95);
+}
 
 .register-container {
   width: 400px;
@@ -382,5 +347,5 @@ button {
 button:hover { background: #e65c00; }
 span { color: red; font-size: 12px; }
 .success { color: green; text-align: center; margin-top: 10px; }
-.error { color: red; text-align: center; margin-top: 10px; }
+.error { color: red; text-align: left; margin-top: 10px; }
 </style>

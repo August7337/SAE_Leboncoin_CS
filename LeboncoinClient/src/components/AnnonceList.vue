@@ -164,8 +164,14 @@ const toggleFavorite = (id) => {
               {{ formatPrice(annonce.prixnuitee) }} €
               <span class="text-sm font-normal text-gray-500">/ nuit</span>
             </p>
-            <p class="text-xs text-gray-500 mt-1" v-if="annonce.adresse?.ville">
+            <p class="text-xs text-gray-500 mt-1" v-if="annonce.adresse?.adresseComplete">
+              {{ annonce.adresse.adresseComplete }}, {{ annonce.adresse.ville?.nomville }} ({{ annonce.adresse.ville?.codepostal }})
+            </p>
+            <p class="text-xs text-gray-500 mt-1" v-else-if="annonce.adresse?.ville">
               {{ annonce.adresse.ville.nomville }} ({{ annonce.adresse.ville.codepostal }})
+            </p>
+            <p class="text-[10px] text-gray-400 mt-0.5" v-if="annonce.dateDepot">
+              Postée le {{ annonce.dateDepot }}
             </p>
           </div>
         </router-link>
