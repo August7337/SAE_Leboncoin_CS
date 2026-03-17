@@ -18,6 +18,8 @@ var dbPass = Environment.GetEnvironmentVariable("DB_PASS") ?? "postgres";
 
 var connectionString = $"Server={dbHost};Port={dbPort};Database={dbName};User Id={dbUser};Password={dbPass};";
 
+Console.WriteLine($"[DB] Connexion vers : {dbHost}:{dbPort}/{dbName} avec user={dbUser}");
+
 builder.Services.AddDbContext<LeboncoinDBContext>(options =>
     options.UseNpgsql(connectionString));
 
@@ -58,7 +60,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseCors("AllowAll");
 
-app.UseHttpsRedirection();
+// app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers();
 app.Run();

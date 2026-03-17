@@ -1,3 +1,78 @@
+<template>
+  <div v-if="loading" class="flex justify-center items-center min-h-[60vh]">
+    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-[#ea580c]"></div>
+  </div>
+
+  <div v-else-if="annonce" class="max-w-6xl mx-auto px-4 md:px-12 xl:px-6 py-8">
+    <nav class="flex mb-6 text-sm text-gray-500 items-center gap-2">
+      <router-link to="/" class="hover:text-[#ea580c] transition-colors">Accueil</router-link>
+      <span class="text-gray-300">/</span>
+      <span class="font-medium text-gray-900 truncate">{{ annonce.titreannonce }}</span>
+    </nav>
+
+    <div class="mb-6">
+      <h1 class="text-2xl md:text-3xl font-black text-gray-900 mb-2">{{ annonce.titreannonce }}</h1>
+      <p class="text-gray-600 underline">
+        {{ annonce.idadresseNavigation?.ville?.nomville || "Ville non renseignée" }}
+      </p>
+    </div>
+
+    <div v-if="annonce.photos?.length" class="relative mb-8">
+      <div class="overflow-hidden rounded-3xl shadow-sm bg-gray-100">
+        <div
+          class="flex transition-transform duration-500"
+          :style="{ transform: `translateX(-${currentIndex * 100}%)` }"
+        >
+          <div
+            v-for="(photo, index) in annonce.photos"
+            :key="index"
+            class="flex-shrink-0 w-full h-[400px]"
+          >
+            <img :src="photo.lienphoto" :alt="annonce.titreannonce" class="w-full h-full object-cover" />
+          </div>
+        </div>
+      </div>
+
+      <button
+        v-if="annonce.photos.length > 1"
+        @click="prevImage"
+        class="absolute top-1/2 left-2 -translate-y-1/2 bg-white/80 rounded-full p-2 shadow hover:bg-white"
+      >
+        ‹
+      </button>
+      <button
+        v-if="annonce.photos.length > 1"
+        @click="nextImage"
+        class="absolute top-1/2 right-2 -translate-y-1/2 bg-white/80 rounded-full p-2 shadow hover:bg-white"
+      >
+        ›
+      </button>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-10">
+      <div class="lg:col-span-2">
+        <h2 class="text-xl font-bold mb-4">À propos de ce logement</h2>
+        <p class="text-gray-700">{{ annonce.descriptionannonce }}</p>
+      </div>
+
+      <div class="lg:col-span-1">
+        <div class="sticky top-24 bg-white border border-gray-200 rounded-3xl p-6 shadow-xl">
+          <div class="text-3xl font-black mb-6">
+            {{ annonce.prixnuitee }}€ <span class="text-sm font-normal">/ nuit</span>
+          </div>
+          <button class="w-full bg-[#ea580c] text-white font-black py-4 rounded-2xl">
+            Réserver
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div v-else class="text-center py-20">
+    <p class="text-gray-500">Annonce introuvable</p>
+  </div>
+</template>
+
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
@@ -6,6 +81,20 @@ import axios from 'axios'
 const route = useRoute()
 const annonce = ref(null)
 const loading = ref(true)
+const annonce = ref(null)
+
+const currentIndex = ref(0)
+
+const nextImage = () => {
+  if (!annonce.value.photos) return
+  currentIndex.value = (currentIndex.value + 1) % annonce.value.photos.length
+}
+
+const prevImage = () => {
+  if (!annonce.value.photos) return
+  currentIndex.value =
+    (currentIndex.value - 1 + annonce.value.photos.length) % annonce.value.photos.length
+}
 
 async function fetchAnnonce() {
   try {

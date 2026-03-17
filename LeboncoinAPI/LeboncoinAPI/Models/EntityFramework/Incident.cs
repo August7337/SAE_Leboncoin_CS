@@ -32,20 +32,17 @@ public partial class Incident
     [StringLength(2000)]
     public string? Descriptionincident { get; set; }
 
-    [Column("lienphotoincident")]
-    [StringLength(200)]
-    public string? Lienphotoincident { get; set; }
     [Column("etape")]
-    public int? Etape { get; set; }
+    public int Etape { get; set; }
 
     [Column("estclasse")]
-    public bool? Estclasse { get; set; }
+    public bool Estclasse { get; set; }
 
     [Column("estrembourse")]
-    public bool? Estrembourse { get; set; }
+    public bool Estrembourse { get; set; }
 
     [Column("estremisaucontentieux")]
-    public bool? Estremisaucontentieux { get; set; }
+    public bool Estremisaucontentieux { get; set; }
 
     [Column("explicationproprietaire")]
     [StringLength(2000)]
@@ -62,6 +59,9 @@ public partial class Incident
     [ForeignKey("Idutilisateur")]
     [InverseProperty("Incidents")]
     public virtual Utilisateur IdutilisateurNavigation { get; set; } = null!;
+
+    [InverseProperty("IdincidentNavigation")]
+    public virtual ICollection<Photo> Photos { get; set; } = new List<Photo>();
 
     [ForeignKey("Idincident")]
     [InverseProperty("Idincidents")]
