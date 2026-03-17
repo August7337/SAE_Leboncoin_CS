@@ -162,42 +162,36 @@ public class UtilisateursController : ControllerBase
         }
     }
     [HttpPost("register")]
-    public async Task<IActionResult> Register([FromBody] Models.DTOs.RegisterRequest dto)
+    public async Task<IActionResult> Register([FromBody] RegisterParticulierDTO dto)
     {
-      
-        var match = Regex.Match(dto.Rue, @"^(\d+)\s*(.*)$");
-        int num = match.Success ? int.Parse(match.Groups[1].Value) : 0;
-        string street = match.Success ? match.Groups[2].Value : dto.Rue;
+        if (!ModelState.IsValid) return BadRequest(ModelState);
 
-        string depCode = dto.CodePostal.Length >= 2 ? dto.CodePostal.Substring(0, 2) : "00";
+        var existing = await _dataRepository.GetByEmailAsync(dto.Email);
+        if (existing != null) return Conflict("Cet email est déjà utilisé.");
 
-        var entity = new Utilisateur
+        var result = await _dataRepository.RegisterFullParticulierAsync(dto);
+        if (result) return Ok(new { message = "Inscription réussie" });
+        return StatusCode(500, "Erreur lors de l'inscription.");
+    }
+    [HttpPost("register-particulier")]
+    public async Task<IActionResult> RegisterParticulier([FromBody] RegisterParticulierDTO dto)
+    {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+
+        try
         {
-            Pseudonyme = dto.Pseudonyme,
-            Email = dto.Email,
-            Telephoneutilisateur = dto.Telephoneutilisateur,
-            Password = dto.Password, 
-            IdadresseNavigation = new Adresse
-            {
-                Numerorue = num,
-                Nomrue = street,
-                IdvilleNavigation = new Ville
-                {
-                    Nomville = dto.Ville,
-                    Codepostal = dto.CodePostal,
-                    IddepartementNavigation = new Departement
-                    {
-                        Numerodepartement = depCode,
-                        Nomdepartement = "Temp", 
-                        IdregionNavigation = new Region { Nomregion = "Temp" } 
-                    }
-                }
-            },
-            IddateNavigation = new Date() 
-        };
+            // On vérifie si l'email existe déjà avant de commencer
+            var existing = await _dataRepository.GetByEmailAsync(dto.Email);
+            if (existing != null) return Conflict("Cet email est déjà utilisé.");
 
-        await _dataRepository.AddAsync(entity);
-        return Ok(new { message = "Inscription réussie" });
+            var success = await _dataRepository.RegisterFullParticulierAsync(dto);
+            if (success) return Ok(new { message = "Inscription réussie !" });
+            return StatusCode(500, "Erreur lors de l'inscription.");
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"Erreur lors de l'inscription : {ex.Message}");
+        }
     }
 
 
