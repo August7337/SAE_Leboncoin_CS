@@ -1,9 +1,13 @@
-﻿using LeboncoinAPI.Models.EntityFramework;
+﻿using LeboncoinAPI.Models.DataManager;
+using LeboncoinAPI.Models.DTOs;
+using LeboncoinAPI.Models.DTOs.LeboncoinAPI.Models.DTOs;
+using LeboncoinAPI.Models.EntityFramework;
 using LeboncoinAPI.Models.Repository;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-
 namespace LeboncoinAPI.Controllers;
 
 [Route("api/[controller]")]
@@ -12,7 +16,7 @@ public class UtilisateursController : ControllerBase
 {
     private readonly IDataUtilisateurRepository<Utilisateur> _dataRepository;
 
-    // L'injection de dépendance fournit automatiquement l'instance d'UtilisateurManager
+    
     public UtilisateursController(IDataUtilisateurRepository<Utilisateur> dataRepository)
     {
         _dataRepository = dataRepository;
@@ -27,7 +31,7 @@ public class UtilisateursController : ControllerBase
     }
 
     // GET: api/Utilisateurs/5
-    [HttpGet("{id}")]
+    [HttpGet("{id:int}")]
     public async Task<ActionResult<Utilisateur>> GetUtilisateurById(int id)
     {
         var utilisateur = await _dataRepository.GetByIdAsync(id);
@@ -44,7 +48,8 @@ public class UtilisateursController : ControllerBase
     [HttpGet("email/{email}")]
     public async Task<IActionResult> GetUtilisateurByEmail(string email)
     {
-        var utilisateur = await _dataRepository.GetByEmailAsync(email);
+        var decodedEmail = System.Net.WebUtility.UrlDecode(email);
+        var utilisateur = await _dataRepository.GetByEmailAsync(decodedEmail);
 
         if (utilisateur == null)
             return NotFound();
@@ -88,28 +93,23 @@ public class UtilisateursController : ControllerBase
     }
 
     // PUT: api/Utilisateurs/5
-    [HttpPut("{id}")]
-    public async Task<IActionResult> PutUtilisateur(int id, Utilisateur utilisateur)
+    [HttpPut("{id:int}")]
+    public async Task<IActionResult> PutUtilisateur(int id, [FromBody] UtilisateurUpdateDTO dto)
     {
-        if (id != utilisateur.Idutilisateur)
-        {
-            return BadRequest("L'ID fourni dans l'URL ne correspond pas à l'ID de l'objet.");
-        }
+        if (id != dto.Idutilisateur)
+            return BadRequest("ID mismatch");
 
-        var utilisateurToUpdate = await _dataRepository.GetByIdAsync(id);
+        var existingUser = await _dataRepository.GetByIdAsync(id);
+        if (existingUser == null) return NotFound();
 
-        if (utilisateurToUpdate == null)
-        {
-            return NotFound("Utilisateur à mettre à jour introuvable.");
-        }
+        // Pass the DTO to the manager
+        await ((UtilisateurManager)_dataRepository).UpdateProfileAsync(existingUser, dto);
 
-        await _dataRepository.UpdateAsync(utilisateurToUpdate, utilisateur);
-
-        return NoContent(); // 204 No Content est la réponse standard pour un PUT réussi
+        return NoContent();
     }
 
     // DELETE: api/Utilisateurs/5
-    [HttpDelete("{id}")]
+    [HttpDelete("{id:int}")]
     public async Task<IActionResult> DeleteUtilisateur(int id)
     {
         var utilisateur = await _dataRepository.GetByIdAsync(id);
@@ -126,35 +126,113 @@ public class UtilisateursController : ControllerBase
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequest loginRequest)
     {
-        var user = await _dataRepository.GetByEmailAsync(loginRequest.Email);
+        
+        var user = await ((UtilisateurManager)_dataRepository).GetByEmailAsync(loginRequest.Email);
+
         if (user == null) return NotFound("Utilisateur non trouvé.");
+
+        if (!BCrypt.Net.BCrypt.Verify(loginRequest.Password, user.Password))
+            return BadRequest("Mot de passe incorrect.");
+
+       
+        string userType = user.Professionnel != null ? "professionnel" : "particulier";
+
+     
+        return Ok(new
+        {
+            idutilisateur = user.Idutilisateur,
+            pseudonyme = user.Pseudonyme,
+            email = user.Email,
+            telephone = user.Telephoneutilisateur,
+            typeUtilisateur = userType,
+
+           
+            civilite = user.Particulier?.Civilite,
+            nomutilisateur = user.Particulier?.Nomutilisateur,
+            prenomutilisateur = user.Particulier?.Prenomutilisateur,
+
+           
+            nomEntreprise = user.Professionnel?.Nomsociete,
+            siret = user.Professionnel?.Numsiret,
+            secteuractivite = user.Professionnel?.Secteuractivite
+        });
+    }
+    [HttpPost("register")]
+    public async Task<IActionResult> Register([FromBody] RegisterParticulierDTO dto)
+    {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+
+        var existing = await _dataRepository.GetByEmailAsync(dto.Email);
+        if (existing != null) return Conflict("Cet email est déjà utilisé.");
+
+        var result = await _dataRepository.RegisterFullParticulierAsync(dto);
+        if (result) return Ok(new { message = "Inscription réussie" });
+        return StatusCode(500, "Erreur lors de l'inscription.");
+    }
+    [HttpPost("register-particulier")]
+    public async Task<IActionResult> RegisterParticulier([FromBody] RegisterParticulierDTO dto)
+    {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
 
         try
         {
-            bool isValid = BCrypt.Net.BCrypt.Verify(loginRequest.Password, user.Password);
-            if (!isValid) return BadRequest("Mot de passe incorrect.");
+            var existingEmail = await _dataRepository.GetByEmailAsync(dto.Email);
+            if (existingEmail != null)
+                return Conflict(new { target = "email", message = "Cet email est déjà utilisé." });
+            var success = await _dataRepository.RegisterFullParticulierAsync(dto);
 
-      
+            if (success)
+            {
+                var user = await _dataRepository.GetByEmailAsync(dto.Email);
+
+                return Ok(new
+                {
+                    message = "Inscription réussie !",
+                    user = new
+                    {
+                        idutilisateur = user.Idutilisateur,
+                        pseudonyme = user.Pseudonyme,
+                        email = user.Email,
+                        telephone = user.Telephoneutilisateur,
+                        solde = user.Solde
+                    }
+                });
+            }
+            return StatusCode(500, "Erreur lors de l'inscription.");
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"Erreur : {ex.Message}");
+        }
+    }
+    [HttpPost("register-professionnel")]
+    public async Task<IActionResult> RegisterProfessionnel([FromBody] RegisterProfessionnelDTO dto)
+    {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+
+        try
+        {
+            await ((UtilisateurManager)_dataRepository).RegisterFullProfessionnelAsync(dto);
+            var user = await _dataRepository.GetByEmailAsync(dto.Email);
             return Ok(new
             {
-                idutilisateur = user.Idutilisateur,
-                pseudonyme = user.Pseudonyme,
-                email = user.Email,
-                telephone = user.Telephoneutilisateur,
-                solde = user.Solde,
-                phoneVerified = user.PhoneVerified,
-                identityVerified = user.IdentityVerified,
-                profilePhoto = user.ProfilePhotoPath
-              
+                message = "Success",
+                user = new
+                {
+                    idutilisateur = user.Idutilisateur,
+                    pseudonyme = user.Pseudonyme,
+                    email = user.Email,
+                    telephone = user.Telephoneutilisateur
+                }
             });
         }
-        catch (BCrypt.Net.SaltParseException)
+        catch (UtilisateurManager.RegistrationConflictException ex)
         {
-            return BadRequest("Format de sécurité obsolète.");
+            return Conflict(new { target = ex.TargetField, message = ex.Message });
         }
         catch (Exception)
         {
-            return StatusCode(500, "Une erreur interne est survenue.");
+            return StatusCode(500, "Erreur interne lors de la création du compte.");
         }
     }
 
@@ -164,4 +242,5 @@ public class UtilisateursController : ControllerBase
         public string Email { get; set; }
         public string Password { get; set; }
     }
+
 }
