@@ -1,98 +1,128 @@
 <script setup>
-import { reactive, ref } from 'vue'
+import { reactive, ref, onMounted } from 'vue'
 import { authState } from '@/auth.js'
 import axios from 'axios'
 
+const isSaving = ref(false)
+const message = ref({ text: '', type: '' })
 
-const localUser = reactive({
+// 1. Detect user type (assuming your authState has a 'role' or 'type' property)
+const userType = ref(authState.user?.typeUtilisateur || 'particulier')
+
+const form = reactive({
   pseudonyme: authState.user?.pseudonyme || '',
   email: authState.user?.email || '',
-  profilePhoto: authState.user?.profilePhoto || ''
+  telephone: authState.user?.telephoneutilisateur || '',
+  // Professional specific fields
+  nomEntreprise: authState.user?.nomEntreprise || '',
+  siret: authState.user?.siret || '',
+  siteWeb: authState.user?.siteWeb || ''
 })
 
-const isSaving = ref(false)
-const showSuccess = ref(false)
+const updateAccount = async () => {
+  const userId = authState.user?.idutilisateur;
+  if (!userId) return;
 
-const saveProfile = async () => {
-  isSaving.value = true
-  
+  isSaving.value = true;
+  message.value = { text: '', type: '' };
+
   try {
+    // 2. Build the payload dynamically
+    const payload = {
+      idutilisateur: userId,
+      pseudonyme: form.pseudonyme,
+      email: form.email,
+      telephoneutilisateur: form.telephone,
+      motDePasse: authState.user.motDePasse, // Caution: backend usually expects a separate "change password" flow
+    };
 
-    const response = await axios.put(`https://localhost:7057/api/Utilisateurs/${authState.user.utilisateurId}`, {
-      utilisateurId: authState.user.utilisateurId,
-      pseudonyme: localUser.pseudonyme,
-      email: localUser.email,
-      profilePhoto: localUser.profilePhoto
-     
-    })
+    // Add professional fields if applicable
+    if (userType.value === 'professionnel') {
+      payload.nomEntreprise = form.nomEntreprise;
+      payload.siret = form.siret;
+      payload.siteWeb = form.siteWeb;
+    }
 
+    // 3. Choose the endpoint based on user type if your API is separated
+    const endpoint = userType.value === 'professionnel' 
+      ? `https://localhost:7057/api/Professionnels/${userId}`
+      : `https://localhost:7057/api/Utilisateurs/${userId}`;
+
+    const response = await axios.put(endpoint, payload);
+
+    const updatedUser = { ...authState.user, ...response.data };
+    authState.setUser(updatedUser);
     
-    authState.setUser(response.data)
-
-    
-    showSuccess.value = true
-    setTimeout(() => { showSuccess.value = false }, 3000)
-
+    message.value = { text: 'Modifications enregistrées !', type: 'success' };
   } catch (error) {
-    console.error('Erreur lors de la mise à jour :', error)
-    alert("Une erreur est survenue lors de l'enregistrement.")
+    console.error("Error:", error);
+    message.value = { text: 'Erreur lors de la sauvegarde.', type: 'error' };
   } finally {
-    isSaving.value = false
+    isSaving.value = false;
   }
-}
+};
 </script>
 
 <template>
   <div class="min-h-screen bg-[#f5f5f5] py-10">
     <div class="max-w-2xl mx-auto px-4">
-      
-      <div class="flex justify-between items-center mb-8">
-        <h1 class="text-2xl font-black text-gray-900">Modifier mon profil</h1>
-        <router-link to="/profil" class="text-sm text-gray-500 hover:text-black">Annuler</router-link>
+      <div class="flex items-center justify-between mb-8">
+        <h1 class="text-2xl font-black text-gray-900">Paramètres du compte</h1>
+        <span class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-orange-100 text-[#ea580c]">
+          {{ userType }}
+        </span>
       </div>
 
-      <div class="bg-white rounded-3xl p-8 shadow-sm border border-gray-100 space-y-8 relative overflow-hidden">
+      <div class="bg-white rounded-3xl p-8 shadow-sm border border-gray-100 space-y-6">
         
-        <div v-if="showSuccess" class="absolute top-0 left-0 right-0 bg-green-500 text-white text-center py-2 text-sm font-bold animate-fade-in-down">
-          Profil mis à jour avec succès !
+        <div v-if="message.text" 
+             :class="message.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'"
+             class="p-4 rounded-xl text-sm font-bold text-center transition-all">
+          {{ message.text }}
         </div>
 
-        <div class="flex flex-col items-center gap-4 pt-4">
-          <img 
-            :src="localUser.profilePhoto || `https://ui-avatars.com/api/?name=${localUser.pseudonyme}&background=ea580c&color=fff`" 
-            class="w-32 h-32 rounded-full border-4 border-orange-50 object-cover" 
-          />
-          <button class="text-[#ea580c] font-bold text-sm hover:underline">Changer la photo</button>
-        </div>
-
-        <div class="space-y-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label class="block text-sm font-bold mb-2 text-gray-700">Pseudonyme</label>
-            <input
-              v-model="localUser.pseudonyme"
-              type="text"
-              placeholder="Votre pseudo"
-              class="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:border-[#ea580c] transition-all"
-            />
+            <label class="block text-sm font-bold mb-2">Pseudonyme</label>
+            <input v-model="form.pseudonyme" type="text" class="input-style" />
+          </div>
+          <div>
+            <label class="block text-sm font-bold mb-2">Téléphone</label>
+            <input v-model="form.telephone" type="text" class="input-style" />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-sm font-bold mb-2">Adresse email</label>
+          <input v-model="form.email" type="email" class="input-style" />
+        </div>
+
+        <div v-if="userType === 'professionnel'" class="pt-6 border-t border-gray-100 space-y-6">
+          <h3 class="font-bold text-gray-400 uppercase text-xs">Informations Professionnelles</h3>
+          
+          <div>
+            <label class="block text-sm font-bold mb-2">Nom de l'entreprise</label>
+            <input v-model="form.nomEntreprise" type="text" class="input-style" />
           </div>
 
-          <div>
-            <label class="block text-sm font-bold mb-2 text-gray-700">Adresse email</label>
-            <input
-              v-model="localUser.email"
-              type="email"
-              placeholder="email@example.com"
-              class="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:border-[#ea580c] transition-all"
-            />
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-bold mb-2">SIRET</label>
+              <input v-model="form.siret" type="text" class="input-style" />
+            </div>
+            <div>
+              <label class="block text-sm font-bold mb-2">Site Web</label>
+              <input v-model="form.siteWeb" type="text" class="input-style" placeholder="https://..." />
+            </div>
           </div>
         </div>
 
         <button
-          @click="saveProfile"
+          @click="updateAccount"
           :disabled="isSaving"
-          class="w-full bg-[#ea580c] text-white font-black py-4 rounded-2xl shadow-lg shadow-orange-100 hover:bg-[#c2410c] transition-all disabled:opacity-50"
+          class="w-full bg-[#ea580c] text-white font-bold py-4 rounded-2xl transition-all hover:bg-[#c2410c] disabled:opacity-50 shadow-lg shadow-orange-100"
         >
-          {{ isSaving ? 'Enregistrement...' : 'Enregistrer les modifications' }}
+          {{ isSaving ? 'Chargement...' : 'Enregistrer les modifications' }}
         </button>
       </div>
     </div>
