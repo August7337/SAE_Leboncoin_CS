@@ -1,11 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using LeboncoinAPI.Models.EntityFramework;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using LeboncoinAPI.Models.EntityFramework;
+using Npgsql;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace LeboncoinAPI.Controllers
 {
@@ -82,16 +83,22 @@ namespace LeboncoinAPI.Controllers
             {
                 await _context.SaveChangesAsync();
             }
-            catch (DbUpdateException)
+            catch (DbUpdateException ex)
             {
-                if (ProfessionnelExists(professionnel.Idutilisateur))
+                // Check if it's a unique constraint violation (Postgres code 23505)
+                if (ex.InnerException is PostgresException pgEx && pgEx.SqlState == "23505")
                 {
-                    return Conflict();
+                    if (pgEx.ConstraintName == "professionnel_numsiret_key")
+                    {
+                        return Conflict(new
+                        {
+                            target = "numsiret",
+                            message = "Ce numéro SIRET est déjà utilisé par un autre compte."
+                        });
+                    }
+                    // Add other checks here (e.g., email_key) if needed
                 }
-                else
-                {
-                    throw;
-                }
+                return BadRequest("Une erreur est survenue lors de l'enregistrement.");
             }
 
             return CreatedAtAction("GetProfessionnel", new { id = professionnel.Idutilisateur }, professionnel);

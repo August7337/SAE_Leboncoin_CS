@@ -1,5 +1,6 @@
 ﻿using LeboncoinAPI.Models.DataManager;
 using LeboncoinAPI.Models.DTOs;
+using LeboncoinAPI.Models.DTOs.LeboncoinAPI.Models.DTOs;
 using LeboncoinAPI.Models.EntityFramework;
 using LeboncoinAPI.Models.Repository;
 using Microsoft.AspNetCore.Mvc;
@@ -180,17 +181,63 @@ public class UtilisateursController : ControllerBase
 
         try
         {
-            // On vérifie si l'email existe déjà avant de commencer
-            var existing = await _dataRepository.GetByEmailAsync(dto.Email);
-            if (existing != null) return Conflict("Cet email est déjà utilisé.");
-
+            var existingEmail = await _dataRepository.GetByEmailAsync(dto.Email);
+            if (existingEmail != null)
+                return Conflict(new { target = "email", message = "Cet email est déjà utilisé." });
             var success = await _dataRepository.RegisterFullParticulierAsync(dto);
-            if (success) return Ok(new { message = "Inscription réussie !" });
+
+            if (success)
+            {
+                var user = await _dataRepository.GetByEmailAsync(dto.Email);
+
+                return Ok(new
+                {
+                    message = "Inscription réussie !",
+                    user = new
+                    {
+                        idutilisateur = user.Idutilisateur,
+                        pseudonyme = user.Pseudonyme,
+                        email = user.Email,
+                        telephone = user.Telephoneutilisateur,
+                        solde = user.Solde
+                    }
+                });
+            }
             return StatusCode(500, "Erreur lors de l'inscription.");
         }
         catch (Exception ex)
         {
-            return StatusCode(500, $"Erreur lors de l'inscription : {ex.Message}");
+            return StatusCode(500, $"Erreur : {ex.Message}");
+        }
+    }
+    [HttpPost("register-professionnel")]
+    public async Task<IActionResult> RegisterProfessionnel([FromBody] RegisterProfessionnelDTO dto)
+    {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+
+        try
+        {
+            await ((UtilisateurManager)_dataRepository).RegisterFullProfessionnelAsync(dto);
+            var user = await _dataRepository.GetByEmailAsync(dto.Email);
+            return Ok(new
+            {
+                message = "Success",
+                user = new
+                {
+                    idutilisateur = user.Idutilisateur,
+                    pseudonyme = user.Pseudonyme,
+                    email = user.Email,
+                    telephone = user.Telephoneutilisateur
+                }
+            });
+        }
+        catch (UtilisateurManager.RegistrationConflictException ex)
+        {
+            return Conflict(new { target = ex.TargetField, message = ex.Message });
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, "Erreur interne lors de la création du compte.");
         }
     }
 
@@ -200,4 +247,5 @@ public class UtilisateursController : ControllerBase
         public string Email { get; set; }
         public string Password { get; set; }
     }
+
 }

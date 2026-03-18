@@ -1,5 +1,6 @@
 ﻿using BCrypt.Net;
 using LeboncoinAPI.Models.DTOs;
+using LeboncoinAPI.Models.DTOs.LeboncoinAPI.Models.DTOs;
 using LeboncoinAPI.Models.EntityFramework;
 using LeboncoinAPI.Models.Repository;
 using Microsoft.EntityFrameworkCore;
@@ -181,5 +182,74 @@ public class UtilisateurManager : IDataUtilisateurRepository<Utilisateur>
                 }
             }
         };
+    }
+    public async Task<bool> RegisterFullProfessionnelAsync(RegisterProfessionnelDTO dto)
+    {
+        using var transaction = await _dbContext.Database.BeginTransactionAsync();
+        try
+        {
+
+            var nouvelUtilisateur = new Utilisateur
+            {
+                Pseudonyme = dto.Pseudonyme,
+                Email = dto.Email,
+                Password = dto.Password,
+                Telephoneutilisateur = dto.Telephoneutilisateur,
+                IdadresseNavigation = BuildAdresseFromDto(new RegisterParticulierDTO
+                {
+                    Rue = dto.Rue,
+                    Ville = dto.Ville,
+                    CodePostal = dto.CodePostal
+                })
+            };
+
+            await AddAsync(nouvelUtilisateur);
+
+
+            var professionnel = new Professionnel
+            {
+                Idutilisateur = nouvelUtilisateur.Idutilisateur,
+                Numsiret = dto.Numsiret,
+                Nomsociete = dto.Nomsociete,
+                Secteuractivite = dto.Secteuractivite
+            };
+
+            _dbContext.Professionnels.Add(professionnel);
+            await _dbContext.SaveChangesAsync();
+
+            await transaction.CommitAsync();
+            return true;
+        }
+        catch (DbUpdateException ex)
+        {
+            await transaction.RollbackAsync();
+            var inner = ex.InnerException?.Message ?? "";
+
+            if (inner.Contains("utilisateur_email_key"))
+                throw new RegistrationConflictException("email", "Cet email est déjà utilisé.");
+
+          
+            if (inner.Contains("utilisateur_telephoneutilisateur_key"))
+                throw new RegistrationConflictException("telephoneUtilisateur", "Ce numéro de téléphone est déjà utilisé.");
+
+            
+            if (inner.Contains("professionnel_numsiret_key"))
+                throw new RegistrationConflictException("numsiret", "Ce numéro SIRET est déjà utilisé.");
+
+            throw;
+        }
+        catch (Exception)
+        {
+            await transaction.RollbackAsync();
+            throw;
+        }
+    }
+    public class RegistrationConflictException : Exception
+    {
+        public string TargetField { get; }
+        public RegistrationConflictException(string target, string message) : base(message)
+        {
+            TargetField = target;
+        }
     }
 }
