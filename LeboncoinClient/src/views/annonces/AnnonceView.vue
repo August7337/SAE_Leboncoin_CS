@@ -3,17 +3,14 @@ import { ref, onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import axios from 'axios'
 import { buildAssetUrl } from '../../services/api'
+import PhotoCarousel from '../../components/PhotoCarousel.vue'
 
-// --- LOGIQUE DE DONNÉES ---
 const route = useRoute()
 const annonce = ref(null)
 const loading = ref(true)
-const currentIndex = ref(0)
 
-// Récupération de la clé API Google Maps depuis le fichier .env
 const googleApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY
 
-// --- CALCUL DE L'ADRESSE POUR GOOGLE MAPS ---
 const fullAddress = computed(() => {
   const addr = annonce.value?.idadresseNavigation
   if (!addr) return null
@@ -25,25 +22,12 @@ const fullAddress = computed(() => {
   return encodeURIComponent(`${rue}, ${cp} ${ville}, France`)
 })
 
-// --- FONCTIONS ---
-const nextImage = () => {
-  if (!annonce.value?.photos?.length) return
-  currentIndex.value = (currentIndex.value + 1) % annonce.value.photos.length
-}
-
-const prevImage = () => {
-  if (!annonce.value?.photos?.length) return
-  currentIndex.value =
-    (currentIndex.value - 1 + annonce.value.photos.length) % annonce.value.photos.length
-}
-
 async function fetchAnnonce() {
   loading.value = true
   try {
     const response = await axios.get(`https://localhost:7057/api/Annonces/${route.params.id}`)
     const data = response.data
     
-    // Mapping des photos pour inclure l'URL complète du backend
     if (data.photos && Array.isArray(data.photos)) {
       data.photos = data.photos.map(p => ({
         ...p,
@@ -76,40 +60,8 @@ onMounted(fetchAnnonce)
         <span class="font-medium text-gray-900 truncate">{{ annonce.titreannonce }}</span>
       </nav>
 
-      <div class="relative mb-8 group">
-        <div v-if="annonce.photos && annonce.photos.length > 0" class="overflow-hidden rounded-3xl shadow-sm bg-gray-100">
-          <div
-            class="flex transition-transform duration-500 h-[450px]"
-            :style="{ transform: `translateX(-${currentIndex * 100}%)` }"
-          >
-            <div v-for="(photo, index) in annonce.photos" :key="index" class="flex-shrink-0 w-full h-full">
-              <img :src="photo.lienphoto" :alt="annonce.titreannonce" class="w-full h-full object-cover" />
-            </div>
-          </div>
-          
-          <button v-if="annonce.photos.length > 1" @click="prevImage" 
-            class="absolute top-1/2 left-4 -translate-y-1/2 bg-white/80 hover:bg-white rounded-full p-3 shadow-lg transition-all opacity-0 group-hover:opacity-100">
-            <svg class="w-6 h-6 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
-          </button>
-          <button v-if="annonce.photos.length > 1" @click="nextImage"
-            class="absolute top-1/2 right-4 -translate-y-1/2 bg-white/80 hover:bg-white rounded-full p-3 shadow-lg transition-all opacity-0 group-hover:opacity-100">
-            <svg class="w-6 h-6 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
-          </button>
-          
-          <div v-if="annonce.photos.length > 1" class="absolute bottom-6 w-full flex justify-center gap-2">
-            <div v-for="(_, index) in annonce.photos" :key="index"
-              class="h-2 rounded-full transition-all duration-300"
-              :class="currentIndex === index ? 'bg-white w-6' : 'bg-white/50 w-2'">
-            </div>
-          </div>
-        </div>
-        
-        <div v-else class="w-full h-[450px] bg-gray-100 rounded-3xl flex items-center justify-center">
-          <img v-if="annonce.lienphoto" :src="buildAssetUrl(annonce.lienphoto)" class="w-full h-full object-cover rounded-3xl" />
-          <svg v-else class="w-20 h-20 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-          </svg>
-        </div>
+      <div class="mb-8">
+        <PhotoCarousel :photos="annonce.photos" height="h-[450px]" />
       </div>
 
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-12">
@@ -191,9 +143,6 @@ onMounted(fetchAnnonce)
 </template>
 
 <style scoped>
-.group:hover button {
-  opacity: 1;
-}
 .whitespace-pre-line {
   white-space: pre-line;
 }
