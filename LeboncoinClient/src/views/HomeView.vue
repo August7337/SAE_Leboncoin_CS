@@ -147,8 +147,8 @@ const mapAnnonceFromApi = (annonceApi) => {
       },
       adresseComplete: annonceApi.adresse || null
     },
-    photos: (annonceApi.lienphoto || annonceApi.lienPhoto)
-      ? [{ lienphoto: buildAssetUrl(annonceApi.lienphoto || annonceApi.lienPhoto) }]
+    photos: Array.isArray(annonceApi.photos) && annonceApi.photos.length > 0
+      ? annonceApi.photos.map(p => ({ lienphoto: p.lienphoto }))
       : [],
     dateDepot: annonceApi.dateDepot ? new Date(annonceApi.dateDepot).toLocaleDateString('fr-FR') : null,
     nombreetoilesleboncoin: annonceApi.nombreetoilesleboncoin
@@ -164,7 +164,7 @@ const performSearch = async () => {
     if (searchQuery.value) {
       data = await annoncesService.searchByLocation(searchQuery.value, filters.value)
     } else {
-      data = await annoncesService.getAll()   // ← utilise getAll au chargement initial
+      data = await annoncesService.getAll()
     }
     annonces.value = Array.isArray(data) ? data.map(mapAnnonceFromApi) : []
   } catch (error) {

@@ -17,10 +17,29 @@ public class AnnoncesController : ControllerBase
 
     // GET: api/Annonces
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Annonce>>> GetAnnonces()
+    public async Task<ActionResult<IEnumerable<AnnonceSearchResultDto>>> GetAnnonces()
     {
         var annonces = await _annonceRepository.GetAllAsync();
-        return Ok(annonces);
+
+        var result = annonces.Select(a => new AnnonceSearchResultDto
+        {
+            Idannonce = a.Idannonce,
+            Titreannonce = a.Titreannonce,
+            TypeHebergement = a.IdtypehebergementNavigation?.Nomtypehebergement,
+            Nomville = a.IdadresseNavigation?.IdvilleNavigation?.Nomville,
+            Codepostal = a.IdadresseNavigation?.IdvilleNavigation?.Codepostal,
+            Prixnuitee = a.Prixnuitee,
+            Capacite = a.Capacite,
+            Nombreetoilesleboncoin = a.Nombreetoilesleboncoin,
+            Photos = a.Photos.Select(p => new Photo
+            {
+                Idphoto = p.Idphoto,
+                Idannonce = p.Idannonce,
+                Lienphoto = p.Lienphoto
+            }).ToList(),
+        });
+
+        return Ok(result);
     }
 
     // GET: api/Annonces/search?q={query}&minPrice=10&maxPrice=500&nbChambres=2&typeHebergementIds=1,2&dateArrivee=2024-01-01&dateDepart=2024-01-10

@@ -15,7 +15,12 @@ public class AnnonceManager : IAnnonceRepository
 
     public async Task<IEnumerable<Annonce>> GetAllAsync()
     {
-        return await _dbContext.Annonces.ToListAsync();
+        return await _dbContext.Annonces
+            .Include(a => a.Photos)
+            .Include(a => a.IdadresseNavigation)
+                .ThenInclude(adr => adr.IdvilleNavigation)
+            .Include(a => a.IdtypehebergementNavigation)
+            .ToListAsync();
     }
 
     public async Task<Annonce?> GetByIdAsync(int id)
