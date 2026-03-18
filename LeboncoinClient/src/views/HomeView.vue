@@ -160,10 +160,14 @@ const performSearch = async () => {
   errorMessage.value = ''
 
   try {
-    const data = await annoncesService.searchByLocation(searchQuery.value, filters.value)
+    let data
+    if (searchQuery.value) {
+      data = await annoncesService.searchByLocation(searchQuery.value, filters.value)
+    } else {
+      data = await annoncesService.getAll()   // ← utilise getAll au chargement initial
+    }
     annonces.value = Array.isArray(data) ? data.map(mapAnnonceFromApi) : []
   } catch (error) {
-    console.error(error)
     errorMessage.value = 'Impossible de charger les annonces.'
   } finally {
     isLoading.value = false

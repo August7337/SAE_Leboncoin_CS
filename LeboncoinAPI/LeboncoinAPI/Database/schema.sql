@@ -555,3 +555,24 @@ VALUES ('20260317075626_migration-v1.0.1', '8.0.23');
 
 COMMIT;
 
+START TRANSACTION;
+
+INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+VALUES ('20260318075352_migration-v1.0.2', '8.0.23');
+
+COMMIT;
+
+START TRANSACTION;
+
+INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+VALUES ('20260318075637_migration-v1.0.3', '8.0.23');
+
+COMMIT;
+
+START TRANSACTION;
+
+INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+VALUES ('20260318075828_migration-v1.0.4', '8.0.23');
+
+COMMIT;
+

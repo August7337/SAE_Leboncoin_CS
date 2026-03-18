@@ -26,8 +26,11 @@ const mapAnnonceFromApi = (annonceApi) => {
       },
       adresseComplete: annonceApi.adresse
     } : null,
-    photos: annonceApi.lienphoto
-      ? [{ lienphoto: buildAssetUrl(annonceApi.lienphoto) }]
+    photos: Array.isArray(annonceApi.photos)
+      ? annonceApi.photos.map(p => ({
+          ...p,
+          lienphoto: buildAssetUrl(p.lienphoto)
+        }))
       : [],
     dateDepot: annonceApi.dateDepot ? new Date(annonceApi.dateDepot).toLocaleDateString('fr-FR') : null,
     nombreetoilesleboncoin: annonceApi.nombreetoilesleboncoin
