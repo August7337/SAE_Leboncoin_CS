@@ -4,6 +4,7 @@ using LeboncoinAPI.Models.DTOs.LeboncoinAPI.Models.DTOs;
 using LeboncoinAPI.Models.EntityFramework;
 using LeboncoinAPI.Models.Repository;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -92,25 +93,19 @@ public class UtilisateursController : ControllerBase
     }
 
     // PUT: api/Utilisateurs/5
-    [HttpPut("{id:int" +
-        "}")]
-    public async Task<IActionResult> PutUtilisateur(int id, Utilisateur utilisateur)
+    [HttpPut("{id:int}")]
+    public async Task<IActionResult> PutUtilisateur(int id, [FromBody] UtilisateurUpdateDTO dto)
     {
-        if (id != utilisateur.Idutilisateur)
-        {
-            return BadRequest("L'ID fourni dans l'URL ne correspond pas à l'ID de l'objet.");
-        }
+        if (id != dto.Idutilisateur)
+            return BadRequest("ID mismatch");
 
-        var utilisateurToUpdate = await _dataRepository.GetByIdAsync(id);
+        var existingUser = await _dataRepository.GetByIdAsync(id);
+        if (existingUser == null) return NotFound();
 
-        if (utilisateurToUpdate == null)
-        {
-            return NotFound("Utilisateur à mettre à jour introuvable.");
-        }
+        // Pass the DTO to the manager
+        await ((UtilisateurManager)_dataRepository).UpdateProfileAsync(existingUser, dto);
 
-        await _dataRepository.UpdateAsync(utilisateurToUpdate, utilisateur);
-
-        return NoContent(); // 204 No Content est la réponse standard pour un PUT réussi
+        return NoContent();
     }
 
     // DELETE: api/Utilisateurs/5
@@ -131,36 +126,36 @@ public class UtilisateursController : ControllerBase
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequest loginRequest)
     {
-        var user = await _dataRepository.GetByEmailAsync(loginRequest.Email);
+        
+        var user = await ((UtilisateurManager)_dataRepository).GetByEmailAsync(loginRequest.Email);
+
         if (user == null) return NotFound("Utilisateur non trouvé.");
 
-        try
-        {
-            bool isValid = BCrypt.Net.BCrypt.Verify(loginRequest.Password, user.Password);
-            if (!isValid) return BadRequest("Mot de passe incorrect.");
+        if (!BCrypt.Net.BCrypt.Verify(loginRequest.Password, user.Password))
+            return BadRequest("Mot de passe incorrect.");
 
+       
+        string userType = user.Professionnel != null ? "professionnel" : "particulier";
 
-            return Ok(new
-            {
-                idutilisateur = user.Idutilisateur,
-                pseudonyme = user.Pseudonyme,
-                email = user.Email,
-                telephone = user.Telephoneutilisateur,
-                solde = user.Solde,
-                phoneVerified = user.PhoneVerified,
-                identityVerified = user.IdentityVerified,
-                profilePhoto = user.ProfilePhotoPath
+     
+        return Ok(new
+        {
+            idutilisateur = user.Idutilisateur,
+            pseudonyme = user.Pseudonyme,
+            email = user.Email,
+            telephone = user.Telephoneutilisateur,
+            typeUtilisateur = userType,
 
-            });
-        }
-        catch (BCrypt.Net.SaltParseException)
-        {
-            return BadRequest("Format de sécurité obsolète.");
-        }
-        catch (Exception)
-        {
-            return StatusCode(500, "Une erreur interne est survenue.");
-        }
+           
+            civilite = user.Particulier?.Civilite,
+            nomutilisateur = user.Particulier?.Nomutilisateur,
+            prenomutilisateur = user.Particulier?.Prenomutilisateur,
+
+           
+            nomEntreprise = user.Professionnel?.Nomsociete,
+            siret = user.Professionnel?.Numsiret,
+            secteuractivite = user.Professionnel?.Secteuractivite
+        });
     }
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterParticulierDTO dto)

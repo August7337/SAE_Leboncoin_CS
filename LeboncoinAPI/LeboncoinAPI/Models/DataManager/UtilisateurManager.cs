@@ -101,15 +101,18 @@ public class UtilisateurManager : IDataUtilisateurRepository<Utilisateur>
 
     public async Task<Utilisateur?> GetByEmailAsync(string email)
     {
-        return await _dbContext.Utilisateurs.FirstOrDefaultAsync(u => u.Email.ToLower() == email.ToLower());
+        return await _dbContext.Utilisateurs
+            .Include(u => u.Particulier)
+            .Include(u => u.Professionnel)
+            .FirstOrDefaultAsync(u => u.Email.ToLower() == email.ToLower());
     }
-    // Removed older overload that relied on different DTO shape. Kept the modern implementation below.
+
     public async Task<bool> RegisterFullParticulierAsync(RegisterParticulierDTO dto)
     {
         using var transaction = await _dbContext.Database.BeginTransactionAsync();
         try
         {
-            // 1. Création de l'objet Utilisateur et de ses dépendances (Adresse/Ville/Dep/Reg)
+
             var nouvelUtilisateur = new Utilisateur
             {
                 Pseudonyme = dto.Pseudonyme,
@@ -119,10 +122,10 @@ public class UtilisateurManager : IDataUtilisateurRepository<Utilisateur>
                 IdadresseNavigation = BuildAdresseFromDto(dto)
             };
 
-            // 2. Appel de ta méthode complexe (Gère GeoData, Hachage, et SaveChanges)
+
             await AddAsync(nouvelUtilisateur);
 
-            // 3. Gestion de la Date de Naissance
+
             var bDay = DateOnly.FromDateTime(dto.DateNaissance);
             var dateEntity = await _dbContext.Dates.FirstOrDefaultAsync(d => d.Date1 == bDay)
                              ?? new Date { Date1 = bDay };
@@ -133,10 +136,10 @@ public class UtilisateurManager : IDataUtilisateurRepository<Utilisateur>
                 await _dbContext.SaveChangesAsync();
             }
 
-            // 4. Création du profil Particulier lié
+
             var particulier = new Particulier
             {
-                Idutilisateur = nouvelUtilisateur.Idutilisateur, // Récupéré après AddAsync
+                Idutilisateur = nouvelUtilisateur.Idutilisateur,
                 Nomutilisateur = dto.Nomutilisateur,
                 Prenomutilisateur = dto.Prenomutilisateur,
                 Civilite = dto.Civilite,
@@ -155,10 +158,27 @@ public class UtilisateurManager : IDataUtilisateurRepository<Utilisateur>
             throw;
         }
     }
+    public async Task UpdateProfileAsync(Utilisateur existingUser, UtilisateurUpdateDTO dto)
+    {
+     
+        existingUser.Pseudonyme = dto.Pseudonyme;
+        existingUser.Email = dto.Email;
+        existingUser.Telephoneutilisateur = dto.Telephoneutilisateur;
+
+
+        if (existingUser.Particulier != null)
+        {
+            existingUser.Particulier.Civilite = dto.Civilite;
+            existingUser.Particulier.Nomutilisateur = dto.Nomutilisateur;
+            existingUser.Particulier.Prenomutilisateur = dto.Prenomutilisateur;
+        }
+
+        await _dbContext.SaveChangesAsync();
+    }
 
     private static Adresse BuildAdresseFromDto(RegisterParticulierDTO dto)
     {
-        // Parse street number and name like the controller did elsewhere
+    
         var match = Regex.Match(dto.Rue ?? string.Empty, "^(\\d+)\\s*(.*)$");
         int num = match.Success && int.TryParse(match.Groups[1].Value, out var n) ? n : 0;
         string street = match.Success ? match.Groups[2].Value : dto.Rue;
