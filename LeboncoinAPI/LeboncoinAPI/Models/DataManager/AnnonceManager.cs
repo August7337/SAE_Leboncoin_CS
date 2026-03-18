@@ -21,6 +21,10 @@ public class AnnonceManager : IAnnonceRepository
     public async Task<Annonce?> GetByIdAsync(int id)
     {
         return await _dbContext.Annonces
+            .Include(a => a.Photos)
+            .Include(a => a.IdadresseNavigation)
+                .ThenInclude(adr => adr.IdvilleNavigation)
+            .Include(a => a.IdtypehebergementNavigation)
             .FirstOrDefaultAsync(a => a.Idannonce == id);
     }
 
@@ -43,6 +47,7 @@ public class AnnonceManager : IAnnonceRepository
             .Include(a => a.IdtypehebergementNavigation)
             .Include(a => a.IddateNavigation)
             .Include(a => a.Idcommodites)
+            .Include(a => a.Photos)
             .AsQueryable();
 
         // Filtrage par localisation
@@ -122,7 +127,7 @@ public class AnnonceManager : IAnnonceRepository
             Codepostal = a.IdadresseNavigation?.IdvilleNavigation?.Codepostal,
             DateDepot = a.IddateNavigation?.Date1,
             Prixnuitee = a.Prixnuitee,
-            Lienphoto = a.Lienphoto,
+            Photos = a.Photos,
         });
     }
 
