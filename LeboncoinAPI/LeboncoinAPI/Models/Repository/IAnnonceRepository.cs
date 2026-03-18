@@ -5,6 +5,7 @@ namespace LeboncoinAPI.Models.Repository;
 public interface IAnnonceRepository : IDataRepository<Annonce>
 {
     Task<IEnumerable<Annonce>> GetAllAsync();
+    Task<IEnumerable<AnnonceSearchResultDto>> GetSimilairesAsync(int id);
     Task<IEnumerable<AnnonceSearchResultDto>> GetByLocalisationAsync(
         string query,
         decimal? minPrice = null,

@@ -3,11 +3,13 @@
 # ==============================================================================
 
 # --- CONFIGURATION DES CHEMINS ---
-$ProjectName = ".\LeboncoinAPI" # Chemin vers le projet contenant le DbContext
+$ProjectName = ".\LeboncoinAPI"
 $MigrationsDir = "$ProjectName\Migrations"
 $DatabaseDir = "$ProjectName\Database"
-$InsertsFile = "$DatabaseDir\inserts-v1.sql"
+$InsertsFile = "$DatabaseDir\inserts.sql"
 $SchemaFile = "$DatabaseDir\schema.sql"
+$DropTableFile = "$DatabaseDir\drop-table.sql"
+$psqlPath = "C:\Program Files\PostgreSQL\17\bin\psql.exe"
 
 # --- CHARGEMENT DU FICHIER .ENV ---
 $EnvFilePath = ".env"
@@ -39,10 +41,10 @@ Write-Host " DEBUT DU PROCESSUS DE MIGRATION ET SEEDING EF CORE" -ForegroundColo
 Write-Host "======================================================" -ForegroundColor Cyan
 
 # ------------------------------------------------------------------------------
-# 0. RESET COMPLET (suppression des migrations et de la BD)
+# 1. RESET DES MIGRATIONS
 # ------------------------------------------------------------------------------
-Write-Host "`n[0/4] Reset complet de la base de donnees et des migrations..." -ForegroundColor Yellow
-Write-Host "      Voulez-vous supprimer la base de donnees et les migrations ? (y/n) > " -ForegroundColor Red -NoNewline
+Write-Host "`n[1/5] Reset des migrations..." -ForegroundColor Yellow
+Write-Host "      Voulez-vous supprimer les migrations ? (y/N) > " -ForegroundColor Red -NoNewline
 $confirmation = Read-Host
 
 if ($confirmation -eq "y") {
@@ -52,16 +54,33 @@ if ($confirmation -eq "y") {
     } else {
         Write-Host "      Aucun dossier Migrations trouve, on continue." -ForegroundColor Gray
     }
-
-    dotnet ef database drop --force --project $ProjectName
-    if ($LASTEXITCODE -ne 0) { Write-Error "Echec du drop de la base de donnees."; exit }
-    Write-Host "      Base de donnees supprimee." -ForegroundColor Green
 } else {
     Write-Host "      Suppression ignoree, on passe a la suite." -ForegroundColor Gray
 }
 
 # ------------------------------------------------------------------------------
-# 1. DETERMINER LA PROCHAINE VERSION DE MIGRATION
+# DROP DES TABLES (toujours execute apres l'etape 1)
+# ------------------------------------------------------------------------------
+Write-Host "`n      Suppression des tables via drop-table.sql..." -ForegroundColor Yellow
+
+if (Test-Path $DropTableFile) {
+    if (Test-Path $psqlPath) {
+        $connectionString = "host=$DbHost port=$DbPort dbname=$DbName user=$DbUser password=$DbPass"
+        $dropOutput = & $psqlPath $connectionString -q -v ON_ERROR_STOP=0 -f $DropTableFile 2>&1
+        foreach ($line in $dropOutput) {
+            Write-Host "      $line" -ForegroundColor Gray
+        }
+        Write-Host "      Tables supprimees avec succes." -ForegroundColor Green
+    } else {
+        Write-Error "psql.exe introuvable dans $psqlPath. Verifie l'installation de Postgres 17."
+        exit
+    }
+} else {
+    Write-Host "      Fichier $DropTableFile introuvable, suppression des tables ignoree." -ForegroundColor Gray
+}
+
+# ------------------------------------------------------------------------------
+# 2. DETERMINER LA PROCHAINE VERSION DE MIGRATION
 # ------------------------------------------------------------------------------
 $NextVersion = "1.0.0"
 
@@ -83,16 +102,16 @@ if (Test-Path $MigrationsDir) {
 }
 
 $MigrationName = "migration-v$NextVersion"
-Write-Host "`n[1/4] Prochaine version detectee : $MigrationName" -ForegroundColor Yellow
+Write-Host "`n[2/5] Prochaine version detectee : $MigrationName" -ForegroundColor Yellow
 Write-Host "      Creation de la migration..."
 
 dotnet ef migrations add $MigrationName --project $ProjectName
 if ($LASTEXITCODE -ne 0) { Write-Error "Echec de la creation de la migration."; exit }
 
 # ------------------------------------------------------------------------------
-# 2. GENERER LE SCRIPT DE CREATION DE LA BASE DE DONNEES
+# 3. GENERER LE SCRIPT DE CREATION DE LA BASE DE DONNEES
 # ------------------------------------------------------------------------------
-Write-Host "`n[2/4] Generation du script SQL de la base de donnees..." -ForegroundColor Yellow
+Write-Host "`n[3/5] Generation du script SQL de la base de donnees..." -ForegroundColor Yellow
 
 if (-not (Test-Path $DatabaseDir)) { New-Item -ItemType Directory -Path $DatabaseDir | Out-Null }
 
@@ -102,31 +121,27 @@ if ($LASTEXITCODE -ne 0) { Write-Error "Echec de la generation du script."; exit
 Write-Host "      Script genere avec succes dans : $SchemaFile" -ForegroundColor Green
 
 # ------------------------------------------------------------------------------
-# 3. APPLIQUER LA MIGRATION A LA BASE DE DONNEES
+# 4. APPLIQUER LA MIGRATION A LA BASE DE DONNEES
 # ------------------------------------------------------------------------------
-Write-Host "`n[3/4] Application des changements a la base de donnees (Update)..." -ForegroundColor Yellow
+Write-Host "`n[4/5] Application des changements a la base de donnees (Update)..." -ForegroundColor Yellow
 
 dotnet ef database update --project $ProjectName
 if ($LASTEXITCODE -ne 0) { Write-Error "Echec de la mise a jour de la base de donnees."; exit }
 
 # ------------------------------------------------------------------------------
-# 4. INSERER LES DONNEES (SEED)
+# 5. INSERER LES DONNEES (SEED)
 # ------------------------------------------------------------------------------
-Write-Host "`n[4/4] Execution du script d'insertions SQL ($InsertsFile)..." -ForegroundColor Yellow
-
-$psqlPath = "C:\Program Files\PostgreSQL\17\bin\psql.exe"
+Write-Host "`n[5/5] Execution du script d'insertions SQL ($InsertsFile)..." -ForegroundColor Yellow
 
 if (Test-Path $InsertsFile) {
     if (Test-Path $psqlPath) {
         $connectionString = "host=$DbHost port=$DbPort dbname=$DbName user=$DbUser password=$DbPass"
 
-        # Lancement de psql en arriere-plan
         $job = Start-Job -ScriptBlock {
             param($conn, $psql, $file)
             & $psql $conn -q -v ON_ERROR_STOP=1 -f $file 2>&1
         } -ArgumentList $connectionString, $psqlPath, $InsertsFile
 
-        # Barre de chargement pendant l'execution
         $spinnerChars = @('|', '/', '-', '\')
         $spinnerIndex = 0
         $barWidth = 30
@@ -143,11 +158,9 @@ if (Test-Path $InsertsFile) {
             $spinnerIndex++
         }
 
-        # Barre completee
         $fullBar = "#" * $barWidth
         Write-Host "`r      > [ $fullBar ] Termine !                    " -ForegroundColor Green
 
-        # Recuperation du resultat
         $jobOutput = Receive-Job -Job $job
         Remove-Job -Job $job
 

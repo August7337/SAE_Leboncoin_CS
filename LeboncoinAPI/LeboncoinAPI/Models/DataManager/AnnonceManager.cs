@@ -30,7 +30,45 @@ public class AnnonceManager : IAnnonceRepository
             .Include(a => a.IdadresseNavigation)
                 .ThenInclude(adr => adr.IdvilleNavigation)
             .Include(a => a.IdtypehebergementNavigation)
+            .Include(a => a.Idcommodites)
+                .ThenInclude(c => c.IdcategorieNavigation)
+            .Include(a => a.IdutilisateurNavigation)
+            .Include(a => a.IdheurearriveeNavigation)
+            .Include(a => a.IdheuredepartNavigation)
+            .Include(a => a.Reservations)
+                .ThenInclude(r => r.IddatedebutreservationNavigation)
+            .Include(a => a.Reservations)
+                .ThenInclude(r => r.IddatefinreservationNavigation)
             .FirstOrDefaultAsync(a => a.Idannonce == id);
+    }
+
+    public async Task<IEnumerable<AnnonceSearchResultDto>> GetSimilairesAsync(int id)
+    {
+        var similaires = await _dbContext.Annonces
+            .Where(a => a.IdannonceAs.Any(r => r.Idannonce == id)
+                     || a.IdannonceBs.Any(r => r.Idannonce == id))
+            .Include(a => a.Photos)
+            .Include(a => a.IdadresseNavigation)
+                .ThenInclude(adr => adr.IdvilleNavigation)
+            .Include(a => a.IdtypehebergementNavigation)
+            .Take(6)
+            .ToListAsync();
+
+        return similaires.Select(a => new AnnonceSearchResultDto
+        {
+            Idannonce = a.Idannonce,
+            Titreannonce = a.Titreannonce,
+            TypeHebergement = a.IdtypehebergementNavigation?.Nomtypehebergement,
+            Nomville = a.IdadresseNavigation?.IdvilleNavigation?.Nomville,
+            Codepostal = a.IdadresseNavigation?.IdvilleNavigation?.Codepostal,
+            Prixnuitee = a.Prixnuitee,
+            Photos = a.Photos.Select(p => new Photo
+            {
+                Idphoto = p.Idphoto,
+                Idannonce = p.Idannonce,
+                Lienphoto = p.Lienphoto
+            }).ToList(),
+        });
     }
 
     public async Task<IEnumerable<AnnonceSearchResultDto>> GetByLocalisationAsync(
