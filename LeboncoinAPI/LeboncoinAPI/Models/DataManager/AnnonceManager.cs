@@ -15,27 +15,50 @@ public class AnnonceManager : IAnnonceRepository
 
     public async Task<IEnumerable<Annonce>> GetAllAsync()
     {
-        return await _dbContext.Annonces.ToListAsync();
+        return await _dbContext.Annonces
+            .Include(a => a.Photos)
+            .Include(a => a.IdadresseNavigation)
+                .ThenInclude(adr => adr.IdvilleNavigation)
+            .Include(a => a.IdtypehebergementNavigation)
+            .ToListAsync();
     }
 
     public async Task<Annonce?> GetByIdAsync(int id)
     {
         return await _dbContext.Annonces
+            .Include(a => a.Photos)
+            .Include(a => a.IdadresseNavigation)
+                .ThenInclude(adr => adr.IdvilleNavigation)
+            .Include(a => a.IdtypehebergementNavigation)
             .FirstOrDefaultAsync(a => a.Idannonce == id);
     }
 
-    public async Task<IEnumerable<AnnonceSearchResultDto>> GetByLocalisationAsync(string query)
+    public async Task<IEnumerable<AnnonceSearchResultDto>> GetByLocalisationAsync(
+        string query,
+        decimal? minPrice = null,
+        decimal? maxPrice = null,
+        int? nbChambres = null,
+        List<int>? typeHebergementIds = null,
+        DateTime? dateArrivee = null,
+        DateTime? dateDepart = null,
+        List<int>? commoditeIds = null)
     {
         var q = query?.Trim() ?? string.Empty;
 
-        var annonces = await _dbContext.Annonces
+        var queryable = _dbContext.Annonces
             .Include(a => a.IdadresseNavigation)
                 .ThenInclude(adr => adr.IdvilleNavigation)
                     .ThenInclude(v => v.IddepartementNavigation)
             .Include(a => a.IdtypehebergementNavigation)
             .Include(a => a.IddateNavigation)
-            .Where(a =>
-                string.IsNullOrEmpty(q) ||
+            .Include(a => a.Idcommodites)
+            .Include(a => a.Photos)
+            .AsQueryable();
+
+        // Filtrage par localisation
+        if (!string.IsNullOrEmpty(q))
+        {
+            queryable = queryable.Where(a =>
                 (a.IdadresseNavigation.IdvilleNavigation.Nomville != null &&
                  a.IdadresseNavigation.IdvilleNavigation.Nomville.ToLower().Contains(q.ToLower())) ||
                 (a.IdadresseNavigation.IdvilleNavigation.Codepostal != null &&
@@ -44,8 +67,60 @@ public class AnnonceManager : IAnnonceRepository
                  a.IdadresseNavigation.IdvilleNavigation.IddepartementNavigation.Nomdepartement.ToLower().Contains(q.ToLower())) ||
                 (a.IdadresseNavigation.IdvilleNavigation.IddepartementNavigation.Numerodepartement != null &&
                  a.IdadresseNavigation.IdvilleNavigation.IddepartementNavigation.Numerodepartement.ToLower().Contains(q.ToLower()))
-            )
-            .ToListAsync();
+            );
+        }
+
+        // Filtre Prix
+        if (minPrice.HasValue)
+        {
+            queryable = queryable.Where(a => a.Prixnuitee >= minPrice.Value);
+        }
+        if (maxPrice.HasValue)
+        {
+            queryable = queryable.Where(a => a.Prixnuitee <= maxPrice.Value);
+        }
+
+        // Filtre Chambres
+        if (nbChambres.HasValue && nbChambres.Value > 0)
+        {
+            if (nbChambres.Value >= 6)
+                queryable = queryable.Where(a => a.Nbchambres >= 6);
+            else
+                queryable = queryable.Where(a => a.Nbchambres == nbChambres.Value);
+        }
+
+        // Filtre Type d'hébergement
+        if (typeHebergementIds != null && typeHebergementIds.Any())
+        {
+            queryable = queryable.Where(a => typeHebergementIds.Contains(a.Idtypehebergement));
+        }
+
+        // Filtre Commodités (Doit avoir TOUTES les commodités sélectionnées)
+        if (commoditeIds != null && commoditeIds.Any())
+        {
+            foreach (var commoditeId in commoditeIds)
+            {
+                queryable = queryable.Where(a => a.Idcommodites.Any(c => c.Idcommodite == commoditeId));
+            }
+        }
+
+        // Filtrage par dates (basique : exclure les annonces ayant une réservation qui chevauche)
+        if (dateArrivee.HasValue && dateDepart.HasValue)
+        {
+            var start = DateOnly.FromDateTime(dateArrivee.Value);
+            var end = DateOnly.FromDateTime(dateDepart.Value);
+
+            queryable = queryable.Where(a => !_dbContext.Reservations.Any(r =>
+                r.Idannonce == a.Idannonce &&
+                r.IddatedebutreservationNavigation.Date1.HasValue &&
+                r.IddatefinreservationNavigation.Date1.HasValue &&
+                ((start >= r.IddatedebutreservationNavigation.Date1.Value && start < r.IddatefinreservationNavigation.Date1.Value) ||
+                 (end > r.IddatedebutreservationNavigation.Date1.Value && end <= r.IddatefinreservationNavigation.Date1.Value) ||
+                 (start <= r.IddatedebutreservationNavigation.Date1.Value && end >= r.IddatefinreservationNavigation.Date1.Value))
+            ));
+        }
+
+        var annonces = await queryable.ToListAsync();
 
         return annonces.Select(a => new AnnonceSearchResultDto
         {
@@ -57,7 +132,7 @@ public class AnnonceManager : IAnnonceRepository
             Codepostal = a.IdadresseNavigation?.IdvilleNavigation?.Codepostal,
             DateDepot = a.IddateNavigation?.Date1,
             Prixnuitee = a.Prixnuitee,
-            Lienphoto = a.Lienphoto,
+            Photos = a.Photos,
         });
     }
 

@@ -17,17 +17,56 @@ public class AnnoncesController : ControllerBase
 
     // GET: api/Annonces
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Annonce>>> GetAnnonces()
+    public async Task<ActionResult<IEnumerable<AnnonceSearchResultDto>>> GetAnnonces()
     {
         var annonces = await _annonceRepository.GetAllAsync();
-        return Ok(annonces);
+
+        var result = annonces.Select(a => new AnnonceSearchResultDto
+        {
+            Idannonce = a.Idannonce,
+            Titreannonce = a.Titreannonce,
+            TypeHebergement = a.IdtypehebergementNavigation?.Nomtypehebergement,
+            Nomville = a.IdadresseNavigation?.IdvilleNavigation?.Nomville,
+            Codepostal = a.IdadresseNavigation?.IdvilleNavigation?.Codepostal,
+            Prixnuitee = a.Prixnuitee,
+            Capacite = a.Capacite,
+            Nombreetoilesleboncoin = a.Nombreetoilesleboncoin,
+            Photos = a.Photos.Select(p => new Photo
+            {
+                Idphoto = p.Idphoto,
+                Idannonce = p.Idannonce,
+                Lienphoto = p.Lienphoto
+            }).ToList(),
+        });
+
+        return Ok(result);
     }
 
-    // GET: api/Annonces/search?q={query}
+    // GET: api/Annonces/search?q={query}&minPrice=10&maxPrice=500&nbChambres=2&typeHebergementIds=1,2&dateArrivee=2024-01-01&dateDepart=2024-01-10
     [HttpGet("search")]
-    public async Task<ActionResult<IEnumerable<AnnonceSearchResultDto>>> SearchAnnonces([FromQuery] string q = "")
+    public async Task<ActionResult<IEnumerable<AnnonceSearchResultDto>>> SearchAnnonces(
+        [FromQuery] string q = "",
+        [FromQuery] decimal? minPrice = null,
+        [FromQuery] decimal? maxPrice = null,
+        [FromQuery] int? nbChambres = null,
+        [FromQuery] string? typeHebergementIds = null,
+        [FromQuery] DateTime? dateArrivee = null,
+        [FromQuery] DateTime? dateDepart = null,
+        [FromQuery] string? commoditeIds = null)
     {
-        var results = await _annonceRepository.GetByLocalisationAsync(q);
+        List<int>? typeIds = null;
+        if (!string.IsNullOrEmpty(typeHebergementIds))
+        {
+            typeIds = typeHebergementIds.Split(',').Select(int.Parse).ToList();
+        }
+
+        List<int>? commoIds = null;
+        if (!string.IsNullOrEmpty(commoditeIds))
+        {
+            commoIds = commoditeIds.Split(',').Select(int.Parse).ToList();
+        }
+
+        var results = await _annonceRepository.GetByLocalisationAsync(q, minPrice, maxPrice, nbChambres, typeIds, dateArrivee, dateDepart, commoIds);
         return Ok(results);
     }
 

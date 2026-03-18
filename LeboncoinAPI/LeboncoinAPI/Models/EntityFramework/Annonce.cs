@@ -48,10 +48,6 @@ public partial class Annonce
     [StringLength(4000)]
     public string Descriptionannonce { get; set; } = null!;
 
-    [Column("lienphoto")]
-    [StringLength(200)]
-    public string? Lienphoto { get; set; }
-
     [Column("nombreetoilesleboncoin")]
     public int? Nombreetoilesleboncoin { get; set; }
 
@@ -116,6 +112,9 @@ public partial class Annonce
     [ForeignKey("Idutilisateur")]
     [InverseProperty("Annonces")]
     public virtual Utilisateur IdutilisateurNavigation { get; set; } = null!;
+
+    [InverseProperty("IdannonceNavigation")]
+    public virtual ICollection<Photo> Photos { get; set; } = new List<Photo>();
 
     [InverseProperty("IdannonceNavigation")]
     public virtual ICollection<Relier> Reliers { get; set; } = new List<Relier>();
