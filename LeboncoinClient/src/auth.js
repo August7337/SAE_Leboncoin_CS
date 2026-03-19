@@ -7,7 +7,9 @@ export const authState = reactive({
   setUser(userData) {
     this.user = userData; 
     localStorage.setItem('user', JSON.stringify(userData));
+    console.log(this.user)
   },
+  
   isLoggedIn() {
     return !!this.user;
   },

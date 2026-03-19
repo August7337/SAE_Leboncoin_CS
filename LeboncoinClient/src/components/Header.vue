@@ -55,7 +55,7 @@ const logout = () => {
     <div class="h-6 w-6 rounded-full overflow-hidden border border-gray-200 group-hover:border-black transition-colors bg-gray-100 flex items-center justify-center">
       <img
         v-if="authState.user"
-        :src="authState.user.profilePhoto || 'https://cdn-icons-png.flaticon.com/512/149/149071.png'"
+        :src="authState.user.profilePhotoPath || 'https://cdn-icons-png.flaticon.com/512/149/149071.png'"
         alt="Avatar"
         class="h-full w-full object-cover"
       />

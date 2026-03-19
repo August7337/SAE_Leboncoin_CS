@@ -78,12 +78,12 @@ const errors = reactive({
   dateNaissance: ""
 })
 
-// --- FIX 1: Recovery of Step 1 data ---
+
 onMounted(() => {
   const savedDraft = sessionStorage.getItem('registration_draft');
   if (savedDraft) {
     dataFromStep1.value = JSON.parse(savedDraft);
-    // Pre-fill Step 2 if user came back from a phone error
+  
     const data = dataFromStep1.value;
     if (data.nomutilisateur) particulierForm.nom = data.nomutilisateur;
     if (data.prenomutilisateur) particulierForm.prenom = data.prenomutilisateur;

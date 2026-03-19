@@ -1,11 +1,12 @@
 <script setup>
-import { reactive, ref } from 'vue'
+import { reactive, ref,onMounted } from 'vue'
 import axios from 'axios'
 import { useRouter } from 'vue-router'
 import { authState } from '@/auth.js' 
 
 const router = useRouter()
-
+const showPassword = ref(false)
+const showPasswordConfirm = ref(false)
 const form = reactive({
   email: '',
   password: ''
@@ -98,7 +99,12 @@ async function login() {
 
       <div class="field" v-if="emailExists">
         <label>Mot de passe</label>
-        <input v-model="form.password" type="password" placeholder="Mot de passe" autofocus/>
+        <div class="password-wrapper">
+        <input v-model="form.password"  :type="showPasswordConfirm ? 'text' : 'password'" placeholder="Mot de passe" autofocus/>
+                  <button type="button" class="toggle-btn" @click="showPasswordConfirm = !showPasswordConfirm">
+            {{ showPasswordConfirm ? 'Masquer' : 'Afficher' }}
+          </button>
+          </div>
       </div>
 
 <button type="submit" class="login-btn">

@@ -74,7 +74,7 @@ const routes = [
     meta: { requiresAuth: true }
   },
   {
-    path: '/settings',
+    path: '/account-settings',
     name: 'settings',
     component: () => import('../views/account/AccountSettingsView.vue'),
     meta: { requiresAuth: true }
@@ -95,6 +95,12 @@ const routes = [
     path: '/security',
     name: 'security',
     component: () => import('../views/profile/SecurityView.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/profile-picture',
+    name: 'profile-picture',
+    component: () => import('../views/account/AccountProfilePictureView.vue'),
     meta: { requiresAuth: true }
   }
 ]

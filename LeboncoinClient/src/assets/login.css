@@ -42,6 +42,32 @@ form {
   border: none;
   cursor: pointer;
 }
+.toggle-btn {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none !important; /* Annule le fond orange */
+  border: none;
+  color: #ea580c; 
+  font-size: 12px;
+  font-weight: bold;
+  cursor: pointer;
+  width: auto !important; 
+  padding: 5px;
+}
+.toggle-btn:hover {
+  background: none !important;
+  text-decoration: underline;
+}
+.password-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.password-wrapper input {
+  padding-right: 80px; 
+}
 
 .modifier-btn {
   background: transparent;

@@ -12,6 +12,14 @@ const menuItems = [
   { title: 'Sécurité', icon: 'lock', path: '/security', desc: 'Mot de passe et protection' },
 ]
 
+
+
+
+const navigation = () => {
+
+  router.push({ name: 'profile-picture' }) 
+
+}
 const handleLogout = () => {
   authState.clearUser()
   router.push('/login')
@@ -26,8 +34,10 @@ const handleLogout = () => {
         class="bg-white rounded-3xl p-8 shadow-sm border border-gray-100 mb-6 flex items-center gap-6"
       >
         <img 
-          :src="authState.user.profilePhoto || `https://ui-avatars.com/api/?name=${authState.user.pseudonyme}&background=ea580c&color=fff`" 
-          class="w-20 h-20 rounded-full border-4 border-orange-50 object-cover shadow-sm" 
+          :src="authState.user.profilePhotoPath || `https://ui-avatars.com/api/?name=${authState.user.pseudonyme}&background=ea580c&color=fff`" 
+          class="w-20 h-20 rounded-full border-4 border-orange-50 object-cover shadow-sm clickable-img" 
+          @click="navigation"
+          
         />
         <div>
           <h1 class="text-2xl font-black text-gray-900">{{ authState.user.pseudonyme }}</h1>
@@ -63,3 +73,28 @@ const handleLogout = () => {
     </div>
   </div>
 </template>
+<style scoped>
+.clickable-img {
+  cursor: pointer;
+  user-select: none;
+  transition: transform 0.2s;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  overflow: hidden; 
+  border: 2px solid #ea580c; 
+  cursor: pointer;
+  transition: all 0.3s ease-in-out;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.clickable-img:hover {
+  opacity: 0.8;
+  width: 82px;
+  height: 82px;
+  object-fit: cover; 
+  transition: transform 0.3s ease;
+}
+</style>

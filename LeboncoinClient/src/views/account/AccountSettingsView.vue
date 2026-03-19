@@ -65,6 +65,11 @@ const updateAccount = async () => {
     payload.nomutilisateur = form.nomutilisateur;
     payload.prenomutilisateur = form.prenomutilisateur;
   }
+  if (userType.value === 'professionnel') {
+    payload.nomEntreprise = form.nomEntreprise;
+    payload.siret = form.siret;
+    payload.siteWeb = form.siteWeb;
+  }
 
   try {
    
