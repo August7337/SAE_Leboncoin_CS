@@ -16,15 +16,15 @@ const form = reactive({
   // Professional specific fields
   nomEntreprise: authState.user?.nomEntreprise || '',
   siret: authState.user?.siret || '',
-  siteWeb: authState.user?.siteWeb || ''
+  siteWeb: authState.user?.siteWeb || '',
 })
 
 const updateAccount = async () => {
-  const userId = authState.user?.idutilisateur;
-  if (!userId) return;
+  const userId = authState.user?.idutilisateur
+  if (!userId) return
 
-  isSaving.value = true;
-  message.value = { text: '', type: '' };
+  isSaving.value = true
+  message.value = { text: '', type: '' }
 
   try {
     // 2. Build the payload dynamically
@@ -34,33 +34,34 @@ const updateAccount = async () => {
       email: form.email,
       telephoneutilisateur: form.telephone,
       motDePasse: authState.user.motDePasse, // Caution: backend usually expects a separate "change password" flow
-    };
+    }
 
     // Add professional fields if applicable
     if (userType.value === 'professionnel') {
-      payload.nomEntreprise = form.nomEntreprise;
-      payload.siret = form.siret;
-      payload.siteWeb = form.siteWeb;
+      payload.nomEntreprise = form.nomEntreprise
+      payload.siret = form.siret
+      payload.siteWeb = form.siteWeb
     }
 
     // 3. Choose the endpoint based on user type if your API is separated
-    const endpoint = userType.value === 'professionnel' 
-      ? `https://localhost:7057/api/Professionnels/${userId}`
-      : `https://localhost:7057/api/Utilisateurs/${userId}`;
+    const endpoint =
+      userType.value === 'professionnel'
+        ? `https://localhost:7057/api/Professionnels/${userId}`
+        : `https://localhost:7057/api/Utilisateurs/${userId}`
 
-    const response = await axios.put(endpoint, payload);
+    const response = await axios.put(endpoint, payload)
 
-    const updatedUser = { ...authState.user, ...response.data };
-    authState.setUser(updatedUser);
-    
-    message.value = { text: 'Modifications enregistrées !', type: 'success' };
+    const updatedUser = { ...authState.user, ...response.data }
+    authState.setUser(updatedUser)
+
+    message.value = { text: 'Modifications enregistrées !', type: 'success' }
   } catch (error) {
-    console.error("Error:", error);
-    message.value = { text: 'Erreur lors de la sauvegarde.', type: 'error' };
+    console.error('Error:', error)
+    message.value = { text: 'Erreur lors de la sauvegarde.', type: 'error' }
   } finally {
-    isSaving.value = false;
+    isSaving.value = false
   }
-};
+}
 </script>
 
 <template>
@@ -68,16 +69,21 @@ const updateAccount = async () => {
     <div class="max-w-2xl mx-auto px-4">
       <div class="flex items-center justify-between mb-8">
         <h1 class="text-2xl font-black text-gray-900">Paramètres du compte</h1>
-        <span class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-orange-100 text-[#ea580c]">
+        <span
+          class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-orange-100 text-[#ea580c]"
+        >
           {{ userType }}
         </span>
       </div>
 
       <div class="bg-white rounded-3xl p-8 shadow-sm border border-gray-100 space-y-6">
-        
-        <div v-if="message.text" 
-             :class="message.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'"
-             class="p-4 rounded-xl text-sm font-bold text-center transition-all">
+        <div
+          v-if="message.text"
+          :class="
+            message.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
+          "
+          class="p-4 rounded-xl text-sm font-bold text-center transition-all"
+        >
           {{ message.text }}
         </div>
 
@@ -99,7 +105,7 @@ const updateAccount = async () => {
 
         <div v-if="userType === 'professionnel'" class="pt-6 border-t border-gray-100 space-y-6">
           <h3 class="font-bold text-gray-400 uppercase text-xs">Informations Professionnelles</h3>
-          
+
           <div>
             <label class="block text-sm font-bold mb-2">Nom de l'entreprise</label>
             <input v-model="form.nomEntreprise" type="text" class="input-style" />
@@ -112,7 +118,12 @@ const updateAccount = async () => {
             </div>
             <div>
               <label class="block text-sm font-bold mb-2">Site Web</label>
-              <input v-model="form.siteWeb" type="text" class="input-style" placeholder="https://..." />
+              <input
+                v-model="form.siteWeb"
+                type="text"
+                class="input-style"
+                placeholder="https://..."
+              />
             </div>
           </div>
         </div>

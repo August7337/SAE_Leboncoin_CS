@@ -9,11 +9,11 @@ const isSent = ref(false)
 const apiError = ref('')
 
 const form = reactive({
-  email: ''
+  email: '',
 })
 
 const errors = reactive({
-  email: ''
+  email: '',
 })
 
 async function handleForgot() {
@@ -27,16 +27,16 @@ async function handleForgot() {
 
   isSending.value = true
   try {
-    await axios.post(`https://localhost:7057/api/Utilisateurs/forgot-password`, { 
-      email: form.email 
+    await axios.post(`https://localhost:7057/api/Utilisateurs/forgot-password`, {
+      email: form.email,
     })
-    
+
     isSent.value = true
     setTimeout(() => {
       router.push({ name: 'login' })
     }, 3000)
   } catch (error) {
-    apiError.value = error.response?.data || "Une erreur est survenue."
+    apiError.value = error.response?.data || 'Une erreur est survenue.'
   } finally {
     isSending.value = false
   }
@@ -45,15 +45,33 @@ async function handleForgot() {
 
 <template>
   <div class="min-h-screen bg-[#f5f5f5] flex items-center justify-center px-4">
-    <div v-if="isSent" class="fixed inset-0 flex items-center justify-center bg-white/95 z-50 transition-opacity">
+    <div
+      v-if="isSent"
+      class="fixed inset-0 flex items-center justify-center bg-white/95 z-50 transition-opacity"
+    >
       <div class="text-center">
-        <div class="w-20 h-20 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
-           <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-[#ea580c]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+        <div
+          class="w-20 h-20 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-10 w-10 text-[#ea580c]"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="3"
+              d="M5 13l4 4L19 7"
+            />
           </svg>
         </div>
         <h2 class="text-2xl font-bold text-gray-900">Email envoyé !</h2>
-        <p class="text-gray-500 mt-2">Consultez votre boîte mail pour réinitialiser votre mot de passe.</p>
+        <p class="text-gray-500 mt-2">
+          Consultez votre boîte mail pour réinitialiser votre mot de passe.
+        </p>
       </div>
     </div>
 
@@ -62,23 +80,28 @@ async function handleForgot() {
       <p class="text-center text-gray-500 mb-8">Entrez votre email pour recevoir un lien.</p>
 
       <form @submit.prevent="handleForgot" class="space-y-6">
-        <div v-if="apiError" class="bg-red-50 text-red-600 p-3 rounded-xl text-sm font-bold text-center">
+        <div
+          v-if="apiError"
+          class="bg-red-50 text-red-600 p-3 rounded-xl text-sm font-bold text-center"
+        >
           {{ apiError }}
         </div>
 
         <div class="field">
           <label class="block text-sm font-bold mb-2 text-gray-700">Votre adresse email</label>
-          <input 
+          <input
             v-model="form.email"
-            type="email" 
+            type="email"
             placeholder="exemple@mail.com"
             class="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:border-[#ea580c] transition-all"
           />
-          <span v-if="errors.email" class="text-red-500 text-xs font-bold mt-1">{{ errors.email }}</span>
+          <span v-if="errors.email" class="text-red-500 text-xs font-bold mt-1">{{
+            errors.email
+          }}</span>
         </div>
 
-        <button 
-          type="submit" 
+        <button
+          type="submit"
           :disabled="isSending"
           class="w-full bg-[#ea580c] text-white font-black py-4 rounded-2xl shadow-lg shadow-orange-200 hover:bg-[#c2410c] transition-all disabled:opacity-50"
         >
@@ -87,7 +110,9 @@ async function handleForgot() {
       </form>
 
       <div class="mt-6 text-center">
-        <router-link to="/login" class="text-[#ea580c] font-bold hover:underline text-sm">Retour à la connexion</router-link>
+        <router-link to="/login" class="text-[#ea580c] font-bold hover:underline text-sm"
+          >Retour à la connexion</router-link
+        >
       </div>
     </div>
   </div>
@@ -95,8 +120,13 @@ async function handleForgot() {
 
 <style scoped>
 @keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: .5; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
 }
 .animate-pulse {
   animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;

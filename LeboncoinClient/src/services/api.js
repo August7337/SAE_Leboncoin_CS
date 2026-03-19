@@ -61,4 +61,5 @@ export const postJson = (path, body, options = {}) =>
 export const putJson = (path, body, options = {}) =>
   apiJson(path, createJsonRequestOptions('PUT', body, options))
 
-export const deleteRequest = (path, options = {}) => apiFetch(path, { ...options, method: 'DELETE' })
+export const deleteRequest = (path, options = {}) =>
+  apiFetch(path, { ...options, method: 'DELETE' })
