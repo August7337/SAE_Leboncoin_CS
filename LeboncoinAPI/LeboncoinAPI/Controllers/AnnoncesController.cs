@@ -186,4 +186,36 @@ public class AnnoncesController : ControllerBase
 
         return NoContent();
     }
+
+    // GET: api/Annonces/favorites/{userId}
+    [HttpGet("favorites/{userId}")]
+    public async Task<ActionResult<IEnumerable<AnnonceSearchResultDto>>> GetFavorites(int userId)
+    {
+        var favorites = await _annonceRepository.GetFavoritesByUserIdAsync(userId);
+        return Ok(favorites);
+    }
+
+    // GET: api/Annonces/favorites/ids/{userId}
+    [HttpGet("favorites/ids/{userId}")]
+    public async Task<ActionResult<IEnumerable<int>>> GetFavoriteIds(int userId)
+    {
+        var ids = await _annonceRepository.GetFavoriteIdsByUserIdAsync(userId);
+        return Ok(ids);
+    }
+
+    // POST: api/Annonces/{annonceId}/favorite/{userId}
+    [HttpPost("{annonceId}/favorite/{userId}")]
+    public async Task<IActionResult> AddFavorite(int annonceId, int userId)
+    {
+        await _annonceRepository.AddFavoriteAsync(userId, annonceId);
+        return Ok();
+    }
+
+    // DELETE: api/Annonces/{annonceId}/favorite/{userId}
+    [HttpDelete("{annonceId}/favorite/{userId}")]
+    public async Task<IActionResult> RemoveFavorite(int annonceId, int userId)
+    {
+        await _annonceRepository.RemoveFavoriteAsync(userId, annonceId);
+        return NoContent();
+    }
 }

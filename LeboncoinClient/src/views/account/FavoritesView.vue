@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue'
 import axios from 'axios'
 import { authState } from '@/auth.js'
 import AnnonceList from '@/components/AnnonceList.vue'
+import annoncesService from '@/services/annoncesService'
 
 const favorites = ref([])
 const loading = ref(true)
@@ -10,9 +11,8 @@ const loading = ref(true)
 async function fetchFavorites() {
   if (!authState.user) return
   try {
-    // Note: l'URL dépend de ta table de jointure (ex: UtilisateurFavoris)
-    const response = await axios.get(`https://localhost:7057/api/Annonces/favorites/${authState.user.idutilisateur}`)
-    favorites.value = response.data
+    const data = await annoncesService.getFavorites(authState.user.idutilisateur)
+    favorites.value = data
   } catch (error) {
     console.error("Erreur favoris", error)
   } finally {
@@ -31,7 +31,11 @@ onMounted(fetchFavorites)
       <div v-if="loading" class="text-center py-20 text-gray-400">Chargement...</div>
 
       <div v-else-if="favorites.length > 0">
-        <AnnonceList :annonces="favorites" />
+        <AnnonceList 
+          :annonces="favorites" 
+          :favorite-ids="favorites.map(f => f.idannonce)" 
+          @update-favorites="(newIds) => favorites = favorites.filter(f => newIds.includes(f.idannonce))" 
+        />
       </div>
 
       <div v-else class="bg-white rounded-3xl p-16 text-center border border-gray-100 shadow-sm">

@@ -87,7 +87,7 @@
       </div>
       
       <div v-else-if="annonces.length > 0">
-        <AnnonceList :annonces="annonces" />
+        <AnnonceList :annonces="annonces" :favorite-ids="favoriteIds" @update-favorites="favoriteIds = $event" />
       </div>
       
       <div v-else class="bg-white rounded-3xl p-12 text-center shadow-sm border border-gray-100">
@@ -113,8 +113,10 @@ import AnnonceList from '../components/AnnonceList.vue'
 import FilterSidebar from '../components/FilterSidebar.vue'
 import { buildAssetUrl } from '../services/api'
 import annoncesService from '../services/annoncesService'
+import { authState } from '@/auth.js'
 
 const annonces = ref([])
+const favoriteIds = ref([])
 const isLoading = ref(false)
 const errorMessage = ref('')
 const searchQuery = ref('')
@@ -186,7 +188,16 @@ const applyFilters = (newFilters) => {
   performSearch()
 }
 
-onMounted(performSearch)
+onMounted(async () => {
+  if (authState.user) {
+    try {
+      favoriteIds.value = await annoncesService.getFavoriteIds(authState.user.idutilisateur)
+    } catch (e) {
+      console.error("Erreur récup favoris", e)
+    }
+  }
+  performSearch()
+})
 </script>
 
 <style scoped>
