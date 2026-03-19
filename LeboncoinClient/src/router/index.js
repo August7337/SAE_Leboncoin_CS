@@ -97,6 +97,11 @@ const routes = [
     component: () => import('../views/profile/SecurityView.vue'),
     meta: { requiresAuth: true },
   },
+  {
+    path: '/vendeur/:id',
+    name: 'public-profile',
+    component: () => import('../views/profile/PublicProfileView.vue'),
+  },
 ]
 
 const router = createRouter({

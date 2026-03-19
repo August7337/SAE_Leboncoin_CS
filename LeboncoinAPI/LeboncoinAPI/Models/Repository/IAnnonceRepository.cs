@@ -15,4 +15,5 @@ public interface IAnnonceRepository : IDataRepository<Annonce>
         DateTime? dateArrivee = null,
         DateTime? dateDepart = null,
         List<int>? commoditeIds = null);
+    Task<IEnumerable<AnnonceSearchResultDto>> GetByUserIdAsync(int userId);
 }

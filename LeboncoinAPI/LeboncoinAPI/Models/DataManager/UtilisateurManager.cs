@@ -1,4 +1,4 @@
-﻿using BCrypt.Net;
+using BCrypt.Net;
 using LeboncoinAPI.Models.DTOs;
 using LeboncoinAPI.Models.DTOs.LeboncoinAPI.Models.DTOs;
 using LeboncoinAPI.Models.EntityFramework;
@@ -32,6 +32,15 @@ public class UtilisateurManager : IDataUtilisateurRepository<Utilisateur>
     {
         
         return await _dbContext.Utilisateurs.FindAsync(id);
+    }
+
+    public async Task<Utilisateur?> GetPublicProfileAsync(int id)
+    {
+        return await _dbContext.Utilisateurs
+            .Include(u => u.IddateNavigation)
+            .Include(u => u.Annonces)
+            .Include(u => u.Avis)
+            .FirstOrDefaultAsync(u => u.Idutilisateur == id);
     }
 
     public async Task AddAsync(Utilisateur entity)
