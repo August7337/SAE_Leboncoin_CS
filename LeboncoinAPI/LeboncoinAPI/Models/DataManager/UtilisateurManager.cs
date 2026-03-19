@@ -88,10 +88,11 @@ public class UtilisateurManager : IDataUtilisateurRepository<Utilisateur>
 
     public async Task UpdateAsync(Utilisateur entityToUpdate, Utilisateur entity)
     {
-        
+
         _dbContext.Entry(entityToUpdate).CurrentValues.SetValues(entity);
         await _dbContext.SaveChangesAsync();
     }
+
 
     public async Task DeleteAsync(Utilisateur entity)
     {
@@ -160,12 +161,18 @@ public class UtilisateurManager : IDataUtilisateurRepository<Utilisateur>
     }
     public async Task UpdateProfileAsync(Utilisateur existingUser, UtilisateurUpdateDTO dto)
     {
-     
+        
+        if (existingUser.Particulier == null)
+        {
+            await _dbContext.Entry(existingUser).Reference(u => u.Particulier).LoadAsync();
+        }
+
+    
         existingUser.Pseudonyme = dto.Pseudonyme;
         existingUser.Email = dto.Email;
         existingUser.Telephoneutilisateur = dto.Telephoneutilisateur;
 
-
+       
         if (existingUser.Particulier != null)
         {
             existingUser.Particulier.Civilite = dto.Civilite;

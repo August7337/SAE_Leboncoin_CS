@@ -1,4 +1,6 @@
-﻿using LeboncoinAPI.Models.DataManager;
+﻿using CloudinaryDotNet;
+using CloudinaryDotNet.Actions;
+using LeboncoinAPI.Models.DataManager;
 using LeboncoinAPI.Models.DTOs;
 using LeboncoinAPI.Models.DTOs.LeboncoinAPI.Models.DTOs;
 using LeboncoinAPI.Models.EntityFramework;
@@ -15,11 +17,48 @@ namespace LeboncoinAPI.Controllers;
 public class UtilisateursController : ControllerBase
 {
     private readonly IDataUtilisateurRepository<Utilisateur> _dataRepository;
+    private readonly Cloudinary _cloudinary;
 
-    
-    public UtilisateursController(IDataUtilisateurRepository<Utilisateur> dataRepository)
+    public UtilisateursController(IDataUtilisateurRepository<Utilisateur> dataRepository, IConfiguration config)
     {
         _dataRepository = dataRepository;
+
+        var acc = new Account(
+            config["CloudinarySettings:CloudName"],
+            config["CloudinarySettings:ApiKey"],
+            config["CloudinarySettings:ApiSecret"]
+        );
+        _cloudinary = new Cloudinary(acc);
+    }
+
+    [HttpPost("{id}/upload-pfp")]
+    public async Task<IActionResult> UploadPfp(int id, IFormFile file)
+    {
+        if (file == null || file.Length == 0) return BadRequest("No file.");
+
+        using var stream = file.OpenReadStream();
+
+        var uploadParams = new ImageUploadParams()
+        {
+            File = new FileDescription(file.FileName, stream),
+            Folder = "user_profiles",
+            PublicId = $"user_{id}",
+            Overwrite = true,
+            
+            Transformation = new Transformation()
+                .Width(200).Height(200).Crop("thumb").Gravity("face").Radius("max").FetchFormat("png")
+        };
+
+        var uploadResult = await _cloudinary.UploadAsync(uploadParams);
+
+        if (uploadResult.Error != null) return BadRequest(uploadResult.Error.Message);
+
+    
+        var user = await _dataRepository.GetByIdAsync(id);
+        user.ProfilePhotoPath = uploadResult.SecureUrl.ToString();
+        await _dataRepository.UpdateAsync(user, user);
+
+        return Ok(new { newUrl = user.ProfilePhotoPath });
     }
 
     // GET: api/Utilisateurs
@@ -99,10 +138,11 @@ public class UtilisateursController : ControllerBase
         if (id != dto.Idutilisateur)
             return BadRequest("ID mismatch");
 
+      
         var existingUser = await _dataRepository.GetByIdAsync(id);
+
         if (existingUser == null) return NotFound();
 
-        // Pass the DTO to the manager
         await ((UtilisateurManager)_dataRepository).UpdateProfileAsync(existingUser, dto);
 
         return NoContent();
@@ -145,7 +185,7 @@ public class UtilisateursController : ControllerBase
             email = user.Email,
             telephone = user.Telephoneutilisateur,
             typeUtilisateur = userType,
-
+            profilePhotoPath = user.ProfilePhotoPath,
            
             civilite = user.Particulier?.Civilite,
             nomutilisateur = user.Particulier?.Nomutilisateur,
