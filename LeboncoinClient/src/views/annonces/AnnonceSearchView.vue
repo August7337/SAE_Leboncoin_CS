@@ -3,8 +3,10 @@ import { ref, onMounted } from 'vue'
 import AnnonceList from '../../components/AnnonceList.vue'
 import annoncesService from '../../services/annoncesService'
 import { buildAssetUrl } from '../../services/api'
+import { authState } from '@/auth.js'
 
 const searchQuery = ref('')
+const favoriteIds = ref([])
 const filteredAnnonces = ref([])
 const isLoading = ref(false)
 const errorMessage = ref('')
@@ -68,7 +70,14 @@ const clearSearch = () => {
   performSearch()
 }
 
-onMounted(() => {
+onMounted(async () => {
+  if (authState.user) {
+    try {
+      favoriteIds.value = await annoncesService.getFavoriteIds(authState.user.idutilisateur)
+    } catch (e) {
+      console.error("Erreur récup favoris", e)
+    }
+  }
   performSearch()
 })
 
@@ -131,6 +140,33 @@ onMounted(fetchAnnonces)
           <button @click="searchQuery = ''" class="mt-4 text-[#ea580c] font-bold">
             Effacer les filtres
           </button>
+          <svg class="w-6 h-6 absolute left-4 top-4 text-gray-400 group-focus-within:text-[#ea580c]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <div class="max-w-6xl mx-auto px-4 py-8">
+      <div v-if="loading" class="flex justify-center py-20">
+        <div class="w-10 h-10 border-4 border-orange-100 border-t-[#ea580c] rounded-full animate-spin"></div>
+      </div>
+
+      <div v-else>
+        <div class="flex items-center justify-between mb-8">
+          <h1 class="text-xl font-black text-gray-900">
+            {{ filteredAnnonces.length }} logement{{ filteredAnnonces.length > 1 ? 's' : '' }} trouvé{{ filteredAnnonces.length > 1 ? 's' : '' }}
+          </h1>
+          <p class="text-gray-500 font-medium" v-if="!isLoading && !errorMessage">
+            {{ filteredAnnonces.length }} logements disponibles
+          </p>
+        </div>
+
+        <AnnonceList v-if="filteredAnnonces.length > 0" :annonces="filteredAnnonces" :favorite-ids="favoriteIds" @update-favorites="favoriteIds = $event" />
+
+        <div v-else class="bg-white rounded-3xl p-16 text-center border border-gray-100 mt-10">
+          <p class="text-gray-400 text-lg">Aucun résultat pour cette recherche.</p>
+          <button @click="searchQuery = ''" class="mt-4 text-[#ea580c] font-bold">Effacer les filtres</button>
         </div>
       </div>
 
@@ -143,7 +179,7 @@ onMounted(fetchAnnonces)
       </div>
 
       <div v-else-if="filteredAnnonces.length > 0">
-        <AnnonceList :annonces="filteredAnnonces" />
+        <AnnonceList :annonces="filteredAnnonces" :favorite-ids="favoriteIds" @update-favorites="favoriteIds = $event" />
       </div>
 
       <div

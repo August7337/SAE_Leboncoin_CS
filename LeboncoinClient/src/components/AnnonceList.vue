@@ -8,14 +8,51 @@ const props = defineProps({
   isAuth: { type: Boolean, default: false },
 })
 
+const emit = defineEmits(['update-favorites'])
+
+import annoncesService from '@/services/annoncesService'
+import { authState } from '@/auth.js'
+
 const formatPrice = (price) => {
   if (!price) return '0'
   return parseFloat(price).toString()
 }
 
-const isFavorite = (id) => props.favoriteIds.includes(id)
-const toggleFavorite = (id) => {
-  console.log("Toggle favori pour l'ID:", id)
+import { watch } from 'vue'
+
+const localFavoriteIds = ref([...props.favoriteIds])
+
+watch(() => props.favoriteIds, (newVal) => {
+  localFavoriteIds.value = [...newVal]
+}, { deep: true, immediate: true })
+
+const isFavorite = (id) => localFavoriteIds.value.includes(id)
+
+const toggleFavorite = async (id) => {
+  if (!authState.user) {
+    alert("Vous devez être connecté pour ajouter des favoris.");
+    return;
+  }
+  
+  try {
+    const userId = authState.user.idutilisateur;
+    if (isFavorite(id)) {
+      // Mise à jour optimiste (immédiate)
+      localFavoriteIds.value = localFavoriteIds.value.filter(fId => fId !== id);
+      emit('update-favorites', localFavoriteIds.value);
+      
+      await annoncesService.removeFavorite(id, userId);
+    } else {
+      // Mise à jour optimiste (immédiate)
+      localFavoriteIds.value.push(id);
+      emit('update-favorites', localFavoriteIds.value);
+      
+      await annoncesService.addFavorite(id, userId);
+    }
+  } catch (error) {
+    console.error("Erreur lors de la modification des favoris", error);
+    // On pourrait annuler la mise à jour optimiste ici en cas d'erreur
+  }
 }
 </script>
 
