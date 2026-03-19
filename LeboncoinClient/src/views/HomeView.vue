@@ -161,11 +161,7 @@ const performSearch = async () => {
 
   try {
     let data
-    if (searchQuery.value) {
-      data = await annoncesService.searchByLocation(searchQuery.value, filters.value)
-    } else {
-      data = await annoncesService.getAll()
-    }
+    data = await annoncesService.searchByLocation(searchQuery.value || '', filters.value)
     annonces.value = Array.isArray(data) ? data.map(mapAnnonceFromApi) : []
   } catch (error) {
     errorMessage.value = 'Impossible de charger les annonces.'
@@ -192,35 +188,6 @@ const applyFilters = (newFilters) => {
 
 onMounted(performSearch)
 </script>
-
-<style scoped>
-.filter-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.75rem 1.25rem;
-  background-color: white;
-  border: 1px solid #e2e8f0;
-  border-radius: 15px;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  transition: background-color 0.2s;
-  font-size: 0.875rem;
-  font-weight: 500;
-  white-space: nowrap;
-}
-
-.filter-btn:hover {
-  background-color: #f8fafc;
-}
-
-.hide-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-.hide-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-</style>
 
 <style scoped>
 .filter-btn {

@@ -98,13 +98,9 @@ public class AnnonceManager : IAnnonceRepository
         {
             queryable = queryable.Where(a =>
                 (a.IdadresseNavigation.IdvilleNavigation.Nomville != null &&
-                 a.IdadresseNavigation.IdvilleNavigation.Nomville.ToLower().Contains(q.ToLower())) ||
+                 a.IdadresseNavigation.IdvilleNavigation.Nomville.ToLower().StartsWith(q.ToLower())) ||
                 (a.IdadresseNavigation.IdvilleNavigation.Codepostal != null &&
-                 a.IdadresseNavigation.IdvilleNavigation.Codepostal.ToLower().Contains(q.ToLower())) ||
-                (a.IdadresseNavigation.IdvilleNavigation.IddepartementNavigation.Nomdepartement != null &&
-                 a.IdadresseNavigation.IdvilleNavigation.IddepartementNavigation.Nomdepartement.ToLower().Contains(q.ToLower())) ||
-                (a.IdadresseNavigation.IdvilleNavigation.IddepartementNavigation.Numerodepartement != null &&
-                 a.IdadresseNavigation.IdvilleNavigation.IddepartementNavigation.Numerodepartement.ToLower().Contains(q.ToLower()))
+                 a.IdadresseNavigation.IdvilleNavigation.Codepostal.ToLower().StartsWith(q.ToLower()))
             );
         }
 
@@ -170,7 +166,14 @@ public class AnnonceManager : IAnnonceRepository
             Codepostal = a.IdadresseNavigation?.IdvilleNavigation?.Codepostal,
             DateDepot = a.IddateNavigation?.Date1,
             Prixnuitee = a.Prixnuitee,
-            Photos = a.Photos,
+            Capacite = a.Capacite,
+            Nombreetoilesleboncoin = a.Nombreetoilesleboncoin,
+            Photos = a.Photos.Select(p => new Photo
+            {
+                Idphoto = p.Idphoto,
+                Idannonce = p.Idannonce,
+                Lienphoto = p.Lienphoto
+            }).ToList(),
         });
     }
 
