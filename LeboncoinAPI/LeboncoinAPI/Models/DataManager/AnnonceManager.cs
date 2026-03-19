@@ -216,7 +216,14 @@ public class AnnonceManager : IAnnonceRepository
             Codepostal = a.IdadresseNavigation?.IdvilleNavigation?.Codepostal,
             DateDepot = a.IddateNavigation?.Date1,
             Prixnuitee = a.Prixnuitee,
-            Photos = a.Photos,
+            Capacite = a.Capacite,
+            Nombreetoilesleboncoin = a.Nombreetoilesleboncoin,
+            Photos = a.Photos.Select(p => new Photo
+            {
+                Idphoto = p.Idphoto,
+                Idannonce = p.Idannonce,
+                Lienphoto = p.Lienphoto
+            }).ToList(),
         });
     }
 
