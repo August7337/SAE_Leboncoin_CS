@@ -1,29 +1,67 @@
+/* --- Structure Globale --- */
 .register-container {
   width: 400px;
-  margin: auto;
-  margin-top: 80px;
+  margin: 80px auto;
   padding: 30px;
-  border-radius: 10px;
   background: #f5f5f5;
+  border-radius: 10px;
   box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+  position: relative; /* Nécessaire pour le positionnement de la flèche */
 }
 
-h1 {
+h1 { 
+  text-align: center; 
+  font-weight: bold; 
+  font-size: large; 
+  margin-bottom: 10px;
+}
+
+h2 {
   text-align: center;
+  margin-bottom: 4%;
+  font-size: 1rem;
+  color: #666;
 }
 
+/* --- Champs du Formulaire --- */
 .field {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
   margin-bottom: 15px;
 }
 
-input {
+.field label {
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+input, select {
   width: 100%;
   padding: 10px;
   margin-top: 5px;
   border: 1px solid #ccc;
-  border-radius: 5px;
+  border-radius: 12px;
+  box-sizing: border-box; /* Évite que le padding dépasse */
 }
 
+input::placeholder {
+  font-weight: bold;
+  opacity: 0.5;
+  color: rgb(146, 117, 117);
+}
+
+input:focus {
+  outline: none;
+  border: 1px solid #ff6e14;
+}
+
+input.error {
+  border: 1px solid red;
+}
+
+/* --- Bouton Principal --- */
 button {
   width: 100%;
   padding: 12px;
@@ -32,15 +70,109 @@ button {
   border: none;
   border-radius: 5px;
   cursor: pointer;
+  font-weight: bold;
+  transition: background 0.2s;
 }
 
 button:hover {
   background: #e65c00;
 }
 
-span {
+/* --- Sélecteur Type de Compte --- */
+.account-selector {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  margin-top: 5px;
+}
+
+.account-selector button {
+  flex: 1;
+  background: white;
+  color: #b1aaaa;
+  border: 2px solid #ccc;
+  border-radius: 8px;
+  padding: 10px;
+  transition: all 0.2s;
+}
+
+.account-selector button.active {
+  border-color: #ea580c;
+  background-color: #fff7ed;
+  color: #ea580c;
+}
+
+.account-selector button:hover {
+  border-color: #ea580c;
+  background-color: #fff7ed;
+}
+
+/* --- Mot de passe avec Toggle --- */
+.password-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.password-wrapper input {
+  padding-right: 80px; 
+}
+
+.toggle-btn {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none !important; /* Annule le fond orange */
+  border: none;
+  color: #ea580c; 
+  font-size: 12px;
+  font-weight: bold;
+  cursor: pointer;
+  width: auto !important; 
+  padding: 5px;
+}
+
+.toggle-btn:hover {
+  background: none !important;
+  text-decoration: underline;
+}
+
+/* --- Flèche de Retour (Leboncoin Style) --- */
+.back-arrow-btn {
+  width: auto !important;
+  background: none !important;
+  padding: 8px !important;
+  margin: 0;
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  color: #71717a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.back-arrow-btn:hover {
+  background-color: #f4f4f5 !important;
+  color: #ea580c !important;
+}
+
+.back-arrow-btn svg {
+  width: 24px;
+  height: 24px;
+}
+
+/* --- Messages d'erreur et Success --- */
+span, .error {
   color: red;
   font-size: 12px;
+  text-align: left;
+  width: 100%;
+  margin-top: 5px;
 }
 
 .success {
@@ -49,8 +181,24 @@ span {
   margin-top: 10px;
 }
 
-.error {
-  color: red;
+.debug-info {
+  margin-top: 20px;
+  font-size: 12px;
+  color: #666;
   text-align: center;
-  margin-top: 10px;
+}
+
+/* --- Animations Success Overlay --- */
+.fixed { position: fixed; }
+.inset-0 { top: 0; right: 0; bottom: 0; left: 0; }
+.z-50 { z-index: 50; }
+.bg-white\/95 { background-color: rgba(255, 255, 255, 0.95); }
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: .5; }
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }

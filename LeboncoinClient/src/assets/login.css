@@ -26,7 +26,37 @@ h1 {
 input.error {
   border: 1px solid red;
 }
+/* Ensure the form items have spacing */
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem; /* This creates space between all fields and buttons */
+}
 
+.login-btn {
+  background-color: #ea580c;
+  color: white;
+  padding: 12px;
+  border-radius: 12px;
+  font-weight: bold;
+  border: none;
+  cursor: pointer;
+}
+
+.modifier-btn {
+  background: transparent;
+  color: #ea580c;
+  border: 1px solid #ea580c;
+  padding: 12px;
+  border-radius: 12px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.modifier-btn:hover {
+  background: #fff7ed;
+}
 .field {
   margin-bottom: 15px;
   border-radius: 15px;

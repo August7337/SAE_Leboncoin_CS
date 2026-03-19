@@ -10,5 +10,7 @@ public class AnnonceSearchResultDto
     public string? Codepostal { get; set; }
     public DateOnly? DateDepot { get; set; }
     public decimal Prixnuitee { get; set; }
-    public string? Lienphoto { get; set; }
+    public int? Capacite { get; set; }
+    public int? Nombreetoilesleboncoin { get; set; }
+    public ICollection<Photo>? Photos { get; set; }
 }

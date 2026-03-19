@@ -32,24 +32,27 @@ namespace LeboncoinAPI.Migrations
 
                     b.HasKey("IdannonceA", "IdannonceB");
 
-                    b.HasIndex("IdannonceB");
-
-                    b.ToTable("ressembler", (string)null);
+                    b.ToTable("AnnonceAnnonce");
                 });
 
             modelBuilder.Entity("AnnonceCommodite", b =>
                 {
-                    b.Property<int>("Idannonce")
-                        .HasColumnType("integer");
-
                     b.Property<int>("Idcommodite")
-                        .HasColumnType("integer");
+                        .HasColumnType("integer")
+                        .HasColumnName("Idcommodite");
 
-                    b.HasKey("Idannonce", "Idcommodite");
+                    b.Property<int>("Idannonce")
+                        .HasColumnType("integer")
+                        .HasColumnName("Idannonce");
 
-                    b.HasIndex("Idcommodite");
+                    b.HasKey("Idcommodite", "Idannonce")
+                        .HasName("pk_proposer");
 
-                    b.ToTable("AnnonceCommodite");
+                    b.HasIndex(new[] { "Idannonce" }, "idx_proposer_idannonce");
+
+                    b.HasIndex(new[] { "Idcommodite" }, "idx_proposer_idcommodite");
+
+                    b.ToTable("AnnonceCommodite", (string)null);
                 });
 
             modelBuilder.Entity("AnnonceUtilisateur", b =>
@@ -62,9 +65,43 @@ namespace LeboncoinAPI.Migrations
 
                     b.HasKey("Idannonce", "Idutilisateur");
 
-                    b.HasIndex("Idutilisateur");
-
                     b.ToTable("AnnonceUtilisateur");
+                });
+
+            modelBuilder.Entity("Attribuer", b =>
+                {
+                    b.Property<int>("Idutilisateur")
+                        .HasColumnType("integer")
+                        .HasColumnName("idutilisateur");
+
+                    b.Property<int>("Idrole")
+                        .HasColumnType("integer")
+                        .HasColumnName("idrole");
+
+                    b.HasKey("Idutilisateur", "Idrole")
+                        .HasName("pk_attribuer");
+
+                    b.HasIndex("Idrole");
+
+                    b.ToTable("attribuer", (string)null);
+                });
+
+            modelBuilder.Entity("Cibler", b =>
+                {
+                    b.Property<int>("Idtypehebergement")
+                        .HasColumnType("integer")
+                        .HasColumnName("idtypehebergement");
+
+                    b.Property<int>("Idrecherche")
+                        .HasColumnType("integer")
+                        .HasColumnName("idrecherche");
+
+                    b.HasKey("Idtypehebergement", "Idrecherche")
+                        .HasName("pk_cibler");
+
+                    b.HasIndex(new[] { "Idrecherche" }, "idx_cibler_idrecherche");
+
+                    b.ToTable("cibler", (string)null);
                 });
 
             modelBuilder.Entity("CommoditeRecherche", b =>
@@ -77,9 +114,7 @@ namespace LeboncoinAPI.Migrations
 
                     b.HasKey("Idcommodite", "Idrecherche");
 
-                    b.HasIndex("Idrecherche");
-
-                    b.ToTable("filtrer", (string)null);
+                    b.ToTable("CommoditeRecherche");
                 });
 
             modelBuilder.Entity("CompensationIncident", b =>
@@ -92,9 +127,61 @@ namespace LeboncoinAPI.Migrations
 
                     b.HasKey("Idcompensation", "Idincident");
 
-                    b.HasIndex("Idincident");
+                    b.ToTable("CompensationIncident");
+                });
+
+            modelBuilder.Entity("Demander", b =>
+                {
+                    b.Property<int>("Idincident")
+                        .HasColumnType("integer")
+                        .HasColumnName("idincident");
+
+                    b.Property<int>("Idcompensation")
+                        .HasColumnType("integer")
+                        .HasColumnName("idcompensation");
+
+                    b.HasKey("Idincident", "Idcompensation")
+                        .HasName("pk_demander");
+
+                    b.HasIndex(new[] { "Idcompensation" }, "idx_demander_idcompensation");
 
                     b.ToTable("demander", (string)null);
+                });
+
+            modelBuilder.Entity("Favoriser", b =>
+                {
+                    b.Property<int>("Idutilisateur")
+                        .HasColumnType("integer")
+                        .HasColumnName("idutilisateur");
+
+                    b.Property<int>("Idannonce")
+                        .HasColumnType("integer")
+                        .HasColumnName("idannonce");
+
+                    b.HasKey("Idutilisateur", "Idannonce")
+                        .HasName("pk_favoriser");
+
+                    b.HasIndex(new[] { "Idannonce" }, "idx_favoriser_idannonce");
+
+                    b.ToTable("favoriser", (string)null);
+                });
+
+            modelBuilder.Entity("Filtrer", b =>
+                {
+                    b.Property<int>("Idrecherche")
+                        .HasColumnType("integer")
+                        .HasColumnName("idrecherche");
+
+                    b.Property<int>("Idcommodite")
+                        .HasColumnType("integer")
+                        .HasColumnName("idcommodite");
+
+                    b.HasKey("Idrecherche", "Idcommodite")
+                        .HasName("pk_filtrer");
+
+                    b.HasIndex(new[] { "Idcommodite" }, "idx_filtrer_idcommodite");
+
+                    b.ToTable("filtrer", (string)null);
                 });
 
             modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.Adresse", b =>
@@ -119,7 +206,8 @@ namespace LeboncoinAPI.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("numerorue");
 
-                    b.HasKey("Idadresse");
+                    b.HasKey("Idadresse")
+                        .HasName("pk_adresse");
 
                     b.HasIndex(new[] { "Idville" }, "idx_adresse_idville");
 
@@ -146,7 +234,9 @@ namespace LeboncoinAPI.Migrations
                         .HasColumnName("descriptionannonce");
 
                     b.Property<bool>("Estverifie")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
+                        .HasDefaultValue(false)
                         .HasColumnName("estverifie");
 
                     b.Property<int>("Idadresse")
@@ -172,11 +262,6 @@ namespace LeboncoinAPI.Migrations
                     b.Property<int>("Idutilisateur")
                         .HasColumnType("integer")
                         .HasColumnName("idutilisateur");
-
-                    b.Property<string>("Lienphoto")
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)")
-                        .HasColumnName("lienphoto");
 
                     b.Property<int?>("Minimumnuitee")
                         .HasColumnType("integer")
@@ -217,7 +302,9 @@ namespace LeboncoinAPI.Migrations
                         .HasColumnName("prixnuitee");
 
                     b.Property<bool>("Smsverifie")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
+                        .HasDefaultValue(false)
                         .HasColumnName("smsverifie");
 
                     b.Property<string>("Titreannonce")
@@ -226,7 +313,8 @@ namespace LeboncoinAPI.Migrations
                         .HasColumnType("character varying(50)")
                         .HasColumnName("titreannonce");
 
-                    b.HasKey("Idannonce");
+                    b.HasKey("Idannonce")
+                        .HasName("pk_annonce");
 
                     b.HasIndex(new[] { "Capacite" }, "idx_annonce_capacite");
 
@@ -280,7 +368,8 @@ namespace LeboncoinAPI.Migrations
                         .HasColumnType("character varying(500)")
                         .HasColumnName("texteavis");
 
-                    b.HasKey("Idavis");
+                    b.HasKey("Idavis")
+                        .HasName("pk_avis");
 
                     b.HasIndex("Idannonce");
 
@@ -328,7 +417,8 @@ namespace LeboncoinAPI.Migrations
                         .HasColumnType("character varying(50)")
                         .HasColumnName("prenomtitulaire");
 
-                    b.HasKey("Idcartebancaire");
+                    b.HasKey("Idcartebancaire")
+                        .HasName("pk_cartebancaire");
 
                     b.HasIndex("Idutilisateur");
 
@@ -349,7 +439,8 @@ namespace LeboncoinAPI.Migrations
                         .HasColumnType("character varying(50)")
                         .HasColumnName("nomcategorie");
 
-                    b.HasKey("Idcategorie");
+                    b.HasKey("Idcategorie")
+                        .HasName("pk_categorie");
 
                     b.ToTable("categorie");
                 });
@@ -372,7 +463,8 @@ namespace LeboncoinAPI.Migrations
                         .HasColumnType("character varying(50)")
                         .HasColumnName("nomcommodite");
 
-                    b.HasKey("Idcommodite");
+                    b.HasKey("Idcommodite")
+                        .HasName("pk_commodite");
 
                     b.HasIndex(new[] { "Idcategorie" }, "idx_commodite_idcategorie");
 
@@ -393,7 +485,8 @@ namespace LeboncoinAPI.Migrations
                         .HasColumnType("character varying(100)")
                         .HasColumnName("nomcompensation");
 
-                    b.HasKey("Idcompensation");
+                    b.HasKey("Idcompensation")
+                        .HasName("pk_compensation");
 
                     b.ToTable("compensation");
                 });
@@ -411,7 +504,8 @@ namespace LeboncoinAPI.Migrations
                         .HasColumnType("date")
                         .HasColumnName("date");
 
-                    b.HasKey("Iddate");
+                    b.HasKey("Iddate")
+                        .HasName("pk_date");
 
                     b.HasIndex(new[] { "Date1" }, "idx_date_date");
 
@@ -441,7 +535,8 @@ namespace LeboncoinAPI.Migrations
                         .HasColumnType("character varying(3)")
                         .HasColumnName("numerodepartement");
 
-                    b.HasKey("Iddepartement");
+                    b.HasKey("Iddepartement")
+                        .HasName("pk_departement");
 
                     b.HasIndex(new[] { "Idregion" }, "idx_departement_idregion");
 
@@ -461,7 +556,8 @@ namespace LeboncoinAPI.Migrations
                         .HasColumnType("time without time zone")
                         .HasColumnName("heure");
 
-                    b.HasKey("Idheure");
+                    b.HasKey("Idheure")
+                        .HasName("pk_heure");
 
                     b.ToTable("heure");
                 });
@@ -480,20 +576,28 @@ namespace LeboncoinAPI.Migrations
                         .HasColumnType("character varying(2000)")
                         .HasColumnName("descriptionincident");
 
-                    b.Property<bool?>("Estclasse")
+                    b.Property<bool>("Estclasse")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
+                        .HasDefaultValue(false)
                         .HasColumnName("estclasse");
 
-                    b.Property<bool?>("Estrembourse")
+                    b.Property<bool>("Estrembourse")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
+                        .HasDefaultValue(false)
                         .HasColumnName("estrembourse");
 
-                    b.Property<bool?>("Estremisaucontentieux")
+                    b.Property<bool>("Estremisaucontentieux")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
+                        .HasDefaultValue(false)
                         .HasColumnName("estremisaucontentieux");
 
-                    b.Property<int?>("Etape")
+                    b.Property<int>("Etape")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
+                        .HasDefaultValue(1)
                         .HasColumnName("etape");
 
                     b.Property<string>("Explicationproprietaire")
@@ -513,17 +617,13 @@ namespace LeboncoinAPI.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("idutilisateur");
 
-                    b.Property<string>("Lienphotoincident")
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)")
-                        .HasColumnName("lienphotoincident");
-
                     b.Property<string>("Motifincident")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
                         .HasColumnName("motifincident");
 
-                    b.HasKey("Idincident");
+                    b.HasKey("Idincident")
+                        .HasName("pk_incident");
 
                     b.HasIndex("Iddate");
 
@@ -545,10 +645,13 @@ namespace LeboncoinAPI.Migrations
                         .HasColumnName("idtypevoyageur");
 
                     b.Property<int>("Nombrevoyageur")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
+                        .HasDefaultValue(0)
                         .HasColumnName("nombrevoyageur");
 
-                    b.HasKey("Idreservation", "Idtypevoyageur");
+                    b.HasKey("Idreservation", "Idtypevoyageur")
+                        .HasName("pk_inclure");
 
                     b.HasIndex(new[] { "Idtypevoyageur" }, "idx_inclure_idtypevoyageur");
 
@@ -582,7 +685,8 @@ namespace LeboncoinAPI.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("idutilisateurreceveur");
 
-                    b.HasKey("Idmessage");
+                    b.HasKey("Idmessage")
+                        .HasName("pk_message");
 
                     b.HasIndex("Iddate");
 
@@ -621,7 +725,8 @@ namespace LeboncoinAPI.Migrations
                         .HasColumnType("character varying(50)")
                         .HasColumnName("prenomutilisateur");
 
-                    b.HasKey("Idutilisateur");
+                    b.HasKey("Idutilisateur")
+                        .HasName("pk_particulier");
 
                     b.HasIndex("Iddate");
 
@@ -642,9 +747,42 @@ namespace LeboncoinAPI.Migrations
                         .HasColumnType("character varying(100)")
                         .HasColumnName("nompermission");
 
-                    b.HasKey("Idpermission");
+                    b.HasKey("Idpermission")
+                        .HasName("pk_permission");
 
                     b.ToTable("permission");
+                });
+
+            modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.Photo", b =>
+                {
+                    b.Property<int>("Idphoto")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("idphoto");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Idphoto"));
+
+                    b.Property<int?>("Idannonce")
+                        .HasColumnType("integer")
+                        .HasColumnName("idannonce");
+
+                    b.Property<int?>("Idincident")
+                        .HasColumnType("integer")
+                        .HasColumnName("idincident");
+
+                    b.Property<string>("Lienphoto")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("lienphoto");
+
+                    b.HasKey("Idphoto")
+                        .HasName("pk_photo");
+
+                    b.HasIndex("Idannonce");
+
+                    b.HasIndex("Idincident");
+
+                    b.ToTable("photo");
                 });
 
             modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.Professionnel", b =>
@@ -670,7 +808,8 @@ namespace LeboncoinAPI.Migrations
                         .HasColumnType("character varying(50)")
                         .HasColumnName("secteuractivite");
 
-                    b.HasKey("Idutilisateur");
+                    b.HasKey("Idutilisateur")
+                        .HasName("pk_professionnel");
 
                     b.HasIndex(new[] { "Numsiret" }, "professionnel_numsiret_key")
                         .IsUnique();
@@ -724,7 +863,9 @@ namespace LeboncoinAPI.Migrations
                         .HasColumnName("nombreminimumchambre");
 
                     b.Property<bool>("Paiementenligne")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
+                        .HasDefaultValue(false)
                         .HasColumnName("paiementenligne");
 
                     b.Property<decimal?>("Prixmaximum")
@@ -737,7 +878,8 @@ namespace LeboncoinAPI.Migrations
                         .HasColumnType("numeric(10,2)")
                         .HasColumnName("prixminimum");
 
-                    b.HasKey("Idrecherche");
+                    b.HasKey("Idrecherche")
+                        .HasName("pk_recherche");
 
                     b.HasIndex("Iddatedebutrecherche");
 
@@ -769,7 +911,8 @@ namespace LeboncoinAPI.Migrations
                         .HasColumnType("character varying(30)")
                         .HasColumnName("nomregion");
 
-                    b.HasKey("Idregion");
+                    b.HasKey("Idregion")
+                        .HasName("pk_region");
 
                     b.HasIndex(new[] { "Nomregion" }, "region_nomregion_key")
                         .IsUnique();
@@ -788,10 +931,13 @@ namespace LeboncoinAPI.Migrations
                         .HasColumnName("iddate");
 
                     b.Property<bool>("Estdisponible")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
+                        .HasDefaultValue(false)
                         .HasColumnName("estdisponible");
 
-                    b.HasKey("Idannonce", "Iddate");
+                    b.HasKey("Idannonce", "Iddate")
+                        .HasName("pk_relier");
 
                     b.HasIndex(new[] { "Iddate" }, "idx_relier_iddate");
 
@@ -837,10 +983,12 @@ namespace LeboncoinAPI.Migrations
 
                     b.Property<string>("Telephoneclient")
                         .HasMaxLength(10)
-                        .HasColumnType("character varying(10)")
-                        .HasColumnName("telephoneclient");
+                        .HasColumnType("character(10)")
+                        .HasColumnName("telephoneclient")
+                        .IsFixedLength();
 
-                    b.HasKey("Idreservation");
+                    b.HasKey("Idreservation")
+                        .HasName("pk_reservation");
 
                     b.HasIndex(new[] { "Idannonce" }, "idx_reservation_idannonce");
 
@@ -867,7 +1015,8 @@ namespace LeboncoinAPI.Migrations
                         .HasColumnType("character varying(100)")
                         .HasColumnName("nomrole");
 
-                    b.HasKey("Idrole");
+                    b.HasKey("Idrole")
+                        .HasName("pk_role");
 
                     b.ToTable("role");
                 });
@@ -898,7 +1047,8 @@ namespace LeboncoinAPI.Migrations
                         .HasColumnType("numeric(10,2)")
                         .HasColumnName("montanttransaction");
 
-                    b.HasKey("Idtransaction");
+                    b.HasKey("Idtransaction")
+                        .HasName("pk_transaction");
 
                     b.HasIndex(new[] { "Idcartebancaire" }, "idx_transaction_idcartebancaire");
 
@@ -927,7 +1077,8 @@ namespace LeboncoinAPI.Migrations
                         .HasColumnType("character varying(30)")
                         .HasColumnName("nomtypehebergement");
 
-                    b.HasKey("Idtypehebergement");
+                    b.HasKey("Idtypehebergement")
+                        .HasName("pk_typehebergement");
 
                     b.HasIndex(new[] { "Idcategorie" }, "idx_typehebergement_idcategorie");
 
@@ -949,7 +1100,8 @@ namespace LeboncoinAPI.Migrations
                         .HasColumnType("character varying(30)")
                         .HasColumnName("nomtypevoyageur");
 
-                    b.HasKey("Idtypevoyageur");
+                    b.HasKey("Idtypevoyageur")
+                        .HasName("pk_typevoyageur");
 
                     b.HasIndex(new[] { "Nomtypevoyageur" }, "typevoyageur_nomtypevoyageur_key")
                         .IsUnique();
@@ -989,7 +1141,9 @@ namespace LeboncoinAPI.Migrations
                         .HasColumnName("iddate");
 
                     b.Property<bool>("IdentityVerified")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
+                        .HasDefaultValue(false)
                         .HasColumnName("identity_verified");
 
                     b.Property<string>("Password")
@@ -999,7 +1153,9 @@ namespace LeboncoinAPI.Migrations
                         .HasColumnName("password");
 
                     b.Property<bool>("PhoneVerified")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
+                        .HasDefaultValue(false)
                         .HasColumnName("phone_verified");
 
                     b.Property<string>("ProfilePhotoPath")
@@ -1026,8 +1182,9 @@ namespace LeboncoinAPI.Migrations
                     b.Property<string>("Telephoneutilisateur")
                         .IsRequired()
                         .HasMaxLength(10)
-                        .HasColumnType("character varying(10)")
-                        .HasColumnName("telephoneutilisateur");
+                        .HasColumnType("character(10)")
+                        .HasColumnName("telephoneutilisateur")
+                        .IsFixedLength();
 
                     b.Property<DateTime?>("TwoFactorConfirmedAt")
                         .HasColumnType("timestamp without time zone")
@@ -1041,7 +1198,8 @@ namespace LeboncoinAPI.Migrations
                         .HasColumnType("text")
                         .HasColumnName("two_factor_secret");
 
-                    b.HasKey("Idutilisateur");
+                    b.HasKey("Idutilisateur")
+                        .HasName("pk_utilisateur");
 
                     b.HasIndex(new[] { "Idadresse" }, "idx_utilisateur_idadresse");
 
@@ -1070,8 +1228,9 @@ namespace LeboncoinAPI.Migrations
                     b.Property<string>("Codepostal")
                         .IsRequired()
                         .HasMaxLength(5)
-                        .HasColumnType("character varying(5)")
-                        .HasColumnName("codepostal");
+                        .HasColumnType("character(5)")
+                        .HasColumnName("codepostal")
+                        .IsFixedLength();
 
                     b.Property<int>("Iddepartement")
                         .HasColumnType("integer")
@@ -1088,11 +1247,30 @@ namespace LeboncoinAPI.Migrations
                         .HasColumnType("numeric(10,2)")
                         .HasColumnName("taxedesejour");
 
-                    b.HasKey("Idville");
+                    b.HasKey("Idville")
+                        .HasName("pk_ville");
 
                     b.HasIndex(new[] { "Iddepartement" }, "idx_ville_iddepartement");
 
                     b.ToTable("ville");
+                });
+
+            modelBuilder.Entity("Permettre", b =>
+                {
+                    b.Property<int>("Idrole")
+                        .HasColumnType("integer")
+                        .HasColumnName("idrole");
+
+                    b.Property<int>("Idpermission")
+                        .HasColumnType("integer")
+                        .HasColumnName("idpermission");
+
+                    b.HasKey("Idrole", "Idpermission")
+                        .HasName("pk_permettre");
+
+                    b.HasIndex("Idpermission");
+
+                    b.ToTable("permettre", (string)null);
                 });
 
             modelBuilder.Entity("PermissionRole", b =>
@@ -1105,9 +1283,7 @@ namespace LeboncoinAPI.Migrations
 
                     b.HasKey("Idpermission", "Idrole");
 
-                    b.HasIndex("Idrole");
-
-                    b.ToTable("permettre", (string)null);
+                    b.ToTable("PermissionRole");
                 });
 
             modelBuilder.Entity("RechercheTypehebergement", b =>
@@ -1120,9 +1296,25 @@ namespace LeboncoinAPI.Migrations
 
                     b.HasKey("Idrecherche", "Idtypehebergement");
 
-                    b.HasIndex("Idtypehebergement");
+                    b.ToTable("RechercheTypehebergement");
+                });
 
-                    b.ToTable("cibler", (string)null);
+            modelBuilder.Entity("Ressembler", b =>
+                {
+                    b.Property<int>("IdannonceA")
+                        .HasColumnType("integer")
+                        .HasColumnName("idannonce_a");
+
+                    b.Property<int>("IdannonceB")
+                        .HasColumnType("integer")
+                        .HasColumnName("idannonce_b");
+
+                    b.HasKey("IdannonceA", "IdannonceB")
+                        .HasName("pk_ressembler");
+
+                    b.HasIndex(new[] { "IdannonceB" }, "idx_ressembler_idannonce_b");
+
+                    b.ToTable("ressembler", (string)null);
                 });
 
             modelBuilder.Entity("RoleUtilisateur", b =>
@@ -1135,24 +1327,7 @@ namespace LeboncoinAPI.Migrations
 
                     b.HasKey("Idrole", "Idutilisateur");
 
-                    b.HasIndex("Idutilisateur");
-
-                    b.ToTable("attribuer", (string)null);
-                });
-
-            modelBuilder.Entity("AnnonceAnnonce", b =>
-                {
-                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Annonce", null)
-                        .WithMany()
-                        .HasForeignKey("IdannonceA")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Annonce", null)
-                        .WithMany()
-                        .HasForeignKey("IdannonceB")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                    b.ToTable("RoleUtilisateur");
                 });
 
             modelBuilder.Entity("AnnonceCommodite", b =>
@@ -1160,59 +1335,101 @@ namespace LeboncoinAPI.Migrations
                     b.HasOne("LeboncoinAPI.Models.EntityFramework.Annonce", null)
                         .WithMany()
                         .HasForeignKey("Idannonce")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_proposer_proposer2_annonce");
 
                     b.HasOne("LeboncoinAPI.Models.EntityFramework.Commodite", null)
                         .WithMany()
                         .HasForeignKey("Idcommodite")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_proposer_proposer_commodit");
                 });
 
-            modelBuilder.Entity("AnnonceUtilisateur", b =>
+            modelBuilder.Entity("Attribuer", b =>
                 {
-                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Annonce", null)
+                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Role", null)
                         .WithMany()
-                        .HasForeignKey("Idannonce")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("Idrole")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_attribuer_role");
 
                     b.HasOne("LeboncoinAPI.Models.EntityFramework.Utilisateur", null)
                         .WithMany()
                         .HasForeignKey("Idutilisateur")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_attribuer_utilisateur");
                 });
 
-            modelBuilder.Entity("CommoditeRecherche", b =>
+            modelBuilder.Entity("Cibler", b =>
                 {
-                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Commodite", null)
-                        .WithMany()
-                        .HasForeignKey("Idcommodite")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("LeboncoinAPI.Models.EntityFramework.Recherche", null)
                         .WithMany()
                         .HasForeignKey("Idrecherche")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_cibler_cibler2_recherch");
+
+                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Typehebergement", null)
+                        .WithMany()
+                        .HasForeignKey("Idtypehebergement")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_cibler_cibler_typehebe");
                 });
 
-            modelBuilder.Entity("CompensationIncident", b =>
+            modelBuilder.Entity("Demander", b =>
                 {
                     b.HasOne("LeboncoinAPI.Models.EntityFramework.Compensation", null)
                         .WithMany()
                         .HasForeignKey("Idcompensation")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_demander_compensation");
 
                     b.HasOne("LeboncoinAPI.Models.EntityFramework.Incident", null)
                         .WithMany()
                         .HasForeignKey("Idincident")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_demander_incident");
+                });
+
+            modelBuilder.Entity("Favoriser", b =>
+                {
+                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Annonce", null)
+                        .WithMany()
+                        .HasForeignKey("Idannonce")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_favorise_favoriser_annonce");
+
+                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Utilisateur", null)
+                        .WithMany()
+                        .HasForeignKey("Idutilisateur")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_favorise_favoriser_utilisateur");
+                });
+
+            modelBuilder.Entity("Filtrer", b =>
+                {
+                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Commodite", null)
+                        .WithMany()
+                        .HasForeignKey("Idcommodite")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_filtrer_filtrer2_commodit");
+
+                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Recherche", null)
+                        .WithMany()
+                        .HasForeignKey("Idrecherche")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_filtrer_filtrer_recherch");
                 });
 
             modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.Adresse", b =>
@@ -1220,8 +1437,9 @@ namespace LeboncoinAPI.Migrations
                     b.HasOne("LeboncoinAPI.Models.EntityFramework.Ville", "IdvilleNavigation")
                         .WithMany("Adresses")
                         .HasForeignKey("Idville")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_adresse_posseder_ville");
 
                     b.Navigation("IdvilleNavigation");
                 });
@@ -1232,37 +1450,43 @@ namespace LeboncoinAPI.Migrations
                         .WithMany("Annonces")
                         .HasForeignKey("Idadresse")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("fk_annonce_se_trouve_adresse");
 
                     b.HasOne("LeboncoinAPI.Models.EntityFramework.Date", "IddateNavigation")
                         .WithMany("Annonces")
                         .HasForeignKey("Iddate")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("fk_annonce_publier_date");
 
                     b.HasOne("LeboncoinAPI.Models.EntityFramework.Heure", "IdheurearriveeNavigation")
                         .WithMany("AnnonceIdheurearriveeNavigations")
                         .HasForeignKey("Idheurearrivee")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("fk_annonce_arriver_heure");
 
                     b.HasOne("LeboncoinAPI.Models.EntityFramework.Heure", "IdheuredepartNavigation")
                         .WithMany("AnnonceIdheuredepartNavigations")
                         .HasForeignKey("Idheuredepart")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("fk_annonce_partir_heure");
 
                     b.HasOne("LeboncoinAPI.Models.EntityFramework.Typehebergement", "IdtypehebergementNavigation")
                         .WithMany("Annonces")
                         .HasForeignKey("Idtypehebergement")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("fk_annonce_qualifier_typehebe");
 
                     b.HasOne("LeboncoinAPI.Models.EntityFramework.Utilisateur", "IdutilisateurNavigation")
                         .WithMany("Annonces")
                         .HasForeignKey("Idutilisateur")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("fk_annonce_diffuser_utilisateur");
 
                     b.Navigation("IdadresseNavigation");
 
@@ -1283,19 +1507,22 @@ namespace LeboncoinAPI.Migrations
                         .WithMany("Avis")
                         .HasForeignKey("Idannonce")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("fk_avis_noter_annonce");
 
                     b.HasOne("LeboncoinAPI.Models.EntityFramework.Date", "IddateNavigation")
                         .WithMany("Avis")
                         .HasForeignKey("Iddate")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("fk_avis_deposer_date");
 
                     b.HasOne("LeboncoinAPI.Models.EntityFramework.Utilisateur", "IdutilisateurNavigation")
                         .WithMany("Avis")
                         .HasForeignKey("Idutilisateur")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("fk_avis_commenter_utilisateur");
 
                     b.Navigation("IdannonceNavigation");
 
@@ -1310,7 +1537,8 @@ namespace LeboncoinAPI.Migrations
                         .WithMany("Cartebancaires")
                         .HasForeignKey("Idutilisateur")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("fk_carteban_enregistr_utilisat");
 
                     b.Navigation("IdutilisateurNavigation");
                 });
@@ -1321,7 +1549,8 @@ namespace LeboncoinAPI.Migrations
                         .WithMany("Commodites")
                         .HasForeignKey("Idcategorie")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("fk_commodit_apparteni_categori");
 
                     b.Navigation("IdcategorieNavigation");
                 });
@@ -1332,7 +1561,8 @@ namespace LeboncoinAPI.Migrations
                         .WithMany("Departements")
                         .HasForeignKey("Idregion")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("fk_departem_localiser_region");
 
                     b.Navigation("IdregionNavigation");
                 });
@@ -1343,19 +1573,22 @@ namespace LeboncoinAPI.Migrations
                         .WithMany("Incidents")
                         .HasForeignKey("Iddate")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("fk_incident_associati_date");
 
                     b.HasOne("LeboncoinAPI.Models.EntityFramework.Reservation", "IdreservationNavigation")
                         .WithMany("Incidents")
                         .HasForeignKey("Idreservation")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("fk_incident_associati_reservat");
 
                     b.HasOne("LeboncoinAPI.Models.EntityFramework.Utilisateur", "IdutilisateurNavigation")
                         .WithMany("Incidents")
                         .HasForeignKey("Idutilisateur")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("fk_incident_associati_utilisat");
 
                     b.Navigation("IddateNavigation");
 
@@ -1370,13 +1603,15 @@ namespace LeboncoinAPI.Migrations
                         .WithMany("Inclures")
                         .HasForeignKey("Idreservation")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("fk_inclure_inclure_reservat");
 
                     b.HasOne("LeboncoinAPI.Models.EntityFramework.Typevoyageur", "IdtypevoyageurNavigation")
                         .WithMany("Inclures")
                         .HasForeignKey("Idtypevoyageur")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("fk_inclure_inclure2_typevoya");
 
                     b.Navigation("IdreservationNavigation");
 
@@ -1389,19 +1624,22 @@ namespace LeboncoinAPI.Migrations
                         .WithMany("Messages")
                         .HasForeignKey("Iddate")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("fk_message_associati_date");
 
                     b.HasOne("LeboncoinAPI.Models.EntityFramework.Utilisateur", "IdutilisateurexpediteurNavigation")
                         .WithMany("MessageIdutilisateurexpediteurNavigations")
                         .HasForeignKey("Idutilisateurexpediteur")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("fk_message_expedier_utilisat");
 
                     b.HasOne("LeboncoinAPI.Models.EntityFramework.Utilisateur", "IdutilisateurreceveurNavigation")
                         .WithMany("MessageIdutilisateurreceveurNavigations")
                         .HasForeignKey("Idutilisateurreceveur")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("fk_message_recevoir_utilisat");
 
                     b.Navigation("IddateNavigation");
 
@@ -1416,17 +1654,38 @@ namespace LeboncoinAPI.Migrations
                         .WithMany("Particuliers")
                         .HasForeignKey("Iddate")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("fk_particulier_naitre_date");
 
                     b.HasOne("LeboncoinAPI.Models.EntityFramework.Utilisateur", "IdutilisateurNavigation")
                         .WithOne("Particulier")
                         .HasForeignKey("LeboncoinAPI.Models.EntityFramework.Particulier", "Idutilisateur")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("fk_particulier_heritage__utilisateur");
 
                     b.Navigation("IddateNavigation");
 
                     b.Navigation("IdutilisateurNavigation");
+                });
+
+            modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.Photo", b =>
+                {
+                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Annonce", "IdannonceNavigation")
+                        .WithMany("Photos")
+                        .HasForeignKey("Idannonce")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_photo_comporter_annonce");
+
+                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Incident", "IdincidentNavigation")
+                        .WithMany("Photos")
+                        .HasForeignKey("Idincident")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_photo_prouver_incident");
+
+                    b.Navigation("IdannonceNavigation");
+
+                    b.Navigation("IdincidentNavigation");
                 });
 
             modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.Professionnel", b =>
@@ -1435,7 +1694,8 @@ namespace LeboncoinAPI.Migrations
                         .WithOne("Professionnel")
                         .HasForeignKey("LeboncoinAPI.Models.EntityFramework.Professionnel", "Idutilisateur")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("fk_professionnel_heritage__utilisateur");
 
                     b.Navigation("IdutilisateurNavigation");
                 });
@@ -1445,33 +1705,39 @@ namespace LeboncoinAPI.Migrations
                     b.HasOne("LeboncoinAPI.Models.EntityFramework.Date", "IddatedebutrechercheNavigation")
                         .WithMany("RechercheIddatedebutrechercheNavigations")
                         .HasForeignKey("Iddatedebutrecherche")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_recherch_commencer_date");
 
                     b.HasOne("LeboncoinAPI.Models.EntityFramework.Date", "IddatefinrechercheNavigation")
                         .WithMany("RechercheIddatefinrechercheNavigations")
                         .HasForeignKey("Iddatefinrecherche")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_recherch_terminer_date");
 
                     b.HasOne("LeboncoinAPI.Models.EntityFramework.Departement", "IddepartementNavigation")
                         .WithMany("Recherches")
                         .HasForeignKey("Iddepartement")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_recherch_connecter_departem");
 
                     b.HasOne("LeboncoinAPI.Models.EntityFramework.Region", "IdregionNavigation")
                         .WithMany("Recherches")
                         .HasForeignKey("Idregion")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_recherch_lier_region");
 
                     b.HasOne("LeboncoinAPI.Models.EntityFramework.Utilisateur", "IdutilisateurNavigation")
                         .WithMany("Recherches")
                         .HasForeignKey("Idutilisateur")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("fk_recherch_associati_utilisat");
 
                     b.HasOne("LeboncoinAPI.Models.EntityFramework.Ville", "IdvilleNavigation")
                         .WithMany("Recherches")
                         .HasForeignKey("Idville")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_recherch_associer_ville");
 
                     b.Navigation("IddatedebutrechercheNavigation");
 
@@ -1492,13 +1758,15 @@ namespace LeboncoinAPI.Migrations
                         .WithMany("Reliers")
                         .HasForeignKey("Idannonce")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("fk_relier_relier_annonce");
 
                     b.HasOne("LeboncoinAPI.Models.EntityFramework.Date", "IddateNavigation")
                         .WithMany("Reliers")
                         .HasForeignKey("Iddate")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("fk_relier_relier2_date");
 
                     b.Navigation("IdannonceNavigation");
 
@@ -1511,25 +1779,29 @@ namespace LeboncoinAPI.Migrations
                         .WithMany("Reservations")
                         .HasForeignKey("Idannonce")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("fk_reservat_concerner_annonce");
 
                     b.HasOne("LeboncoinAPI.Models.EntityFramework.Date", "IddatedebutreservationNavigation")
                         .WithMany("ReservationIddatedebutreservationNavigations")
                         .HasForeignKey("Iddatedebutreservation")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("fk_reservat_debuter_date");
 
                     b.HasOne("LeboncoinAPI.Models.EntityFramework.Date", "IddatefinreservationNavigation")
                         .WithMany("ReservationIddatefinreservationNavigations")
                         .HasForeignKey("Iddatefinreservation")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("fk_reservat_finir_date");
 
                     b.HasOne("LeboncoinAPI.Models.EntityFramework.Utilisateur", "IdutilisateurNavigation")
                         .WithMany("Reservations")
                         .HasForeignKey("Idutilisateur")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("fk_reservation_reserver_utilisateur");
 
                     b.Navigation("IdannonceNavigation");
 
@@ -1546,19 +1818,22 @@ namespace LeboncoinAPI.Migrations
                         .WithMany("Transactions")
                         .HasForeignKey("Idcartebancaire")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("fk_transact_faire_carteban");
 
                     b.HasOne("LeboncoinAPI.Models.EntityFramework.Date", "IddateNavigation")
                         .WithMany("Transactions")
                         .HasForeignKey("Iddate")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("fk_transact_effectuer_date");
 
                     b.HasOne("LeboncoinAPI.Models.EntityFramework.Reservation", "IdreservationNavigation")
                         .WithMany("Transactions")
                         .HasForeignKey("Idreservation")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("fk_transact_regler_reservat");
 
                     b.Navigation("IdcartebancaireNavigation");
 
@@ -1573,7 +1848,8 @@ namespace LeboncoinAPI.Migrations
                         .WithMany("Typehebergements")
                         .HasForeignKey("Idcategorie")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("fk_typehebe_classer_categori");
 
                     b.Navigation("IdcategorieNavigation");
                 });
@@ -1584,18 +1860,21 @@ namespace LeboncoinAPI.Migrations
                         .WithMany("Utilisateurs")
                         .HasForeignKey("Idadresse")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("fk_utilisat_resider_adresse");
 
                     b.HasOne("LeboncoinAPI.Models.EntityFramework.Cartebancaire", "IdcartebancaireNavigation")
                         .WithMany("Utilisateurs")
                         .HasForeignKey("Idcartebancaire")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_utilisat_enregistr_carteban");
 
                     b.HasOne("LeboncoinAPI.Models.EntityFramework.Date", "IddateNavigation")
                         .WithMany("Utilisateurs")
                         .HasForeignKey("Iddate")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("fk_utilisat_creer_date");
 
                     b.Navigation("IdadresseNavigation");
 
@@ -1610,54 +1889,44 @@ namespace LeboncoinAPI.Migrations
                         .WithMany("Villes")
                         .HasForeignKey("Iddepartement")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("fk_ville_situer_departem");
 
                     b.Navigation("IddepartementNavigation");
                 });
 
-            modelBuilder.Entity("PermissionRole", b =>
+            modelBuilder.Entity("Permettre", b =>
                 {
                     b.HasOne("LeboncoinAPI.Models.EntityFramework.Permission", null)
                         .WithMany()
                         .HasForeignKey("Idpermission")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_permettre_permission");
 
                     b.HasOne("LeboncoinAPI.Models.EntityFramework.Role", null)
                         .WithMany()
                         .HasForeignKey("Idrole")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_permettre_role");
                 });
 
-            modelBuilder.Entity("RechercheTypehebergement", b =>
+            modelBuilder.Entity("Ressembler", b =>
                 {
-                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Recherche", null)
+                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Annonce", null)
                         .WithMany()
-                        .HasForeignKey("Idrecherche")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("IdannonceA")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_ressembler_idannonce_a");
 
-                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Typehebergement", null)
+                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Annonce", null)
                         .WithMany()
-                        .HasForeignKey("Idtypehebergement")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("RoleUtilisateur", b =>
-                {
-                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Role", null)
-                        .WithMany()
-                        .HasForeignKey("Idrole")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Utilisateur", null)
-                        .WithMany()
-                        .HasForeignKey("Idutilisateur")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("IdannonceB")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_ressembler_idannonce_b");
                 });
 
             modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.Adresse", b =>
@@ -1670,6 +1939,8 @@ namespace LeboncoinAPI.Migrations
             modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.Annonce", b =>
                 {
                     b.Navigation("Avis");
+
+                    b.Navigation("Photos");
 
                     b.Navigation("Reliers");
 
@@ -1729,6 +2000,11 @@ namespace LeboncoinAPI.Migrations
                     b.Navigation("AnnonceIdheurearriveeNavigations");
 
                     b.Navigation("AnnonceIdheuredepartNavigations");
+                });
+
+            modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.Incident", b =>
+                {
+                    b.Navigation("Photos");
                 });
 
             modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.Region", b =>
