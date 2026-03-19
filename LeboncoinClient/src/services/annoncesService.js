@@ -20,6 +20,10 @@ export const annoncesService = {
   },
   getTypeHebergements: () => getJson('/api/TypeHebergements'),
   getCommoditesByCategories: () => getJson('/api/Commodites/by-categories'),
+  getFavorites: (userId) => getJson(`${BASE_PATH}/favorites/${userId}`),
+  getFavoriteIds: (userId) => getJson(`${BASE_PATH}/favorites/ids/${userId}`),
+  addFavorite: (annonceId, userId) => postJson(`${BASE_PATH}/${annonceId}/favorite/${userId}`, {}),
+  removeFavorite: (annonceId, userId) => deleteRequest(`${BASE_PATH}/${annonceId}/favorite/${userId}`),
 }
 
 export default annoncesService

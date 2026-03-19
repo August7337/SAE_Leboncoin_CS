@@ -98,13 +98,9 @@ public class AnnonceManager : IAnnonceRepository
         {
             queryable = queryable.Where(a =>
                 (a.IdadresseNavigation.IdvilleNavigation.Nomville != null &&
-                 a.IdadresseNavigation.IdvilleNavigation.Nomville.ToLower().Contains(q.ToLower())) ||
+                 a.IdadresseNavigation.IdvilleNavigation.Nomville.ToLower().StartsWith(q.ToLower())) ||
                 (a.IdadresseNavigation.IdvilleNavigation.Codepostal != null &&
-                 a.IdadresseNavigation.IdvilleNavigation.Codepostal.ToLower().Contains(q.ToLower())) ||
-                (a.IdadresseNavigation.IdvilleNavigation.IddepartementNavigation.Nomdepartement != null &&
-                 a.IdadresseNavigation.IdvilleNavigation.IddepartementNavigation.Nomdepartement.ToLower().Contains(q.ToLower())) ||
-                (a.IdadresseNavigation.IdvilleNavigation.IddepartementNavigation.Numerodepartement != null &&
-                 a.IdadresseNavigation.IdvilleNavigation.IddepartementNavigation.Numerodepartement.ToLower().Contains(q.ToLower()))
+                 a.IdadresseNavigation.IdvilleNavigation.Codepostal.ToLower().StartsWith(q.ToLower()))
             );
         }
 
@@ -170,7 +166,14 @@ public class AnnonceManager : IAnnonceRepository
             Codepostal = a.IdadresseNavigation?.IdvilleNavigation?.Codepostal,
             DateDepot = a.IddateNavigation?.Date1,
             Prixnuitee = a.Prixnuitee,
-            Photos = a.Photos,
+            Capacite = a.Capacite,
+            Nombreetoilesleboncoin = a.Nombreetoilesleboncoin,
+            Photos = a.Photos.Select(p => new Photo
+            {
+                Idphoto = p.Idphoto,
+                Idannonce = p.Idannonce,
+                Lienphoto = p.Lienphoto
+            }).ToList(),
         });
     }
 
@@ -190,6 +193,77 @@ public class AnnonceManager : IAnnonceRepository
     {
         _dbContext.Annonces.Remove(entity);
         await _dbContext.SaveChangesAsync();
+    }
+
+    public async Task<IEnumerable<AnnonceSearchResultDto>> GetFavoritesByUserIdAsync(int userId)
+    {
+        var annonces = await _dbContext.Annonces
+            .Include(a => a.IdadresseNavigation)
+                .ThenInclude(adr => adr.IdvilleNavigation)
+            .Include(a => a.IdtypehebergementNavigation)
+            .Include(a => a.IddateNavigation)
+            .Include(a => a.Photos)
+            .Where(a => a.Idutilisateurs.Any(u => u.Idutilisateur == userId))
+            .ToListAsync();
+
+        return annonces.Select(a => new AnnonceSearchResultDto
+        {
+            Idannonce = a.Idannonce,
+            Titreannonce = a.Titreannonce,
+            TypeHebergement = a.IdtypehebergementNavigation?.Nomtypehebergement,
+            Adresse = FormatAdresse(a.IdadresseNavigation),
+            Nomville = a.IdadresseNavigation?.IdvilleNavigation?.Nomville,
+            Codepostal = a.IdadresseNavigation?.IdvilleNavigation?.Codepostal,
+            DateDepot = a.IddateNavigation?.Date1,
+            Prixnuitee = a.Prixnuitee,
+            Capacite = a.Capacite,
+            Nombreetoilesleboncoin = a.Nombreetoilesleboncoin,
+            Photos = a.Photos.Select(p => new Photo
+            {
+                Idphoto = p.Idphoto,
+                Idannonce = p.Idannonce,
+                Lienphoto = p.Lienphoto
+            }).ToList(),
+        });
+    }
+
+    public async Task<IEnumerable<int>> GetFavoriteIdsByUserIdAsync(int userId)
+    {
+        return await _dbContext.Annonces
+            .Where(a => a.Idutilisateurs.Any(u => u.Idutilisateur == userId))
+            .Select(a => a.Idannonce)
+            .ToListAsync();
+    }
+
+    public async Task AddFavoriteAsync(int userId, int annonceId)
+    {
+        var utilisateur = await _dbContext.Utilisateurs.Include(u => u.Idannonces).FirstOrDefaultAsync(u => u.Idutilisateur == userId);
+        var annonce = await _dbContext.Annonces.FindAsync(annonceId);
+
+        if (utilisateur != null && annonce != null)
+        {
+            if (!utilisateur.Idannonces.Any(a => a.Idannonce == annonceId))
+            {
+                utilisateur.Idannonces.Add(annonce);
+                await _dbContext.SaveChangesAsync();
+            }
+        }
+    }
+
+    public async Task RemoveFavoriteAsync(int userId, int annonceId)
+    {
+        var utilisateur = await _dbContext.Utilisateurs.Include(u => u.Idannonces).FirstOrDefaultAsync(u => u.Idutilisateur == userId);
+        var annonce = await _dbContext.Annonces.FindAsync(annonceId);
+
+        if (utilisateur != null && annonce != null)
+        {
+            var exists = utilisateur.Idannonces.FirstOrDefault(a => a.Idannonce == annonceId);
+            if (exists != null)
+            {
+                utilisateur.Idannonces.Remove(exists);
+                await _dbContext.SaveChangesAsync();
+            }
+        }
     }
 
     private static string? FormatAdresse(Adresse? adresse)
