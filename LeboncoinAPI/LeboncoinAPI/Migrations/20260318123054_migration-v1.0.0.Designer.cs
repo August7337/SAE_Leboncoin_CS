@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace LeboncoinAPI.Migrations
 {
     [DbContext(typeof(LeboncoinDBContext))]
-    [Migration("20260317075626_migration-v1.0.1")]
-    partial class migrationv101
+    [Migration("20260318123054_migration-v1.0.0")]
+    partial class migrationv100
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -40,15 +40,22 @@ namespace LeboncoinAPI.Migrations
 
             modelBuilder.Entity("AnnonceCommodite", b =>
                 {
-                    b.Property<int>("Idannonce")
-                        .HasColumnType("integer");
-
                     b.Property<int>("Idcommodite")
-                        .HasColumnType("integer");
+                        .HasColumnType("integer")
+                        .HasColumnName("Idcommodite");
 
-                    b.HasKey("Idannonce", "Idcommodite");
+                    b.Property<int>("Idannonce")
+                        .HasColumnType("integer")
+                        .HasColumnName("Idannonce");
 
-                    b.ToTable("AnnonceCommodite");
+                    b.HasKey("Idcommodite", "Idannonce")
+                        .HasName("pk_proposer");
+
+                    b.HasIndex(new[] { "Idannonce" }, "idx_proposer_idannonce");
+
+                    b.HasIndex(new[] { "Idcommodite" }, "idx_proposer_idcommodite");
+
+                    b.ToTable("AnnonceCommodite", (string)null);
                 });
 
             modelBuilder.Entity("AnnonceUtilisateur", b =>
@@ -1282,26 +1289,6 @@ namespace LeboncoinAPI.Migrations
                     b.ToTable("PermissionRole");
                 });
 
-            modelBuilder.Entity("Proposer", b =>
-                {
-                    b.Property<int>("Idcommodite")
-                        .HasColumnType("integer")
-                        .HasColumnName("idcommodite");
-
-                    b.Property<int>("Idannonce")
-                        .HasColumnType("integer")
-                        .HasColumnName("idannonce");
-
-                    b.HasKey("Idcommodite", "Idannonce")
-                        .HasName("pk_proposer");
-
-                    b.HasIndex(new[] { "Idannonce" }, "idx_proposer_idannonce");
-
-                    b.HasIndex(new[] { "Idcommodite" }, "idx_proposer_idcommodite");
-
-                    b.ToTable("proposer", (string)null);
-                });
-
             modelBuilder.Entity("RechercheTypehebergement", b =>
                 {
                     b.Property<int>("Idrecherche")
@@ -1344,6 +1331,23 @@ namespace LeboncoinAPI.Migrations
                     b.HasKey("Idrole", "Idutilisateur");
 
                     b.ToTable("RoleUtilisateur");
+                });
+
+            modelBuilder.Entity("AnnonceCommodite", b =>
+                {
+                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Annonce", null)
+                        .WithMany()
+                        .HasForeignKey("Idannonce")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_proposer_proposer2_annonce");
+
+                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Commodite", null)
+                        .WithMany()
+                        .HasForeignKey("Idcommodite")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_proposer_proposer_commodit");
                 });
 
             modelBuilder.Entity("Attribuer", b =>
@@ -1909,23 +1913,6 @@ namespace LeboncoinAPI.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("fk_permettre_role");
-                });
-
-            modelBuilder.Entity("Proposer", b =>
-                {
-                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Annonce", null)
-                        .WithMany()
-                        .HasForeignKey("Idannonce")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired()
-                        .HasConstraintName("fk_proposer_proposer2_annonce");
-
-                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Commodite", null)
-                        .WithMany()
-                        .HasForeignKey("Idcommodite")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired()
-                        .HasConstraintName("fk_proposer_proposer_commodit");
                 });
 
             modelBuilder.Entity("Ressembler", b =>

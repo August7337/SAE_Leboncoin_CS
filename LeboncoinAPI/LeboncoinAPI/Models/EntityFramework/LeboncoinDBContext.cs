@@ -127,8 +127,8 @@ public partial class LeboncoinDBContext : DbContext
                         j.HasKey("IdannonceA", "IdannonceB").HasName("pk_ressembler");
                         j.ToTable("ressembler");
                         j.HasIndex(new[] { "IdannonceB" }, "idx_ressembler_idannonce_b");
-                        j.IndexerProperty<int>("IdannonceA").HasColumnName("idannonce_a");
-                        j.IndexerProperty<int>("IdannonceB").HasColumnName("idannonce_b");
+                        j.IndexerProperty<int>("IdannonceA").HasColumnName("IdannonceA");
+                        j.IndexerProperty<int>("IdannonceB").HasColumnName("IdannonceB");
                     });
 
             entity.HasMany(d => d.IdannonceBs).WithMany(p => p.IdannonceAs)
@@ -193,7 +193,7 @@ public partial class LeboncoinDBContext : DbContext
 
             entity.HasMany(d => d.Idannonces).WithMany(p => p.Idcommodites)
                 .UsingEntity<Dictionary<string, object>>(
-                    "Proposer",
+                    "AnnonceCommodite",
                     r => r.HasOne<Annonce>().WithMany()
                         .HasForeignKey("Idannonce")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -205,11 +205,11 @@ public partial class LeboncoinDBContext : DbContext
                     j =>
                     {
                         j.HasKey("Idcommodite", "Idannonce").HasName("pk_proposer");
-                        j.ToTable("proposer");
+                        j.ToTable("AnnonceCommodite");
                         j.HasIndex(new[] { "Idannonce" }, "idx_proposer_idannonce");
                         j.HasIndex(new[] { "Idcommodite" }, "idx_proposer_idcommodite");
-                        j.IndexerProperty<int>("Idcommodite").HasColumnName("idcommodite");
-                        j.IndexerProperty<int>("Idannonce").HasColumnName("idannonce");
+                        j.IndexerProperty<int>("Idcommodite").HasColumnName("Idcommodite");
+                        j.IndexerProperty<int>("Idannonce").HasColumnName("Idannonce");
                     });
         });
 

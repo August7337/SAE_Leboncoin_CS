@@ -1,6 +1,7 @@
 using LeboncoinAPI.Models.EntityFramework;
 using LeboncoinAPI.Models.Repository;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace LeboncoinAPI.Controllers;
 
@@ -9,10 +10,12 @@ namespace LeboncoinAPI.Controllers;
 public class AnnoncesController : ControllerBase
 {
     private readonly IAnnonceRepository _annonceRepository;
+    private readonly LeboncoinDBContext _dbContext;
 
-    public AnnoncesController(IAnnonceRepository annonceRepository)
+    public AnnoncesController(IAnnonceRepository annonceRepository, LeboncoinDBContext dbContext)
     {
         _annonceRepository = annonceRepository;
+        _dbContext = dbContext;
     }
 
     // GET: api/Annonces
@@ -40,6 +43,22 @@ public class AnnoncesController : ControllerBase
         });
 
         return Ok(result);
+    }
+
+    // GET: api/Annonces/user/{userId}
+    [HttpGet("user/{userId:int}")]
+    public async Task<ActionResult<IEnumerable<AnnonceSearchResultDto>>> GetAnnoncesByUser(int userId)
+    {
+        var results = await _annonceRepository.GetByUserIdAsync(userId);
+        return Ok(results);
+    }
+
+    // GET: api/Annonces/5/similaires
+    [HttpGet("{id}/similaires")]
+    public async Task<ActionResult<IEnumerable<AnnonceSearchResultDto>>> GetSimilaires(int id)
+    {
+        var results = await _annonceRepository.GetSimilairesAsync(id);
+        return Ok(results);
     }
 
     // GET: api/Annonces/search?q={query}&minPrice=10&maxPrice=500&nbChambres=2&typeHebergementIds=1,2&dateArrivee=2024-01-01&dateDepart=2024-01-10
@@ -72,16 +91,64 @@ public class AnnoncesController : ControllerBase
 
     // GET: api/Annonces/5
     [HttpGet("{id}")]
-    public async Task<ActionResult<Annonce>> GetAnnonce(int id)
+    public async Task<ActionResult> GetAnnonce(int id)
     {
         var annonce = await _annonceRepository.GetByIdAsync(id);
+        if (annonce == null) return NotFound("Annonce introuvable.");
 
-        if (annonce == null)
+        var result = new
         {
-            return NotFound("Annonce introuvable.");
-        }
+            annonce.Idannonce,
+            annonce.Titreannonce,
+            annonce.Descriptionannonce,
+            annonce.Prixnuitee,
+            annonce.Capacite,
+            annonce.Nbchambres,
+            annonce.Minimumnuitee,
+            annonce.Nombrebebesmax,
+            annonce.Possibiliteanimaux,
+            annonce.Possibilitefumeur,
+            annonce.Smsverifie,
+            annonce.Nombreetoilesleboncoin,
+            annonce.Idutilisateur,
+            IdheurearriveeNavigation = annonce.IdheurearriveeNavigation == null ? null : new { Heure = annonce.IdheurearriveeNavigation.Heure1 },
+            IdheuredepartNavigation = annonce.IdheuredepartNavigation == null ? null : new { Heure = annonce.IdheuredepartNavigation.Heure1 },
+            IdtypehebergementNavigation = annonce.IdtypehebergementNavigation == null ? null : new { annonce.IdtypehebergementNavigation.Nomtypehebergement },
+            IdadresseNavigation = annonce.IdadresseNavigation == null ? null : new
+            {
+                annonce.IdadresseNavigation.Nomrue,
+                IdvilleNavigation = annonce.IdadresseNavigation.IdvilleNavigation == null ? null : new
+                {
+                    annonce.IdadresseNavigation.IdvilleNavigation.Nomville,
+                    annonce.IdadresseNavigation.IdvilleNavigation.Codepostal
+                }
+            },
+            IdutilisateurNavigation = annonce.IdutilisateurNavigation == null ? null : new
+            {
+                annonce.IdutilisateurNavigation.Pseudonyme,
+                annonce.IdutilisateurNavigation.ProfilePhotoPath,
+                DateInscription = annonce.IdutilisateurNavigation.IddateNavigation?.Date1,
+                NombreAnnonces = annonce.IdutilisateurNavigation.Annonces.Count,
+                annonce.IdutilisateurNavigation.IdentityVerified,
+                annonce.IdutilisateurNavigation.PhoneVerified,
+                NoteMoyenne = annonce.IdutilisateurNavigation.Avis.Any() ? (decimal?)annonce.IdutilisateurNavigation.Avis.Average(a => a.Nombreetoiles) : null,
+                NombreAvis = annonce.IdutilisateurNavigation.Avis.Count
+            },
+            Photos = annonce.Photos.Select(p => new { p.Idphoto, p.Idannonce, p.Lienphoto }),
+            Idcommodites = annonce.Idcommodites.Select(c => new
+            {
+                c.Idcommodite,
+                c.Nomcommodite,
+                IdcategorieNavigation = new { c.IdcategorieNavigation.Nomcategorie }
+            }),
+            Reservations = annonce.Reservations.Select(r => new
+            {
+                IddatedebutreservationNavigation = r.IddatedebutreservationNavigation == null ? null : new { r.IddatedebutreservationNavigation.Date1 },
+                IddatefinreservationNavigation = r.IddatefinreservationNavigation == null ? null : new { r.IddatefinreservationNavigation.Date1 }
+            })
+        };
 
-        return Ok(annonce);
+        return Ok(result);
     }
 
     // POST: api/Annonces
@@ -132,6 +199,38 @@ public class AnnoncesController : ControllerBase
 
         await _annonceRepository.DeleteAsync(annonce);
 
+        return NoContent();
+    }
+
+    // GET: api/Annonces/favorites/{userId}
+    [HttpGet("favorites/{userId}")]
+    public async Task<ActionResult<IEnumerable<AnnonceSearchResultDto>>> GetFavorites(int userId)
+    {
+        var favorites = await _annonceRepository.GetFavoritesByUserIdAsync(userId);
+        return Ok(favorites);
+    }
+
+    // GET: api/Annonces/favorites/ids/{userId}
+    [HttpGet("favorites/ids/{userId}")]
+    public async Task<ActionResult<IEnumerable<int>>> GetFavoriteIds(int userId)
+    {
+        var ids = await _annonceRepository.GetFavoriteIdsByUserIdAsync(userId);
+        return Ok(ids);
+    }
+
+    // POST: api/Annonces/{annonceId}/favorite/{userId}
+    [HttpPost("{annonceId}/favorite/{userId}")]
+    public async Task<IActionResult> AddFavorite(int annonceId, int userId)
+    {
+        await _annonceRepository.AddFavoriteAsync(userId, annonceId);
+        return Ok();
+    }
+
+    // DELETE: api/Annonces/{annonceId}/favorite/{userId}
+    [HttpDelete("{annonceId}/favorite/{userId}")]
+    public async Task<IActionResult> RemoveFavorite(int annonceId, int userId)
+    {
+        await _annonceRepository.RemoveFavoriteAsync(userId, annonceId);
         return NoContent();
     }
 }

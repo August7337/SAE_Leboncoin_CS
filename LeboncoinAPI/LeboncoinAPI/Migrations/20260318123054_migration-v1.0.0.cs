@@ -25,18 +25,6 @@ namespace LeboncoinAPI.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "AnnonceCommodite",
-                columns: table => new
-                {
-                    Idannonce = table.Column<int>(type: "integer", nullable: false),
-                    Idcommodite = table.Column<int>(type: "integer", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_AnnonceCommodite", x => new { x.Idannonce, x.Idcommodite });
-                });
-
-            migrationBuilder.CreateTable(
                 name: "AnnonceUtilisateur",
                 columns: table => new
                 {
@@ -403,24 +391,24 @@ namespace LeboncoinAPI.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "proposer",
+                name: "AnnonceCommodite",
                 columns: table => new
                 {
-                    idcommodite = table.Column<int>(type: "integer", nullable: false),
-                    idannonce = table.Column<int>(type: "integer", nullable: false)
+                    Idcommodite = table.Column<int>(type: "integer", nullable: false),
+                    Idannonce = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("pk_proposer", x => new { x.idcommodite, x.idannonce });
+                    table.PrimaryKey("pk_proposer", x => new { x.Idcommodite, x.Idannonce });
                     table.ForeignKey(
                         name: "fk_proposer_proposer2_annonce",
-                        column: x => x.idannonce,
+                        column: x => x.Idannonce,
                         principalTable: "annonce",
                         principalColumn: "idannonce",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "fk_proposer_proposer_commodit",
-                        column: x => x.idcommodite,
+                        column: x => x.Idcommodite,
                         principalTable: "commodite",
                         principalColumn: "idcommodite",
                         onDelete: ReferentialAction.Restrict);
@@ -1043,6 +1031,16 @@ namespace LeboncoinAPI.Migrations
                 column: "prixnuitee");
 
             migrationBuilder.CreateIndex(
+                name: "idx_proposer_idannonce",
+                table: "AnnonceCommodite",
+                column: "Idannonce");
+
+            migrationBuilder.CreateIndex(
+                name: "idx_proposer_idcommodite",
+                table: "AnnonceCommodite",
+                column: "Idcommodite");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_attribuer_idrole",
                 table: "attribuer",
                 column: "idrole");
@@ -1162,16 +1160,6 @@ namespace LeboncoinAPI.Migrations
                 table: "professionnel",
                 column: "numsiret",
                 unique: true);
-
-            migrationBuilder.CreateIndex(
-                name: "idx_proposer_idannonce",
-                table: "proposer",
-                column: "idannonce");
-
-            migrationBuilder.CreateIndex(
-                name: "idx_proposer_idcommodite",
-                table: "proposer",
-                column: "idcommodite");
 
             migrationBuilder.CreateIndex(
                 name: "IX_recherche_iddatedebutrecherche",
@@ -1396,9 +1384,6 @@ namespace LeboncoinAPI.Migrations
                 name: "professionnel");
 
             migrationBuilder.DropTable(
-                name: "proposer");
-
-            migrationBuilder.DropTable(
                 name: "RechercheTypehebergement");
 
             migrationBuilder.DropTable(
@@ -1417,6 +1402,9 @@ namespace LeboncoinAPI.Migrations
                 name: "compensation");
 
             migrationBuilder.DropTable(
+                name: "commodite");
+
+            migrationBuilder.DropTable(
                 name: "recherche");
 
             migrationBuilder.DropTable(
@@ -1430,9 +1418,6 @@ namespace LeboncoinAPI.Migrations
 
             migrationBuilder.DropTable(
                 name: "incident");
-
-            migrationBuilder.DropTable(
-                name: "commodite");
 
             migrationBuilder.DropTable(
                 name: "reservation");

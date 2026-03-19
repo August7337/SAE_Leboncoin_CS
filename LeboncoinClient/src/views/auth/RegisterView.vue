@@ -84,11 +84,23 @@
     </div>
   </template>
 
+<script setup>
+import { reactive, ref, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { authState } from '@/auth.js'
   <script setup>
   import { reactive, ref, onMounted } from "vue"
   import { useRouter,useRoute } from "vue-router"
   import { authState } from '@/auth.js'
 
+const router = useRouter()
+const route = useRoute()
+const loginSuccess = ref(false)
+const successMessage = ref('')
+const apiError = ref('')
+const showPassword = ref(false)
+const showPasswordConfirm = ref(false)
+const typeUtilisateur = ref('particulier')
   const router = useRouter()
   const route = useRoute()
   const loginSuccess = ref(false)
@@ -98,6 +110,14 @@
   const showPasswordConfirm = ref(false)
   const typeUtilisateur = ref('particulier')
 
+const form = reactive({
+  pseudonyme: '',
+  email: '',
+  telephoneUtilisateur: '',
+  adresseUtilisateur: { rue: '', ville: '', codePostal: '' },
+  password: '',
+  passwordConfirm: '',
+})
   const form = reactive({
     pseudonyme: "",
     email: "",
@@ -107,6 +127,14 @@
     passwordConfirm: ""
   })
 
+const errors = reactive({
+  pseudonyme: '',
+  email: '',
+  telephoneUtilisateur: '',
+  adresseUtilisateur: '',
+  password: '',
+  passwordConfirm: '',
+})
   const errors = reactive({
     pseudonyme: "",
     email: "",

@@ -8,7 +8,12 @@ const menuItems = [
   { title: 'Mes annonces', icon: 'list', path: '/my-annonces', desc: 'Gérer vos publications' },
   { title: 'Mes messages', icon: 'chat', path: '/messages', desc: 'Vos conversations en cours' },
   { title: 'Favoris', icon: 'heart', path: '/favorites', desc: 'Annonces sauvegardées' },
-  { title: 'Paramètres', icon: 'settings', path: '/account-settings', desc: 'Modifier vos informations' },
+  {
+    title: 'Paramètres',
+    icon: 'settings',
+    path: '/account-settings',
+    desc: 'Modifier vos informations',
+  },
   { title: 'Sécurité', icon: 'lock', path: '/security', desc: 'Mot de passe et protection' },
 ]
 
@@ -29,8 +34,8 @@ const handleLogout = () => {
 <template>
   <div class="min-h-screen bg-[#f5f5f5] py-10">
     <div class="max-w-2xl mx-auto px-4">
-      
-      <div v-if="authState.user"
+      <div
+        v-if="authState.user"
         class="bg-white rounded-3xl p-8 shadow-sm border border-gray-100 mb-6 flex items-center gap-6"
       >
         <img 
@@ -58,8 +63,18 @@ const handleLogout = () => {
             </h2>
             <p class="text-sm text-gray-400">{{ item.desc }}</p>
           </div>
-          <svg class="w-6 h-6 text-gray-300 group-hover:text-[#ea580c] transform group-hover:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+          <svg
+            class="w-6 h-6 text-gray-300 group-hover:text-[#ea580c] transform group-hover:translate-x-1 transition-all"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M9 5l7 7-7 7"
+            />
           </svg>
         </router-link>
       </div>

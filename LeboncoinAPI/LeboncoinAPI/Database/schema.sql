@@ -12,12 +12,6 @@ CREATE TABLE "AnnonceAnnonce" (
     CONSTRAINT "PK_AnnonceAnnonce" PRIMARY KEY ("IdannonceA", "IdannonceB")
 );
 
-CREATE TABLE "AnnonceCommodite" (
-    "Idannonce" integer NOT NULL,
-    "Idcommodite" integer NOT NULL,
-    CONSTRAINT "PK_AnnonceCommodite" PRIMARY KEY ("Idannonce", "Idcommodite")
-);
-
 CREATE TABLE "AnnonceUtilisateur" (
     "Idannonce" integer NOT NULL,
     "Idutilisateur" integer NOT NULL,
@@ -184,12 +178,12 @@ CREATE TABLE annonce (
     CONSTRAINT fk_annonce_se_trouve_adresse FOREIGN KEY (idadresse) REFERENCES adresse (idadresse) ON DELETE RESTRICT
 );
 
-CREATE TABLE proposer (
-    idcommodite integer NOT NULL,
-    idannonce integer NOT NULL,
-    CONSTRAINT pk_proposer PRIMARY KEY (idcommodite, idannonce),
-    CONSTRAINT fk_proposer_proposer2_annonce FOREIGN KEY (idannonce) REFERENCES annonce (idannonce) ON DELETE RESTRICT,
-    CONSTRAINT fk_proposer_proposer_commodit FOREIGN KEY (idcommodite) REFERENCES commodite (idcommodite) ON DELETE RESTRICT
+CREATE TABLE "AnnonceCommodite" (
+    "Idcommodite" integer NOT NULL,
+    "Idannonce" integer NOT NULL,
+    CONSTRAINT pk_proposer PRIMARY KEY ("Idcommodite", "Idannonce"),
+    CONSTRAINT fk_proposer_proposer2_annonce FOREIGN KEY ("Idannonce") REFERENCES annonce (idannonce) ON DELETE RESTRICT,
+    CONSTRAINT fk_proposer_proposer_commodit FOREIGN KEY ("Idcommodite") REFERENCES commodite (idcommodite) ON DELETE RESTRICT
 );
 
 CREATE TABLE relier (
@@ -435,6 +429,10 @@ CREATE INDEX idx_annonce_nbchambres ON annonce (nbchambres);
 
 CREATE INDEX idx_annonce_prixnuitee ON annonce (prixnuitee);
 
+CREATE INDEX idx_proposer_idannonce ON "AnnonceCommodite" ("Idannonce");
+
+CREATE INDEX idx_proposer_idcommodite ON "AnnonceCommodite" ("Idcommodite");
+
 CREATE INDEX "IX_attribuer_idrole" ON attribuer (idrole);
 
 CREATE INDEX "IX_avis_idannonce" ON avis (idannonce);
@@ -482,10 +480,6 @@ CREATE INDEX "IX_photo_idannonce" ON photo (idannonce);
 CREATE INDEX "IX_photo_idincident" ON photo (idincident);
 
 CREATE UNIQUE INDEX professionnel_numsiret_key ON professionnel (numsiret);
-
-CREATE INDEX idx_proposer_idannonce ON proposer (idannonce);
-
-CREATE INDEX idx_proposer_idcommodite ON proposer (idcommodite);
 
 CREATE INDEX "IX_recherche_iddatedebutrecherche" ON recherche (iddatedebutrecherche);
 
@@ -544,35 +538,7 @@ ALTER TABLE avis ADD CONSTRAINT fk_avis_commenter_utilisateur FOREIGN KEY (iduti
 ALTER TABLE cartebancaire ADD CONSTRAINT fk_carteban_enregistr_utilisat FOREIGN KEY (idutilisateur) REFERENCES utilisateur (idutilisateur) ON DELETE RESTRICT;
 
 INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-VALUES ('20260317073526_migration-v1.0.0', '8.0.23');
-
-COMMIT;
-
-START TRANSACTION;
-
-INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-VALUES ('20260317075626_migration-v1.0.1', '8.0.23');
-
-COMMIT;
-
-START TRANSACTION;
-
-INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-VALUES ('20260318075352_migration-v1.0.2', '8.0.23');
-
-COMMIT;
-
-START TRANSACTION;
-
-INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-VALUES ('20260318075637_migration-v1.0.3', '8.0.23');
-
-COMMIT;
-
-START TRANSACTION;
-
-INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-VALUES ('20260318075828_migration-v1.0.4', '8.0.23');
+VALUES ('20260318123054_migration-v1.0.0', '8.0.23');
 
 COMMIT;
 

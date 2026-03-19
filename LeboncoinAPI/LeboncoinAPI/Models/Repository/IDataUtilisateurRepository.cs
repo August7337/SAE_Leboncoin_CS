@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace LeboncoinAPI.Models.Repository;
@@ -11,4 +11,7 @@ public interface IDataUtilisateurRepository<TEntity>
     Task AddAsync(TEntity entity);
     Task UpdateAsync(TEntity entityToUpdate, TEntity entity);
     Task DeleteAsync(TEntity entity);
+    Task<TEntity?> GetPublicProfileAsync(int id);
+    // Allow managers/controllers to create a full "particulier" (utilisateur + particulier profile)
+    Task<bool> RegisterFullParticulierAsync(LeboncoinAPI.Models.DTOs.RegisterParticulierDTO dto);
 }
