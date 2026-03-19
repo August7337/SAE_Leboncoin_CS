@@ -1,4 +1,4 @@
-﻿using CloudinaryDotNet;
+using CloudinaryDotNet;
 using CloudinaryDotNet.Actions;
 using LeboncoinAPI.Models.DataManager;
 using LeboncoinAPI.Models.DTOs;
@@ -83,7 +83,27 @@ public class UtilisateursController : ControllerBase
         return Ok(utilisateur);
     }
 
-    // GET: api/Utilisateurs/5
+    // GET: api/Utilisateurs/{id}/public
+    [HttpGet("{id:int}/public")]
+    public async Task<ActionResult> GetPublicProfile(int id)
+    {
+        var user = await _dataRepository.GetPublicProfileAsync(id);
+        if (user == null) return NotFound("Utilisateur introuvable.");
+
+        return Ok(new
+        {
+            user.Pseudonyme,
+            user.ProfilePhotoPath,
+            DateInscription = user.IddateNavigation?.Date1,
+            NombreAnnonces = user.Annonces.Count,
+            user.IdentityVerified,
+            user.PhoneVerified,
+            NoteMoyenne = user.Avis.Any() ? (decimal?)user.Avis.Average(a => a.Nombreetoiles) : null,
+            NombreAvis = user.Avis.Count
+        });
+    }
+
+    // GET: api/Utilisateurs/email/{email}
     [HttpGet("email/{email}")]
     public async Task<IActionResult> GetUtilisateurByEmail(string email)
     {

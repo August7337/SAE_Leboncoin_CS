@@ -45,6 +45,14 @@ public class AnnoncesController : ControllerBase
         return Ok(result);
     }
 
+    // GET: api/Annonces/user/{userId}
+    [HttpGet("user/{userId:int}")]
+    public async Task<ActionResult<IEnumerable<AnnonceSearchResultDto>>> GetAnnoncesByUser(int userId)
+    {
+        var results = await _annonceRepository.GetByUserIdAsync(userId);
+        return Ok(results);
+    }
+
     // GET: api/Annonces/5/similaires
     [HttpGet("{id}/similaires")]
     public async Task<ActionResult<IEnumerable<AnnonceSearchResultDto>>> GetSimilaires(int id)
@@ -102,6 +110,7 @@ public class AnnoncesController : ControllerBase
             annonce.Possibilitefumeur,
             annonce.Smsverifie,
             annonce.Nombreetoilesleboncoin,
+            annonce.Idutilisateur,
             IdheurearriveeNavigation = annonce.IdheurearriveeNavigation == null ? null : new { Heure = annonce.IdheurearriveeNavigation.Heure1 },
             IdheuredepartNavigation = annonce.IdheuredepartNavigation == null ? null : new { Heure = annonce.IdheuredepartNavigation.Heure1 },
             IdtypehebergementNavigation = annonce.IdtypehebergementNavigation == null ? null : new { annonce.IdtypehebergementNavigation.Nomtypehebergement },
@@ -117,7 +126,13 @@ public class AnnoncesController : ControllerBase
             IdutilisateurNavigation = annonce.IdutilisateurNavigation == null ? null : new
             {
                 annonce.IdutilisateurNavigation.Pseudonyme,
-                annonce.IdutilisateurNavigation.ProfilePhotoPath
+                annonce.IdutilisateurNavigation.ProfilePhotoPath,
+                DateInscription = annonce.IdutilisateurNavigation.IddateNavigation?.Date1,
+                NombreAnnonces = annonce.IdutilisateurNavigation.Annonces.Count,
+                annonce.IdutilisateurNavigation.IdentityVerified,
+                annonce.IdutilisateurNavigation.PhoneVerified,
+                NoteMoyenne = annonce.IdutilisateurNavigation.Avis.Any() ? (decimal?)annonce.IdutilisateurNavigation.Avis.Average(a => a.Nombreetoiles) : null,
+                NombreAvis = annonce.IdutilisateurNavigation.Avis.Count
             },
             Photos = annonce.Photos.Select(p => new { p.Idphoto, p.Idannonce, p.Lienphoto }),
             Idcommodites = annonce.Idcommodites.Select(c => new

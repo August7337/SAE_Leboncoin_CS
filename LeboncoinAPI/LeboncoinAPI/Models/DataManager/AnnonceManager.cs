@@ -33,6 +33,11 @@ public class AnnonceManager : IAnnonceRepository
             .Include(a => a.Idcommodites)
                 .ThenInclude(c => c.IdcategorieNavigation)
             .Include(a => a.IdutilisateurNavigation)
+                .ThenInclude(u => u.IddateNavigation)
+            .Include(a => a.IdutilisateurNavigation)
+                .ThenInclude(u => u.Annonces)
+            .Include(a => a.IdutilisateurNavigation)
+                .ThenInclude(u => u.Avis)
             .Include(a => a.IdheurearriveeNavigation)
             .Include(a => a.IdheuredepartNavigation)
             .Include(a => a.Reservations)
@@ -165,6 +170,35 @@ public class AnnonceManager : IAnnonceRepository
             Nomville = a.IdadresseNavigation?.IdvilleNavigation?.Nomville,
             Codepostal = a.IdadresseNavigation?.IdvilleNavigation?.Codepostal,
             DateDepot = a.IddateNavigation?.Date1,
+            Prixnuitee = a.Prixnuitee,
+            Capacite = a.Capacite,
+            Nombreetoilesleboncoin = a.Nombreetoilesleboncoin,
+            Photos = a.Photos.Select(p => new Photo
+            {
+                Idphoto = p.Idphoto,
+                Idannonce = p.Idannonce,
+                Lienphoto = p.Lienphoto
+            }).ToList(),
+        });
+    }
+
+    public async Task<IEnumerable<AnnonceSearchResultDto>> GetByUserIdAsync(int userId)
+    {
+        var annonces = await _dbContext.Annonces
+            .Where(a => a.Idutilisateur == userId)
+            .Include(a => a.Photos)
+            .Include(a => a.IdadresseNavigation)
+                .ThenInclude(adr => adr.IdvilleNavigation)
+            .Include(a => a.IdtypehebergementNavigation)
+            .ToListAsync();
+
+        return annonces.Select(a => new AnnonceSearchResultDto
+        {
+            Idannonce = a.Idannonce,
+            Titreannonce = a.Titreannonce,
+            TypeHebergement = a.IdtypehebergementNavigation?.Nomtypehebergement,
+            Nomville = a.IdadresseNavigation?.IdvilleNavigation?.Nomville,
+            Codepostal = a.IdadresseNavigation?.IdvilleNavigation?.Codepostal,
             Prixnuitee = a.Prixnuitee,
             Capacite = a.Capacite,
             Nombreetoilesleboncoin = a.Nombreetoilesleboncoin,

@@ -5,14 +5,14 @@
   padding: 30px;
   background: #f5f5f5;
   border-radius: 10px;
-  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
   position: relative; /* Nécessaire pour le positionnement de la flèche */
 }
 
-h1 { 
-  text-align: center; 
-  font-weight: bold; 
-  font-size: large; 
+h1 {
+  text-align: center;
+  font-weight: bold;
+  font-size: large;
   margin-bottom: 10px;
 }
 
@@ -37,7 +37,8 @@ h2 {
   margin-bottom: 5px;
 }
 
-input, select {
+input,
+select {
   width: 100%;
   padding: 10px;
   margin-top: 5px;
@@ -114,7 +115,7 @@ button:hover {
 }
 
 .password-wrapper input {
-  padding-right: 80px; 
+  padding-right: 80px;
 }
 
 .toggle-btn {
@@ -124,11 +125,11 @@ button:hover {
   transform: translateY(-50%);
   background: none !important; /* Annule le fond orange */
   border: none;
-  color: #ea580c; 
+  color: #ea580c;
   font-size: 12px;
   font-weight: bold;
   cursor: pointer;
-  width: auto !important; 
+  width: auto !important;
   padding: 5px;
 }
 
@@ -167,7 +168,8 @@ button:hover {
 }
 
 /* --- Messages d'erreur et Success --- */
-span, .error {
+span,
+.error {
   color: red;
   font-size: 12px;
   text-align: left;
@@ -189,14 +191,30 @@ span, .error {
 }
 
 /* --- Animations Success Overlay --- */
-.fixed { position: fixed; }
-.inset-0 { top: 0; right: 0; bottom: 0; left: 0; }
-.z-50 { z-index: 50; }
-.bg-white\/95 { background-color: rgba(255, 255, 255, 0.95); }
+.fixed {
+  position: fixed;
+}
+.inset-0 {
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+}
+.z-50 {
+  z-index: 50;
+}
+.bg-white\/95 {
+  background-color: rgba(255, 255, 255, 0.95);
+}
 
 @keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: .5; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
 }
 
 .animate-pulse {

@@ -10,18 +10,6 @@ git config --global user.email "you@example.com"
 git config --global user.name "Your Name"
 ```
 
-## Dotnet dans VScode
-
-Dans ./LeboncoinAPI/
-```
-dotnet build
-```
-
-Dans ./LeboncoinAPI/LeboncoinAPI/
-```
-dotnet run --launch-profile "https"
-```
-
 ## Git dans Visual Studio
 
 Vérifier si on est à jour

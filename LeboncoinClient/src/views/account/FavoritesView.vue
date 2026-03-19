@@ -42,7 +42,7 @@ async function fetchFavorites() {
     const data = await annoncesService.getFavorites(authState.user.idutilisateur)
     favorites.value = Array.isArray(data) ? data.map(mapAnnonceFromApi) : []
   } catch (error) {
-    console.error("Erreur favoris", error)
+    console.error('Erreur favoris', error)
   } finally {
     loading.value = false
   }
@@ -67,10 +67,18 @@ onMounted(fetchFavorites)
       </div>
 
       <div v-else class="bg-white rounded-3xl p-16 text-center border border-gray-100 shadow-sm">
-        <div class="w-20 h-20 bg-pink-50 text-pink-500 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">❤️</div>
+        <div
+          class="w-20 h-20 bg-pink-50 text-pink-500 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl"
+        >
+          ❤️
+        </div>
         <h2 class="text-xl font-bold text-gray-900">Aucun favori pour le moment</h2>
-        <p class="text-gray-500 mt-2 max-w-sm mx-auto">Parcourez les annonces et cliquez sur le cœur pour les retrouver ici.</p>
-        <router-link to="/search" class="inline-block mt-6 font-bold text-[#ea580c]">Explorer les annonces</router-link>
+        <p class="text-gray-500 mt-2 max-w-sm mx-auto">
+          Parcourez les annonces et cliquez sur le cœur pour les retrouver ici.
+        </p>
+        <router-link to="/search" class="inline-block mt-6 font-bold text-[#ea580c]"
+          >Explorer les annonces</router-link
+        >
       </div>
     </div>
   </div>

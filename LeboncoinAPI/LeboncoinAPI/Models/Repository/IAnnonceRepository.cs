@@ -20,4 +20,5 @@ public interface IAnnonceRepository : IDataRepository<Annonce>
     Task<IEnumerable<int>> GetFavoriteIdsByUserIdAsync(int userId);
     Task AddFavoriteAsync(int userId, int annonceId);
     Task RemoveFavoriteAsync(int userId, int annonceId);
+    Task<IEnumerable<AnnonceSearchResultDto>> GetByUserIdAsync(int userId);
 }

@@ -8,28 +8,24 @@ const message = ref({ text: '', type: '' })
 
 const userType = ref(authState.user?.typeUtilisateur || 'particulier')
 onMounted(() => {
-  const user = authState.user;
+  const user = authState.user
   if (user) {
-   
-    form.pseudonyme = user.pseudonyme || '';
-    form.email = user.email || '';
-    form.telephone = user.telephone || '';
-    userType.value = user.typeUtilisateur || 'particulier';
+    form.pseudonyme = user.pseudonyme || ''
+    form.email = user.email || ''
+    form.telephone = user.telephone || ''
+    userType.value = user.typeUtilisateur || 'particulier'
 
-   
     if (userType.value === 'particulier') {
-      form.civilite = user.civilite || 'M.';
-      form.nomutilisateur = user.nomutilisateur || '';
-      form.prenomutilisateur = user.prenomutilisateur || '';
-    } 
-    
-    else {
-      form.nomEntreprise = user.nomEntreprise || '';
-      form.siret = user.siret || '';
-      form.siteWeb = user.secteuractivite || '';
+      form.civilite = user.civilite || 'M.'
+      form.nomutilisateur = user.nomutilisateur || ''
+      form.prenomutilisateur = user.prenomutilisateur || ''
+    } else {
+      form.nomEntreprise = user.nomEntreprise || ''
+      form.siret = user.siret || ''
+      form.siteWeb = user.secteuractivite || ''
     }
   }
-});
+})
 const form = reactive({
   pseudonyme: authState.user?.pseudonyme || '',
   email: authState.user?.email || '',
@@ -41,50 +37,46 @@ const form = reactive({
   // Professional specific fields
   nomEntreprise: authState.user?.nomEntreprise || '',
   siret: authState.user?.siret || '',
-  siteWeb: authState.user?.siteWeb || ''
+  siteWeb: authState.user?.siteWeb || '',
 })
 
 const updateAccount = async () => {
-  const userId = authState.user?.idutilisateur;
-  if (!userId) return;
+  const userId = authState.user?.idutilisateur
+  if (!userId) return
 
-  isSaving.value = true;
-  message.value = { text: '', type: '' };
+  isSaving.value = true
+  message.value = { text: '', type: '' }
 
-  
   const payload = {
     idutilisateur: userId,
     pseudonyme: form.pseudonyme,
     email: form.email,
-    telephoneutilisateur: form.telephone, 
-  };
+    telephoneutilisateur: form.telephone,
+  }
 
- 
   if (userType.value === 'particulier') {
-    payload.civilite = form.civilite;
-    payload.nomutilisateur = form.nomutilisateur;
-    payload.prenomutilisateur = form.prenomutilisateur;
+    payload.civilite = form.civilite
+    payload.nomutilisateur = form.nomutilisateur
+    payload.prenomutilisateur = form.prenomutilisateur
   }
 
   try {
-   
-    await axios.put(`https://localhost:7057/api/Utilisateurs/${userId}`, payload);
-    
-    
-    const updatedUser = { ...authState.user, ...payload };
-    authState.setUser(updatedUser);
-    
-    message.value = { text: 'Modifications enregistrées !', type: 'success' };
+    await axios.put(`https://localhost:7057/api/Utilisateurs/${userId}`, payload)
+
+    const updatedUser = { ...authState.user, ...payload }
+    authState.setUser(updatedUser)
+
+    message.value = { text: 'Modifications enregistrées !', type: 'success' }
   } catch (error) {
-    console.error("Save error:", error.response?.data);
-    message.value = { 
-        text: error.response?.data?.title || 'Erreur lors de la sauvegarde.', 
-        type: 'error' 
-    };
+    console.error('Save error:', error.response?.data)
+    message.value = {
+      text: error.response?.data?.title || 'Erreur lors de la sauvegarde.',
+      type: 'error',
+    }
   } finally {
-    isSaving.value = false;
+    isSaving.value = false
   }
-};
+}
 </script>
 
 <template>
@@ -98,8 +90,7 @@ const updateAccount = async () => {
       </div>
 
       <div class="form-card">
-        <div v-if="message.text" 
-             :class="['status-message', message.type]">
+        <div v-if="message.text" :class="['status-message', message.type]">
           {{ message.text }}
         </div>
 
@@ -114,26 +105,26 @@ const updateAccount = async () => {
           </div>
         </div>
         <div v-if="userType === 'particulier'" class="particulier-section">
-  <div class="input-group">
-    <label>Civilité</label>
-    <select v-model="form.civilite" class="input-field">
-      <option value="M.">Monsieur</option>
-      <option value="Mme">Madame</option>
-      <option value="Autre">Autre</option>
-    </select>
-  </div>
+          <div class="input-group">
+            <label>Civilité</label>
+            <select v-model="form.civilite" class="input-field">
+              <option value="M.">Monsieur</option>
+              <option value="Mme">Madame</option>
+              <option value="Autre">Autre</option>
+            </select>
+          </div>
 
-  <div class="form-grid">
-    <div class="input-group">
-      <label>Nom</label>
-      <input v-model="form.nomutilisateur" type="text" class="input-field" />
-    </div>
-    <div class="input-group">
-      <label>Prénom</label>
-      <input v-model="form.prenomutilisateur" type="text" class="input-field" />
-    </div>
-  </div>
-</div>
+          <div class="form-grid">
+            <div class="input-group">
+              <label>Nom</label>
+              <input v-model="form.nomutilisateur" type="text" class="input-field" />
+            </div>
+            <div class="input-group">
+              <label>Prénom</label>
+              <input v-model="form.prenomutilisateur" type="text" class="input-field" />
+            </div>
+          </div>
+        </div>
 
         <div class="input-group">
           <label>Adresse email</label>
@@ -142,7 +133,7 @@ const updateAccount = async () => {
 
         <div v-if="userType === 'professionnel'" class="pro-section">
           <h3 class="section-divider">Informations Professionnelles</h3>
-          
+
           <div class="input-group">
             <label>Nom de l'entreprise</label>
             <input v-model="form.nomEntreprise" type="text" class="input-field" />
@@ -155,16 +146,17 @@ const updateAccount = async () => {
             </div>
             <div class="input-group">
               <label>Site Web</label>
-              <input v-model="form.siteWeb" type="text" class="input-field" placeholder="https://..." />
+              <input
+                v-model="form.siteWeb"
+                type="text"
+                class="input-field"
+                placeholder="https://..."
+              />
             </div>
           </div>
         </div>
 
-        <button
-          @click="updateAccount"
-          :disabled="isSaving"
-          class="submit-button"
-        >
+        <button @click="updateAccount" :disabled="isSaving" class="submit-button">
           {{ isSaving ? 'Chargement...' : 'Enregistrer les modifications' }}
         </button>
       </div>
@@ -331,8 +323,10 @@ label {
     flex-direction: column;
     text-align: center;
   }
-  .page-title { text-align: center; }
+  .page-title {
+    text-align: center;
+  }
 }
 </style>
 
-<style src="../../assets/register.css"  scoped></style>
+<style src="../../assets/register.css" scoped></style>
