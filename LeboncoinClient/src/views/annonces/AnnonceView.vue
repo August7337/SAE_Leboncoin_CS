@@ -16,16 +16,22 @@ const dateWarning = ref('* Veuillez sélectionner vos dates pour continuer')
 const canReserve = ref(false)
 
 const googleApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY
+console.log("Ma clé API est :", googleApiKey)
 
 // --- Computed ---
 
 const fullAddress = computed(() => {
   const addr = annonce.value?.idadresseNavigation
   if (!addr) return null
-  const rue = addr.rue || ''
+  
+  const num = addr.numerorue || ''
+  const rue = addr.nomrue || ''
   const ville = addr.idvilleNavigation?.nomville || ''
   const cp = addr.idvilleNavigation?.codepostal || ''
-  return encodeURIComponent(`${rue}, ${cp} ${ville}, France`)
+  
+  const adresseTexte = `${num} ${rue}, ${cp} ${ville}, France`.trim()
+  
+  return encodeURIComponent(adresseTexte)
 })
 
 const currentUrl = computed(() => window.location.href)
@@ -390,17 +396,24 @@ onMounted(fetchAnnonce)
           <hr class="border-gray-200">
 
           <!-- Carte -->
-          <div>
-            <h2 class="text-2xl font-bold mb-6 text-gray-900">Où se situe le logement</h2>
-            <div class="w-full h-[400px] rounded-3xl overflow-hidden shadow-sm border border-gray-100 bg-gray-50">
-              <iframe v-if="fullAddress" width="100%" height="100%" frameborder="0" style="border:0"
+          <div class="pt-8 border-t border-gray-100">
+            <h2 class="text-2xl font-bold mb-6">Localisation</h2>
+            <div class="w-full h-[400px] rounded-3xl overflow-hidden bg-gray-100 border">
+              
+              <iframe
+                v-if="fullAddress && googleApiKey"
+                width="100%"
+                height="100%"
+                frameborder="0"
+                style="border:0"
                 :src="`https://www.google.com/maps/embed/v1/place?key=${googleApiKey}&q=${fullAddress}`"
-                allowfullscreen></iframe>
-              <div v-else class="flex items-center justify-center h-full text-gray-400 italic">
-                Localisation en cours de chargement...
+                allowfullscreen
+              ></iframe>
+              
+              <div v-else class="flex items-center justify-center h-full text-gray-400">
+                Chargement de la carte...
               </div>
             </div>
-            <p class="mt-4 text-sm text-gray-400">L'adresse exacte vous sera communiquée après la réservation.</p>
           </div>
 
         </div>
