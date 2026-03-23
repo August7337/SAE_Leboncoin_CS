@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace LeboncoinAPI.Migrations
 {
     [DbContext(typeof(LeboncoinDBContext))]
-    [Migration("20260318123054_migration-v1.0.0")]
+    [Migration("20260323151714_migration-v1.0.0")]
     partial class migrationv100
     {
         /// <inheritdoc />

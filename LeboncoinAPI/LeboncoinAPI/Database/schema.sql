@@ -538,7 +538,7 @@ ALTER TABLE avis ADD CONSTRAINT fk_avis_commenter_utilisateur FOREIGN KEY (iduti
 ALTER TABLE cartebancaire ADD CONSTRAINT fk_carteban_enregistr_utilisat FOREIGN KEY (idutilisateur) REFERENCES utilisateur (idutilisateur) ON DELETE RESTRICT;
 
 INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-VALUES ('20260318123054_migration-v1.0.0', '8.0.23');
+VALUES ('20260323151714_migration-v1.0.0', '8.0.23');
 
 COMMIT;
 
