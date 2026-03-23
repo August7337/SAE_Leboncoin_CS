@@ -1,3 +1,5 @@
+using CloudinaryDotNet;
+using CloudinaryDotNet.Actions;
 using LeboncoinAPI.Models.EntityFramework;
 using LeboncoinAPI.Models.Repository;
 using Microsoft.AspNetCore.Mvc;
@@ -11,11 +13,19 @@ public class AnnoncesController : ControllerBase
 {
     private readonly IAnnonceRepository _annonceRepository;
     private readonly LeboncoinDBContext _dbContext;
+    private readonly Cloudinary _cloudinary;
 
-    public AnnoncesController(IAnnonceRepository annonceRepository, LeboncoinDBContext dbContext)
+    public AnnoncesController(IAnnonceRepository annonceRepository, LeboncoinDBContext dbContext, IConfiguration config)
     {
         _annonceRepository = annonceRepository;
         _dbContext = dbContext;
+
+        var acc = new Account(
+            config["CloudinarySettings:CloudName"],
+            config["CloudinarySettings:ApiKey"],
+            config["CloudinarySettings:ApiSecret"]
+        );
+        _cloudinary = new Cloudinary(acc);
     }
 
     // GET: api/Annonces
@@ -271,4 +281,87 @@ public class AnnoncesController : ControllerBase
         await _annonceRepository.RemoveFavoriteAsync(userId, annonceId);
         return NoContent();
     }
+
+    // POST: api/Annonces/{id}/photos
+    [HttpPost("{id}/photos")]
+    public async Task<IActionResult> AddPhoto(int id, [FromBody] AddPhotoRequest request)
+    {
+        var photo = await _annonceRepository.AddPhotoAsync(id, request.Url);
+        return Ok(new { photo.Idphoto, photo.Idannonce, photo.Lienphoto });
+    }
+
+    // POST: api/Annonces/{id}/upload-photo
+    [HttpPost("{id}/upload-photo")]
+    public async Task<IActionResult> UploadPhoto(int id, IFormFile file)
+    {
+        if (file == null || file.Length == 0) return BadRequest("No file.");
+
+        using var stream = file.OpenReadStream();
+
+        var uploadParams = new ImageUploadParams()
+        {
+            File = new FileDescription(file.FileName, stream),
+            Folder = "annonce_photos",
+            PublicId = $"annonce_{id}_{Guid.NewGuid()}",
+            Overwrite = true
+        };
+
+        var uploadResult = await _cloudinary.UploadAsync(uploadParams);
+
+        if (uploadResult.Error != null) return BadRequest(uploadResult.Error.Message);
+
+        var photo = await _annonceRepository.AddPhotoAsync(id, uploadResult.SecureUrl.ToString());
+        return Ok(new { photo.Idphoto, photo.Idannonce, photo.Lienphoto });
+    }
+
+    // DELETE: api/Annonces/photos/{photoId}
+    [HttpDelete("photos/{photoId}")]
+    public async Task<IActionResult> RemovePhoto(int photoId)
+    {
+        await _annonceRepository.RemovePhotoAsync(photoId);
+        return NoContent();
+    }
+
+    // GET: api/Annonces/{id}/indisponibilites
+    [HttpGet("{id}/indisponibilites")]
+    public async Task<ActionResult<IEnumerable<string>>> GetIndisponibilites(int id)
+    {
+        var dates = await _annonceRepository.GetIndisponibilitesAsync(id);
+        return Ok(dates.Select(d => d.ToString("yyyy-MM-dd")));
+    }
+
+    // POST: api/Annonces/{id}/indisponibilites
+    [HttpPost("{id}/indisponibilites")]
+    public async Task<IActionResult> AddIndisponibilite(int id, [FromBody] UnavailabilityRequest request)
+    {
+        if (DateOnly.TryParse(request.StartDate, out var start) && DateOnly.TryParse(request.EndDate, out var end))
+        {
+            await _annonceRepository.SetIndisponibleAsync(id, start, end);
+            return Ok();
+        }
+        return BadRequest("Invalid date format. Use YYYY-MM-DD.");
+    }
+
+    // DELETE: api/Annonces/{id}/indisponibilites/{date}
+    [HttpDelete("{id}/indisponibilites/{date}")]
+    public async Task<IActionResult> RemoveIndisponibilite(int id, string date)
+    {
+        if (DateOnly.TryParse(date, out var parsedDate))
+        {
+            await _annonceRepository.RemoveIndisponibiliteAsync(id, parsedDate);
+            return NoContent();
+        }
+        return BadRequest("Invalid date format. Use YYYY-MM-DD.");
+    }
+}
+
+public class AddPhotoRequest
+{
+    public string Url { get; set; } = string.Empty;
+}
+
+public class UnavailabilityRequest
+{
+    public string StartDate { get; set; } = string.Empty;
+    public string EndDate { get; set; } = string.Empty;
 }

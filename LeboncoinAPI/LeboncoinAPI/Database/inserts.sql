@@ -1,3 +1,5 @@
+BEGIN;
+
 /*============================================================================================================================================*/
 /*============================================================================================================================================*/
 /* INSERTIONS PREMIER NIVEAU                                                                                                                  */
@@ -926,8 +928,19 @@ paiementenligne, capaciteminimumvoyageur, prixminimum, prixmaximum, nombreminimu
 /*============================================================================================================================================*/
 
 /*==============================================================*/
-/* Table : reservation (103 reservations)                       */
+/* Table : reservation (104 reservations)                       */
 /*==============================================================*/
+
+INSERT INTO reservation(idannonce, iddatedebutreservation, iddatefinreservation, idutilisateur, nomclient, prenomclient, telephoneclient)
+VALUES (
+  1,
+  (SELECT iddate FROM date WHERE date = CURRENT_DATE + INTERVAL '3 days'),
+  (SELECT iddate FROM date WHERE date = CURRENT_DATE + INTERVAL '10 days'),
+  1,
+  'Janvier',
+  'Sarah',
+  '0695638456'
+);
 
 INSERT INTO reservation(idannonce,iddatedebutreservation,iddatefinreservation,idutilisateur,nomclient,prenomclient,telephoneclient) VALUES
 
@@ -6713,3 +6726,5 @@ INSERT INTO demander(idincident, idcompensation) VALUES
 (4,6),
 (4,8),
 (5,9);
+
+COMMIT;
