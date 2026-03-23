@@ -93,6 +93,11 @@ const routes = [
     meta: { requiresAuth: true },
   },
   {
+    path: '/vendeur/:id',
+    name: 'vendeur-profile',
+    component: () => import('../views/profile/PublicProfileView.vue'),
+  },
+  {
     path: '/security',
     name: 'security',
     component: () => import('../views/profile/SecurityView.vue'),
@@ -111,13 +116,11 @@ const router = createRouter({
   routes,
 })
 
-router.beforeEach((to, from, next) => {
+router.beforeEach((to, from) => {
   const requiresAuth = to.matched.some((record) => record.meta.requiresAuth)
 
   if (requiresAuth && !authState.isLoggedIn()) {
-    next({ name: 'login' })
-  } else {
-    next()
+    return { name: 'login' }
   }
 })
 
