@@ -21,4 +21,13 @@ public interface IAnnonceRepository : IDataRepository<Annonce>
     Task AddFavoriteAsync(int userId, int annonceId);
     Task RemoveFavoriteAsync(int userId, int annonceId);
     Task<IEnumerable<AnnonceSearchResultDto>> GetByUserIdAsync(int userId);
+
+    // Photos
+    Task<Photo> AddPhotoAsync(int annonceId, string url);
+    Task RemovePhotoAsync(int photoId);
+
+    // Indisponibilités
+    Task SetIndisponibleAsync(int annonceId, DateOnly startDate, DateOnly endDate);
+    Task<IEnumerable<DateOnly>> GetIndisponibilitesAsync(int annonceId);
+    Task RemoveIndisponibiliteAsync(int annonceId, DateOnly date);
 }
