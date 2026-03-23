@@ -32,11 +32,6 @@ const routes = [
 
   // --- Annonces ---
   {
-    path: '/search',
-    name: 'search',
-    component: () => import('../views/annonces/AnnonceSearchView.vue'),
-  },
-  {
     path: '/annonce/:id',
     name: 'annonce-detail',
     component: () => import('../views/annonces/AnnonceView.vue'),
@@ -72,6 +67,12 @@ const routes = [
     name: 'favorites',
     component: () => import('../views/account/FavoritesView.vue'),
     meta: { requiresAuth: true },
+  },
+  {
+    path: '/mes-recherches',
+    name: 'saved-searches',
+    component: () => import('../views/account/SavedSearchesView.vue'),
+    // No requiresAuth since both visitors & users can use it
   },
   {
     path: '/account-settings',

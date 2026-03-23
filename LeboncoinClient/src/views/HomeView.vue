@@ -49,6 +49,21 @@
                 autocomplete="off"
               />
 
+              <button 
+                v-if="searchQuery || hasActiveFilters" 
+                @click="saveCurrentSearch"
+                class="text-xs font-bold flex items-center gap-1 transition-colors bg-white px-2 py-1 rounded-lg border ml-2 flex-shrink-0"
+                :class="isSaved ? 'text-[#ea580c] border-[#ea580c] cursor-default' : 'text-gray-600 border-gray-200 hover:text-[#ea580c] hover:border-[#ea580c] hover:bg-gray-50'"
+              >
+                <svg v-if="isSaved" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4">
+                  <path fill-rule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.007 5.404.433c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.433 2.082-5.006z" clip-rule="evenodd" />
+                </svg>
+                <svg v-else xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
+                </svg>
+                <span class="hidden sm:inline">{{ isSaved ? 'Sauvegardée' : 'Sauvegarder' }}</span>
+              </button>
+
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"
@@ -165,18 +180,22 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, computed } from 'vue'
+import { useRoute } from 'vue-router'
 import AnnonceList from '../components/AnnonceList.vue'
 import FilterSidebar from '../components/FilterSidebar.vue'
 import { buildAssetUrl } from '../services/api'
 import annoncesService from '../services/annoncesService'
+import recherchesService from '../services/recherchesService'
 import { authState } from '@/auth.js'
 
+const route = useRoute()
 const annonces = ref([])
 const favoriteIds = ref([])
 const isLoading = ref(false)
 const errorMessage = ref('')
 const searchQuery = ref('')
+const isSaved = ref(false)
 const isSidebarOpen = ref(false)
 const filters = ref({
   dateArrivee: '',
@@ -186,6 +205,16 @@ const filters = ref({
   nbChambres: 0,
   typeHebergementIds: [],
   commoditeIds: [],
+})
+
+const hasActiveFilters = computed(() => {
+  return filters.value.dateArrivee !== '' ||
+         filters.value.dateDepart !== '' ||
+         filters.value.minPrice !== null ||
+         filters.value.maxPrice !== null ||
+         filters.value.nbChambres > 0 ||
+         filters.value.typeHebergementIds.length > 0 ||
+         filters.value.commoditeIds.length > 0
 })
 
 let searchTimeout = null
@@ -242,10 +271,17 @@ const performSearch = async () => {
 }
 
 const onSearchInput = () => {
+  isSaved.value = recherchesService.isSearchSaved(searchQuery.value, filters.value)
   if (searchTimeout) clearTimeout(searchTimeout)
   searchTimeout = setTimeout(() => {
     performSearch()
   }, 400)
+}
+
+const saveCurrentSearch = () => {
+  if ((!searchQuery.value && !hasActiveFilters.value) || isSaved.value) return
+  recherchesService.saveSearch(searchQuery.value, filters.value)
+  isSaved.value = true
 }
 
 const openSidebar = () => {
@@ -254,10 +290,23 @@ const openSidebar = () => {
 
 const applyFilters = (newFilters) => {
   filters.value = newFilters
+  isSaved.value = recherchesService.isSearchSaved(searchQuery.value, filters.value)
   performSearch()
 }
 
 onMounted(async () => {
+  if (route.query.q !== undefined) {
+    searchQuery.value = route.query.q
+  }
+  if (route.query.f) {
+    try {
+      filters.value = { ...filters.value, ...JSON.parse(route.query.f) }
+    } catch (e) {
+      console.error('Failed to parse filters', e)
+    }
+  }
+  isSaved.value = recherchesService.isSearchSaved(searchQuery.value, filters.value)
+
   if (authState.user) {
     try {
       favoriteIds.value = await annoncesService.getFavoriteIds(authState.user.idutilisateur)
