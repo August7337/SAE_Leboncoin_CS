@@ -50,27 +50,16 @@ const logout = () => {
       </router-link>
 
       <nav class="flex items-center gap-6 text-gray-700 shrink-0">
-        <router-link to="/search" class="relative hidden md:flex flex-col items-center gap-1 group">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke-width="2"
-            stroke="currentColor"
-            class="w-6 h-6 group-hover:text-black transition-colors"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
-            />
+
+        <router-link
+          to="/mes-recherches"
+          class="relative hidden md:flex flex-col items-center gap-1 group w-20"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6 group-hover:text-black transition-colors">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z" />
           </svg>
-          <span class="text-xs font-medium group-hover:text-black transition-colors"
-            >Rechercher</span
-          >
-          <span
-            class="absolute -bottom-3 left-1/2 w-0 h-[3px] -translate-x-1/2 bg-orange-600 transition-all duration-300 group-hover:w-full"
-          ></span>
+          <span class="text-xs font-medium group-hover:text-black transition-colors text-center leading-tight mt-1">Recherches</span>
+          <span class="absolute -bottom-3 left-1/2 w-0 h-[3px] -translate-x-1/2 bg-orange-600 transition-all duration-300 group-hover:w-full"></span>
         </router-link>
 
         <router-link
