@@ -2,7 +2,7 @@ using LeboncoinAPI.Models.EntityFramework;
 using LeboncoinAPI.Models.Repository;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-
+using LeboncoinAPI.Models.DTOs;
 namespace LeboncoinAPI.Controllers;
 
 [Route("api/[controller]")]
@@ -152,18 +152,56 @@ public class AnnoncesController : ControllerBase
     }
 
     // POST: api/Annonces
+ 
     [HttpPost]
-    public async Task<ActionResult<Annonce>> PostAnnonce(Annonce annonce)
+    public async Task<ActionResult<Annonce>> PostAnnonce(AnnonceDTO incomingAnnonce)
     {
-        if (!ModelState.IsValid)
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+
+        
+        var newAnnonce = new Annonce
         {
-            return BadRequest(ModelState);
+            Titreannonce = incomingAnnonce.Titreannonce,
+            Descriptionannonce = incomingAnnonce.Descriptionannonce,
+            Prixnuitee = incomingAnnonce.Prixnuitee,
+            Capacite = incomingAnnonce.Nombrepersonnesmax,
+        
+            Nbchambres = incomingAnnonce.Nbchambres,
+            Nombrebebesmax = incomingAnnonce.Nombrebebesmax,
+
+            Idadresse = incomingAnnonce.Idadresse,
+            Idutilisateur = incomingAnnonce.Idutilisateur,
+            Idtypehebergement = incomingAnnonce.Idtypehebergement,
+            Possibiliteanimaux = incomingAnnonce.Possibiliteanimaux,
+            Possibilitefumeur = incomingAnnonce.Possibilitefumeur,
+            Iddate = 1 
+        };
+
+
+        if (incomingAnnonce.Liensphoto != null && incomingAnnonce.Liensphoto.Any())
+        {
+            foreach (var url in incomingAnnonce.Liensphoto)
+            {
+                newAnnonce.Photos.Add(new Photo { Lienphoto = url });
+            }
         }
 
-        await _annonceRepository.AddAsync(annonce);
+        await _annonceRepository.AddAsync(newAnnonce);
 
-        return CreatedAtAction(nameof(GetAnnonce), new { id = annonce.Idannonce }, annonce);
+        return CreatedAtAction(nameof(GetAnnonce), new { id = newAnnonce.Idannonce }, newAnnonce);
     }
+
+    // Créez ce DTO pour matcher exactement ce que Vue envoie
+    public class AnnonceDto
+    {
+        public string Titreannonce { get; set; } = null!;
+        public string Descriptionannonce { get; set; } = null!;
+        public decimal Prixnuitee { get; set; }
+        public int Nombrepersonnesmax { get; set; }
+        public int Idadresse { get; set; }
+        public int Idutilisateur { get; set; }
+        public List<string> Liensphoto { get; set; } = new();
+    }   
 
     // PUT: api/Annonces/5
     [HttpPut("{id}")]

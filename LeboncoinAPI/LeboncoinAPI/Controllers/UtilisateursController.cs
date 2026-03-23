@@ -34,7 +34,12 @@ public class UtilisateursController : ControllerBase
     [HttpPost("{id}/upload-pfp")]
     public async Task<IActionResult> UploadPfp(int id, IFormFile file)
     {
-        if (file == null || file.Length == 0) return BadRequest("No file.");
+        // 1. Check if file was actually sent
+        if (file == null || file.Length == 0) return BadRequest("No file uploaded.");
+
+        // 2. Find the user
+        var user = await _dataRepository.GetByIdAsync(id);
+        if (user == null) return NotFound($"User with ID {id} not found.");
 
         using var stream = file.OpenReadStream();
 
@@ -44,7 +49,6 @@ public class UtilisateursController : ControllerBase
             Folder = "user_profiles",
             PublicId = $"user_{id}",
             Overwrite = true,
-            
             Transformation = new Transformation()
                 .Width(200).Height(200).Crop("thumb").Gravity("face").Radius("max").FetchFormat("png")
         };
@@ -53,8 +57,7 @@ public class UtilisateursController : ControllerBase
 
         if (uploadResult.Error != null) return BadRequest(uploadResult.Error.Message);
 
-    
-        var user = await _dataRepository.GetByIdAsync(id);
+        // 3. Update user (now safe because we checked for null above)
         user.ProfilePhotoPath = uploadResult.SecureUrl.ToString();
         await _dataRepository.UpdateAsync(user, user);
 
