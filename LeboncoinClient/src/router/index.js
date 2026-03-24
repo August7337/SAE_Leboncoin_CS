@@ -32,11 +32,6 @@ const routes = [
 
   // --- Annonces ---
   {
-    path: '/search',
-    name: 'search',
-    component: () => import('../views/annonces/AnnonceSearchView.vue'),
-  },
-  {
     path: '/annonce/:id',
     name: 'annonce-detail',
     component: () => import('../views/annonces/AnnonceView.vue'),
@@ -62,6 +57,19 @@ const routes = [
     meta: { requiresAuth: true },
   },
   {
+    path: '/my-reservations',
+    name: 'my-reservations',
+    component: () => import('../views/account/MyReservationsView.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/my-reservations/:id/edit',
+    name: 'edit-reservation',
+    component: () => import('../views/account/EditReservationView.vue'),
+    meta: { requiresAuth: true },
+    props: true
+  },
+  {
     path: '/messages',
     name: 'messages',
     component: () => import('../views/account/MessagesView.vue'),
@@ -72,6 +80,12 @@ const routes = [
     name: 'favorites',
     component: () => import('../views/account/FavoritesView.vue'),
     meta: { requiresAuth: true },
+  },
+  {
+    path: '/mes-recherches',
+    name: 'saved-searches',
+    component: () => import('../views/account/SavedSearchesView.vue'),
+    // No requiresAuth since both visitors & users can use it
   },
   {
     path: '/account-settings',
@@ -92,6 +106,11 @@ const routes = [
     meta: { requiresAuth: true },
   },
   {
+    path: '/vendeur/:id',
+    name: 'vendeur-profile',
+    component: () => import('../views/profile/PublicProfileView.vue'),
+  },
+  {
     path: '/security',
     name: 'security',
     component: () => import('../views/profile/SecurityView.vue'),
@@ -110,13 +129,11 @@ const router = createRouter({
   routes,
 })
 
-router.beforeEach((to, from, next) => {
+router.beforeEach((to, from) => {
   const requiresAuth = to.matched.some((record) => record.meta.requiresAuth)
 
   if (requiresAuth && !authState.isLoggedIn()) {
-    next({ name: 'login' })
-  } else {
-    next()
+    return { name: 'login' }
   }
 })
 

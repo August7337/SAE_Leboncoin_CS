@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue'
 import axios from 'axios'
 import { authState } from '@/auth.js'
+import { buildAssetUrl } from '@/services/api'
 
 const myAnnonces = ref([])
 const loading = ref(true)
@@ -10,11 +11,16 @@ async function fetchMyAnnonces() {
   if (!authState.user) return
 
   try {
-    // Supposons un endpoint qui filtre par utilisateur
     const response = await axios.get(
       `https://localhost:7057/api/Annonces/user/${authState.user.idutilisateur}`,
     )
-    myAnnonces.value = response.data
+    myAnnonces.value = response.data.map((annonce) => ({
+      ...annonce,
+      lienphoto:
+        annonce.photos && annonce.photos.length > 0
+          ? buildAssetUrl(annonce.photos[0].lienphoto)
+          : null,
+    }))
   } catch (error) {
     console.error('Erreur mes annonces', error)
   } finally {
@@ -46,7 +52,10 @@ onMounted(fetchMyAnnonces)
           :key="annonce.idannonce"
           class="bg-white p-4 rounded-3xl shadow-sm border border-gray-50 flex items-center gap-6"
         >
-          <img :src="annonce.lienphoto" class="w-32 h-24 object-cover rounded-2xl" />
+          <img
+            :src="annonce.lienphoto || 'https://via.placeholder.com/150?text=Pas+d\'image'"
+            class="w-32 h-24 object-cover rounded-2xl"
+          />
           <div class="flex-1">
             <h3 class="font-bold text-gray-900">{{ annonce.titreannonce }}</h3>
             <p class="text-[#ea580c] font-black">{{ annonce.prixnuitee }}€ / nuit</p>

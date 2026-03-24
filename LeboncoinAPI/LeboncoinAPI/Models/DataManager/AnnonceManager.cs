@@ -213,13 +213,57 @@ public class AnnonceManager : IAnnonceRepository
 
     public async Task AddAsync(Annonce entity)
     {
+        var today = DateOnly.FromDateTime(DateTime.Now);
+        var dateEntity = await _dbContext.Dates.FirstOrDefaultAsync(d => d.Date1 == today);
+
+        if (dateEntity == null)
+            if (dateEntity == null)
+            {
+                dateEntity = new Date { Date1 = today };
+                _dbContext.Dates.Add(dateEntity);
+                await _dbContext.SaveChangesAsync(); 
+            }
+        entity.Iddate = dateEntity.Iddate;
+        
+        var adr = entity.IdadresseNavigation;
+        var ville = adr.IdvilleNavigation;
+        var dep = ville.IddepartementNavigation;
+        var reg = dep.IdregionNavigation;
+
+        if (UtilisateurManager.GeoData.TryGetValue(dep.Numerodepartement, out var geo))
+        {
+            dep.Nomdepartement = geo.DepName;
+            reg.Nomregion = geo.RegName;
+        }
+        var existingReg = await _dbContext.Regions.FirstOrDefaultAsync(r => r.Nomregion == reg.Nomregion);
+        if (existingReg != null) dep.IdregionNavigation = existingReg;
+        var existingDep = await _dbContext.Departements.FirstOrDefaultAsync(d => d.Numerodepartement == dep.Numerodepartement);
+        if (existingDep != null) ville.IddepartementNavigation = existingDep;
+
+        var existingVille = await _dbContext.Villes.FirstOrDefaultAsync(v =>
+            v.Nomville.ToLower() == ville.Nomville.ToLower() && v.Codepostal == ville.Codepostal);
+        if (existingVille != null) adr.IdvilleNavigation = existingVille;
+
+      
         await _dbContext.Annonces.AddAsync(entity);
         await _dbContext.SaveChangesAsync();
     }
 
+
     public async Task UpdateAsync(Annonce entityToUpdate, Annonce entity)
     {
-        _dbContext.Entry(entityToUpdate).CurrentValues.SetValues(entity);
+        entityToUpdate.Titreannonce = entity.Titreannonce;
+        entityToUpdate.Descriptionannonce = entity.Descriptionannonce;
+        entityToUpdate.Prixnuitee = entity.Prixnuitee;
+        entityToUpdate.Capacite = entity.Capacite;
+        entityToUpdate.Nbchambres = entity.Nbchambres;
+        entityToUpdate.Minimumnuitee = entity.Minimumnuitee;
+        entityToUpdate.Nombrebebesmax = entity.Nombrebebesmax;
+        entityToUpdate.Possibiliteanimaux = entity.Possibiliteanimaux;
+        entityToUpdate.Possibilitefumeur = entity.Possibilitefumeur;
+        entityToUpdate.Idheurearrivee = entity.Idheurearrivee;
+        entityToUpdate.Idheuredepart = entity.Idheuredepart;
+
         await _dbContext.SaveChangesAsync();
     }
 
@@ -309,5 +353,80 @@ public class AnnonceManager : IAnnonceRepository
         if (!string.IsNullOrWhiteSpace(adresse.Nomrue)) parts.Add(adresse.Nomrue);
 
         return parts.Count > 0 ? string.Join(" ", parts) : null;
+    }
+
+    public async Task<Photo> AddPhotoAsync(int annonceId, string url)
+    {
+        var photo = new Photo { Idannonce = annonceId, Lienphoto = url };
+        await _dbContext.Photos.AddAsync(photo);
+        await _dbContext.SaveChangesAsync();
+        return photo;
+    }
+
+    public async Task RemovePhotoAsync(int photoId)
+    {
+        var photo = await _dbContext.Photos.FindAsync(photoId);
+        if (photo != null)
+        {
+            _dbContext.Photos.Remove(photo);
+            await _dbContext.SaveChangesAsync();
+        }
+    }
+
+    public async Task SetIndisponibleAsync(int annonceId, DateOnly startDate, DateOnly endDate)
+    {
+        if (startDate > endDate) return;
+
+        var datesToProcess = new List<DateOnly>();
+        for (var date = startDate; date <= endDate; date = date.AddDays(1))
+        {
+            datesToProcess.Add(date);
+        }
+
+        foreach (var currentDate in datesToProcess)
+        {
+            var dateRecord = await _dbContext.Dates.FirstOrDefaultAsync(d => d.Date1 == currentDate);
+            if (dateRecord == null)
+            {
+                dateRecord = new Date { Date1 = currentDate };
+                _dbContext.Dates.Add(dateRecord);
+                await _dbContext.SaveChangesAsync();
+            }
+
+            var relier = await _dbContext.Reliers.FirstOrDefaultAsync(r => r.Idannonce == annonceId && r.Iddate == dateRecord.Iddate);
+            if (relier == null)
+            {
+                relier = new Relier { Idannonce = annonceId, Iddate = dateRecord.Iddate, Estdisponible = false };
+                _dbContext.Reliers.Add(relier);
+            }
+            else
+            {
+                relier.Estdisponible = false;
+            }
+        }
+        await _dbContext.SaveChangesAsync();
+    }
+
+    public async Task<IEnumerable<DateOnly>> GetIndisponibilitesAsync(int annonceId)
+    {
+        return await _dbContext.Reliers
+            .Include(r => r.IddateNavigation)
+            .Where(r => r.Idannonce == annonceId && r.Estdisponible == false && r.IddateNavigation.Date1 != null)
+            .Select(r => r.IddateNavigation.Date1.Value)
+            .ToListAsync();
+    }
+
+    public async Task RemoveIndisponibiliteAsync(int annonceId, DateOnly date)
+    {
+        var dateRecord = await _dbContext.Dates.FirstOrDefaultAsync(d => d.Date1 == date);
+        if (dateRecord != null)
+        {
+            var relier = await _dbContext.Reliers.FirstOrDefaultAsync(r => r.Idannonce == annonceId && r.Iddate == dateRecord.Iddate);
+            if (relier != null)
+            {
+                _dbContext.Reliers.Remove(relier);
+                await _dbContext.SaveChangesAsync();
+            }
+        }
     }
 }

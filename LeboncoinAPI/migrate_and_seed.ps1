@@ -15,15 +15,27 @@ $psqlPath = "C:\Program Files\PostgreSQL\17\bin\psql.exe"
 $EnvFilePath = ".env"
 
 if (Test-Path $EnvFilePath) {
-    Get-Content $EnvFilePath | Where-Object { $_ -match '^([^#=]+)=(.*)$' } | ForEach-Object {
-        $name = $matches[1].Trim()
-        $value = $matches[2].Trim()
-        [Environment]::SetEnvironmentVariable($name, $value, 'Process')
+
+    Get-Content $EnvFilePath | ForEach-Object {
+        if ($_ -match '^\s*([^#=]+?)\s*=\s*(.*)\s*$') {
+            $name = $matches[1].Trim()
+            $value = $matches[2].Trim()
+
+            # enlever guillemets
+            $value = $value.Trim('"').Trim("'")
+
+            # enlever caractères invisibles (CRLF)
+            $value = $value -replace "`r", ""
+            $value = $value -replace "`n", ""
+
+            [Environment]::SetEnvironmentVariable($name, $value, 'Process')
+        }
     }
-    Write-Host "[OK] Fichier .env charge avec succes." -ForegroundColor Green
+
+    Write-Host "[OK] Fichier .env charge correctement." -ForegroundColor Green
+
 } else {
     Write-Warning "Fichier .env non trouve a l'emplacement : $EnvFilePath"
-    Write-Host "Assure-toi que le fichier existe bien a la racine du projet API." -ForegroundColor Yellow
 }
 
 # --- IDENTIFIANTS DE BASE DE DONNEES (recuperes depuis le .env) ---
@@ -44,8 +56,10 @@ Write-Host "======================================================" -ForegroundC
 # 1. RESET DES MIGRATIONS
 # ------------------------------------------------------------------------------
 Write-Host "`n[1/5] Reset des migrations..." -ForegroundColor Yellow
-Write-Host "      Voulez-vous supprimer les migrations ? (y/N) > " -ForegroundColor Red -NoNewline
+Write-Host "      Voulez-vous supprimer les migrations ET les tables ? (y/N) > " -ForegroundColor Red -NoNewline
 $confirmation = Read-Host
+
+$dropTableExecuted = $false
 
 if ($confirmation -eq "y") {
     if (Test-Path $MigrationsDir) {
@@ -54,29 +68,31 @@ if ($confirmation -eq "y") {
     } else {
         Write-Host "      Aucun dossier Migrations trouve, on continue." -ForegroundColor Gray
     }
-} else {
-    Write-Host "      Suppression ignoree, on passe a la suite." -ForegroundColor Gray
-}
 
-# ------------------------------------------------------------------------------
-# DROP DES TABLES (toujours execute apres l'etape 1)
-# ------------------------------------------------------------------------------
-Write-Host "`n      Suppression des tables via drop-table.sql..." -ForegroundColor Yellow
+    # ------------------------------------------------------------------------------
+    # DROP DES TABLES (uniquement si confirmation = y)
+    # ------------------------------------------------------------------------------
+    Write-Host "`n      Suppression des tables via drop-table.sql..." -ForegroundColor Yellow
 
-if (Test-Path $DropTableFile) {
-    if (Test-Path $psqlPath) {
-        $connectionString = "host=$DbHost port=$DbPort dbname=$DbName user=$DbUser password=$DbPass"
-        $dropOutput = & $psqlPath $connectionString -q -v ON_ERROR_STOP=0 -f $DropTableFile 2>&1
-        foreach ($line in $dropOutput) {
-            Write-Host "      $line" -ForegroundColor Gray
+    if (Test-Path $DropTableFile) {
+        if (Test-Path $psqlPath) {
+            $connectionString = "host=$DbHost port=$DbPort dbname=$DbName user=$DbUser password=$DbPass"
+            $dropOutput = & $psqlPath $connectionString -q -v ON_ERROR_STOP=0 -f $DropTableFile 2>&1
+            foreach ($line in $dropOutput) {
+                Write-Host "      $line" -ForegroundColor Gray
+            }
+            Write-Host "      Tables supprimees avec succes." -ForegroundColor Green
+            $dropTableExecuted = $true
+        } else {
+            Write-Error "psql.exe introuvable dans $psqlPath. Verifie l'installation de Postgres 17."
+            exit
         }
-        Write-Host "      Tables supprimees avec succes." -ForegroundColor Green
     } else {
-        Write-Error "psql.exe introuvable dans $psqlPath. Verifie l'installation de Postgres 17."
-        exit
+        Write-Host "      Fichier $DropTableFile introuvable, suppression des tables ignoree." -ForegroundColor Gray
     }
 } else {
-    Write-Host "      Fichier $DropTableFile introuvable, suppression des tables ignoree." -ForegroundColor Gray
+    Write-Host "      Suppression ignoree, on passe a la suite." -ForegroundColor Gray
+    Write-Host "      Le script inserts.sql ne sera pas execute (drop-table non lance)." -ForegroundColor Gray
 }
 
 # ------------------------------------------------------------------------------
@@ -127,56 +143,6 @@ Write-Host "`n[4/5] Application des changements a la base de donnees (Update)...
 
 dotnet ef database update --project $ProjectName
 if ($LASTEXITCODE -ne 0) { Write-Error "Echec de la mise a jour de la base de donnees."; exit }
-
-# ------------------------------------------------------------------------------
-# 5. INSERER LES DONNEES (SEED)
-# ------------------------------------------------------------------------------
-Write-Host "`n[5/5] Execution du script d'insertions SQL ($InsertsFile)..." -ForegroundColor Yellow
-
-if (Test-Path $InsertsFile) {
-    if (Test-Path $psqlPath) {
-        $connectionString = "host=$DbHost port=$DbPort dbname=$DbName user=$DbUser password=$DbPass"
-
-        $job = Start-Job -ScriptBlock {
-            param($conn, $psql, $file)
-            & $psql $conn -q -v ON_ERROR_STOP=1 -f $file 2>&1
-        } -ArgumentList $connectionString, $psqlPath, $InsertsFile
-
-        $spinnerChars = @('|', '/', '-', '\')
-        $spinnerIndex = 0
-        $barWidth = 30
-
-        Write-Host ""
-        while ($job.State -eq "Running") {
-            $spinner = $spinnerChars[$spinnerIndex % 4]
-            $elapsed = [math]::Round(($spinnerIndex * 100) / 1000, 1)
-            $bar     = "#" * ($spinnerIndex % ($barWidth + 1))
-            $empty   = "-" * ($barWidth - $bar.Length)
-
-            Write-Host "`r      $spinner [ $bar$empty ] ${elapsed}s ecoulees..." -NoNewline -ForegroundColor Cyan
-            Start-Sleep -Milliseconds 100
-            $spinnerIndex++
-        }
-
-        $fullBar = "#" * $barWidth
-        Write-Host "`r      > [ $fullBar ] Termine !                    " -ForegroundColor Green
-
-        $jobOutput = Receive-Job -Job $job
-        Remove-Job -Job $job
-
-        if ($jobOutput -match "ERROR") {
-            Write-Host "      Des erreurs se sont produites durant l'insertion." -ForegroundColor Red
-            Write-Host $jobOutput -ForegroundColor Red
-        } else {
-            Write-Host "      Donnees inserees avec succes !" -ForegroundColor Green
-        }
-
-    } else {
-        Write-Error "psql.exe introuvable dans $psqlPath. Verifie l'installation de Postgres 17."
-    }
-} else {
-    Write-Host "      Fichier $InsertsFile introuvable." -ForegroundColor Red
-}
 
 Write-Host "`n======================================================" -ForegroundColor Cyan
 Write-Host " PROCESSUS TERMINE AVEC SUCCES !" -ForegroundColor Green
