@@ -79,22 +79,16 @@ import { ref } from 'vue';
 
 const activeIndex = ref(0);
 
-// AJOUT 3 : Un tableau réactif pour stocker tous les blocs HTML des catégories
 const sectionRefs = ref([]);
 
 const toggleSection = (index) => {
   if (activeIndex.value === index) {
-    // Si on clique sur la section déjà ouverte, on la ferme simplement
     activeIndex.value = null;
   } else {
-    // Sinon on l'ouvre
     activeIndex.value = index;
     
-    // On met un petit délai (300ms) pour laisser le temps à l'ancienne section de se refermer
-    // Cela permet au navigateur de calculer la vraie position Y de la nouvelle section
     setTimeout(() => {
       if (sectionRefs.value[index]) {
-        // Scroll automatique en douceur vers l'élément !
         sectionRefs.value[index].scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
     }, 300); 
