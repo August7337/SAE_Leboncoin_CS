@@ -81,7 +81,7 @@
     
     canvas.toBlob(async (blob) => {
       const formData = new FormData();
-      formData.append('file', blob, 'pfp.jpg');
+      formData.append('file', blob);
   
       try {
         const response = await axios.post(`https://localhost:7057/api/Utilisateurs/${authState.user.idutilisateur}/upload-pfp`, formData);

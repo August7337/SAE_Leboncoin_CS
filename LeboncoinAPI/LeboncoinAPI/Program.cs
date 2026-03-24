@@ -9,6 +9,9 @@ var builder = WebApplication.CreateBuilder(args);
 
 Env.TraversePath().Load();
 
+builder.Configuration["CloudinarySettings:CloudName"] = Environment.GetEnvironmentVariable("CLOUDINARY_CLOUD_NAME");
+builder.Configuration["CloudinarySettings:ApiKey"] = Environment.GetEnvironmentVariable("CLOUDINARY_API_KEY");
+builder.Configuration["CloudinarySettings:ApiSecret"] = Environment.GetEnvironmentVariable("CLOUDINARY_API_SECRET");
 
 var dbHost = Environment.GetEnvironmentVariable("DB_HOST") ?? "localhost";
 var dbPort = Environment.GetEnvironmentVariable("DB_PORT") ?? "5432";
@@ -26,7 +29,7 @@ builder.Services.AddDbContext<LeboncoinDBContext>(options =>
 
 builder.Services.AddScoped<IDataUtilisateurRepository<Utilisateur>, UtilisateurManager>();
 builder.Services.AddScoped<IAnnonceRepository, AnnonceManager>();
-builder.Services.AddScoped<IDataRepository<Reservation>, ReservationManager>();
+builder.Services.AddScoped<IReservationRepository, ReservationManager>();
 // Particulier creation is handled through UtilisateurManager (full registration)
 // Removed explicit ParticulierManager registration to prefer using UtilisateurManager flows
 
