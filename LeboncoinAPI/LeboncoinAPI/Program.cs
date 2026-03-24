@@ -29,7 +29,7 @@ builder.Services.AddDbContext<LeboncoinDBContext>(options =>
 
 builder.Services.AddScoped<IDataUtilisateurRepository<Utilisateur>, UtilisateurManager>();
 builder.Services.AddScoped<IAnnonceRepository, AnnonceManager>();
-builder.Services.AddScoped<IDataRepository<Reservation>, ReservationManager>();
+builder.Services.AddScoped<IReservationRepository, ReservationManager>();
 // Particulier creation is handled through UtilisateurManager (full registration)
 // Removed explicit ParticulierManager registration to prefer using UtilisateurManager flows
 

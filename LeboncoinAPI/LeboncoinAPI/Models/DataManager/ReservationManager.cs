@@ -1,4 +1,4 @@
-﻿using LeboncoinAPI.Models.EntityFramework;
+using LeboncoinAPI.Models.EntityFramework;
 using LeboncoinAPI.Models.Repository;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace LeboncoinAPI.Models.DataManager;
 
-public class ReservationManager : IDataRepository<Reservation>
+public class ReservationManager : IReservationRepository
 {
     private readonly LeboncoinDBContext _dbContext;
 
@@ -24,7 +24,26 @@ public class ReservationManager : IDataRepository<Reservation>
     public async Task<Reservation?> GetByIdAsync(int id)
     {
         return await _dbContext.Reservations
+            .Include(r => r.IdannonceNavigation)
+                .ThenInclude(a => a.Photos)
+            .Include(r => r.IddatedebutreservationNavigation)
+            .Include(r => r.IddatefinreservationNavigation)
+            .Include(r => r.Inclures)
+                .ThenInclude(i => i.IdtypevoyageurNavigation)
             .FirstOrDefaultAsync(r => r.Idreservation == id);
+    }
+
+    public async Task<IEnumerable<Reservation>> GetByUserIdAsync(int userId)
+    {
+        return await _dbContext.Reservations
+            .Where(r => r.Idutilisateur == userId)
+            .Include(r => r.IdannonceNavigation)
+                .ThenInclude(a => a.Photos)
+            .Include(r => r.IddatedebutreservationNavigation)
+            .Include(r => r.IddatefinreservationNavigation)
+            .Include(r => r.Inclures)
+                .ThenInclude(i => i.IdtypevoyageurNavigation)
+            .ToListAsync();
     }
 
     public async Task AddAsync(Reservation entity)
