@@ -782,28 +782,6 @@ INSERT INTO annonce (idadresse, iddate, idheuredepart, idtypehebergement, idheur
 (118,44970,17,6,23,4,'Appartement compact bien agencé','Plan optimisé, nombreux rangements intégrés.',2,NULL,27,88,1,false,1,false, 2, 1, false);
 
 /*==============================================================*/
-/* Table : cartebancaire (10 cartebancaires)                    */
-/*==============================================================*/
- 
-INSERT INTO cartebancaire (idutilisateur, nomtitulaire, prenomtitulaire, numerocartebancaire, dateexpiration, numerocvv) VALUES
-
-(5,  'Lemaire',       'Caroline',  4929861043728194, '2027-05-31', 312),
-(10, 'Koopman',       'Dorian',    5359186734205578, '2027-06-30', 884),
-(15, 'Van Aalsburg',  'Ali',       4539226018451207, '2028-07-31', 129),
-(20, 'Maes',          'Hugo',      6011843790124453, '2028-08-31', 774),
-(25, 'Rademaker',     'Quentin',   3728391045567821, '2029-09-30', 642),
-(30, 'Aakster',       'Ali',       5184027639152048, '2029-10-31', 906),
-(35, 'Marchand',      'Elisabeth', 4559012678345093, '2030-11-30', 501),
-(40, 'Berger',        'Claire',    3791256044910286, '2030-12-31', 283),
-(45, 'Cousineau',     'Glenn',     5248193067751294, '2031-01-31', 714),
-(50, 'Geelen',        'Ilias',     4719036685219047, '2031-02-28', 065);
-
-UPDATE utilisateur u
-SET idcartebancaire = c.idcartebancaire
-FROM cartebancaire c
-WHERE c.idutilisateur = u.idutilisateur;
-
-/*==============================================================*/
 /* Table : professionnel (15 professionnels)                    */
 /*==============================================================*/
 

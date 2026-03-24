@@ -1,6 +1,7 @@
 <script setup>
 import Header from './components/Header.vue'
 import Footer from './components/Footer.vue'
+import SuccessNotification from './components/SuccessNotification.vue'
 </script>
 
 <template>
@@ -12,5 +13,7 @@ import Footer from './components/Footer.vue'
     </main>
 
     <Footer />
+
+    <SuccessNotification />
   </div>
 </template>

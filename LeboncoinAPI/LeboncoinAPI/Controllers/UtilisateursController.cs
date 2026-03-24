@@ -129,14 +129,14 @@ public class UtilisateursController : ControllerBase
             return BadRequest(ModelState);
         }
 
-     
+
         var existingEmail = await _dataRepository.GetByEmailAsync(utilisateur.Email);
         if (existingEmail != null)
         {
             return BadRequest("Cet email est déjà utilisé.");
         }
 
-       
+
         var allUsers = await _dataRepository.GetAllAsync();
         if (allUsers.Any(u => u.Telephoneutilisateur == utilisateur.Telephoneutilisateur))
         {
@@ -161,7 +161,7 @@ public class UtilisateursController : ControllerBase
         if (id != dto.Idutilisateur)
             return BadRequest("ID mismatch");
 
-      
+
         var existingUser = await _dataRepository.GetByIdAsync(id);
 
         if (existingUser == null) return NotFound();
@@ -189,7 +189,7 @@ public class UtilisateursController : ControllerBase
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequest loginRequest)
     {
-        
+
         var user = await ((UtilisateurManager)_dataRepository).GetByEmailAsync(loginRequest.Email);
 
         if (user == null) return NotFound("Utilisateur non trouvé.");
@@ -197,10 +197,10 @@ public class UtilisateursController : ControllerBase
         if (!BCrypt.Net.BCrypt.Verify(loginRequest.Password, user.Password))
             return BadRequest("Mot de passe incorrect.");
 
-       
+
         string userType = user.Professionnel != null ? "professionnel" : "particulier";
 
-     
+
         return Ok(new
         {
             idutilisateur = user.Idutilisateur,
@@ -209,12 +209,12 @@ public class UtilisateursController : ControllerBase
             telephone = user.Telephoneutilisateur,
             typeUtilisateur = userType,
             profilePhotoPath = user.ProfilePhotoPath,
-           
+            solde = user.Solde,
+
             civilite = user.Particulier?.Civilite,
             nomutilisateur = user.Particulier?.Nomutilisateur,
             prenomutilisateur = user.Particulier?.Prenomutilisateur,
 
-           
             nomEntreprise = user.Professionnel?.Nomsociete,
             siret = user.Professionnel?.Numsiret,
             secteuractivite = user.Professionnel?.Secteuractivite

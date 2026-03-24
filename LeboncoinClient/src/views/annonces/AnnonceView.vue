@@ -2,6 +2,7 @@
 import { useRouter } from 'vue-router';
 import { ref, onMounted, computed, watch, nextTick, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
+import { authState } from '@/auth.js';
 import axios from 'axios'
 import { buildAssetUrl } from '../../services/api'
 import PhotoCarousel from '../../components/PhotoCarousel.vue'
@@ -13,6 +14,11 @@ import 'flatpickr/dist/flatpickr.min.css'
 const router = useRouter();
 
 const reserverMaintenant = (annonceId, dateDebut, dateFin) => {
+  if (!authState.user) {
+    router.push('/login');
+    return;
+  }
+
   router.push({
     name: 'ReservationCreate',
     params: { id: annonceId },
@@ -149,8 +155,6 @@ function initFlatpickr() {
     console.warn('Les inputs Flatpickr ne sont pas encore dans le DOM')
     return false
   }
-
-  console.log("Inputs trouvés:", { inputArrivee, inputDepart })
 
   destroyFlatpickr()
 

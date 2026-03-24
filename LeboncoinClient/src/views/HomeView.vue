@@ -181,15 +181,18 @@
 
 <script setup>
 import { onMounted, ref, computed } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import AnnonceList from '../components/AnnonceList.vue'
 import FilterSidebar from '../components/FilterSidebar.vue'
 import { buildAssetUrl } from '../services/api'
 import annoncesService from '../services/annoncesService'
 import recherchesService from '../services/recherchesService'
 import { authState } from '@/auth.js'
+import { showSuccess } from '@/notification.js'
+import axios from 'axios'
 
 const route = useRoute()
+const router = useRouter()
 const annonces = ref([])
 const favoriteIds = ref([])
 const isLoading = ref(false)
@@ -295,6 +298,23 @@ const applyFilters = (newFilters) => {
 }
 
 onMounted(async () => {
+  const sessionId = route.query.session_id;
+  const payment = route.query.payment;
+
+  if (sessionId) {
+    try {
+      await axios.post('/api/reservations/confirm-payment', { sessionId });
+      showSuccess("Votre réservation a bien été payée et enregistrée !");
+    } catch (error) {
+      console.error("Erreur de confirmation Stripe:", error);
+    }
+    router.replace('/'); 
+  } 
+  else if (payment === 'success') {
+    showSuccess("Votre réservation a été validée avec votre solde !");
+    router.replace('/');
+  }
+
   if (route.query.q !== undefined) {
     searchQuery.value = route.query.q
   }
