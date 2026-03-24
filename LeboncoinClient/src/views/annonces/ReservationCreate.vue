@@ -183,10 +183,13 @@
 
               <div class="mt-6 space-y-4">
                 <label class="flex items-start gap-3 cursor-pointer">
-                  <input v-model="form.cgv" type="checkbox" required class="mt-1 rounded border-gray-300 text-orange-600 focus:ring-orange-500">
-                  <span class="text-xs text-slate-500">
-                    En sélectionnant le bouton ci-dessous, j'accepte les Conditions générales de vente et les Conditions de remboursement.
-                  </span>
+                    <input v-model="form.cgv" type="checkbox" required class="mt-1 rounded border-gray-300 text-orange-600 focus:ring-orange-500">
+                    <span class="text-xs text-slate-500 mt-0.5">
+                        En cochant ce bouton, j'accepte les 
+                        <router-link to="/cgv" target="_blank" class="font-bold underline hover:text-orange-600 transition-colors">
+                        Conditions générales de vente
+                        </router-link>.
+                    </span>
                 </label>
 
                 <button

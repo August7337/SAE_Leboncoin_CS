@@ -8,6 +8,13 @@ const routes = [
     component: () => import('../views/HomeView.vue'),
   },
 
+  {
+      path: '/cgv',
+      name: 'Cgv',
+      component: () => import('@/views/infos-legales/CgvView.vue'),
+      meta: { title: 'Conditions générales de vente - leboncoin' }
+  },
+
   // --- Réserver une annonce ---
   {
     path: '/reservation/create/:id',
