@@ -1,10 +1,12 @@
 using CloudinaryDotNet;
 using CloudinaryDotNet.Actions;
+using LeboncoinAPI.Models.DataManager;
+using LeboncoinAPI.Models.DTOs;
 using LeboncoinAPI.Models.EntityFramework;
 using LeboncoinAPI.Models.Repository;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using LeboncoinAPI.Models.DTOs;
+using System.Text.RegularExpressions;
 namespace LeboncoinAPI.Controllers;
 
 [Route("api/[controller]")]
@@ -162,56 +164,120 @@ public class AnnoncesController : ControllerBase
     }
 
     // POST: api/Annonces
- 
+
+
+
     [HttpPost]
-    public async Task<ActionResult<Annonce>> PostAnnonce(AnnonceDTO incomingAnnonce)
+    public async Task<ActionResult<Annonce>> PostAnnonce(AnnonceDTO dto)
     {
-        if (!ModelState.IsValid) return BadRequest(ModelState);
+        var adresse = await CreateOrGetAdresseAsync(dto);
 
-        
-        var newAnnonce = new Annonce
+        var nouvelleAnnonce = new Annonce
         {
-            Titreannonce = incomingAnnonce.Titreannonce,
-            Descriptionannonce = incomingAnnonce.Descriptionannonce,
-            Prixnuitee = incomingAnnonce.Prixnuitee,
-            Capacite = incomingAnnonce.Nombrepersonnesmax,
-        
-            Nbchambres = incomingAnnonce.Nbchambres,
-            Nombrebebesmax = incomingAnnonce.Nombrebebesmax,
-
-            Idadresse = incomingAnnonce.Idadresse,
-            Idutilisateur = incomingAnnonce.Idutilisateur,
-            Idtypehebergement = incomingAnnonce.Idtypehebergement,
-            Possibiliteanimaux = incomingAnnonce.Possibiliteanimaux,
-            Possibilitefumeur = incomingAnnonce.Possibilitefumeur,
-            Iddate = 1 
+            Titreannonce = dto.Titreannonce,
+            Descriptionannonce = dto.Descriptionannonce,
+            Prixnuitee = dto.Prixnuitee,
+            Nbchambres = dto.Nbchambres,
+            Capacite = dto.Nombrepersonnesmax,
+            Nombrebebesmax = dto.Nombrebebesmax,
+            Minimumnuitee = dto.Minimumnuitee,
+            Montantacompte = dto.Acomptefixe,
+            Pourcentageacompte = dto.Acomptepourcentage,
+            Possibiliteanimaux = dto.Possibiliteanimaux,
+            Possibilitefumeur = dto.Possibilitefumeur,
+            Idheurearrivee = dto.Idheurearrivee,
+            Idheuredepart = dto.Idheuredepart,
+            Idutilisateur = dto.Idutilisateur,
+            Idtypehebergement = dto.Idtypehebergement,
+            IdadresseNavigation = adresse
         };
 
 
-        if (incomingAnnonce.Liensphoto != null && incomingAnnonce.Liensphoto.Any())
+        if (dto.Liensphoto != null && dto.Liensphoto.Any())
         {
-            foreach (var url in incomingAnnonce.Liensphoto)
+            foreach (var base64Data in dto.Liensphoto)
             {
-                newAnnonce.Photos.Add(new Photo { Lienphoto = url });
+             
+                if (string.IsNullOrEmpty(base64Data)) continue;
+
+          
+                var uploadParams = new ImageUploadParams()
+                {
+                    File = new FileDescription(Guid.NewGuid().ToString(), base64Data),
+                    Folder = "annonces",
+                    Transformation = new Transformation().Quality("auto").FetchFormat("auto")
+                };
+
+                var uploadResult = await _cloudinary.UploadAsync(uploadParams);
+
+                if (uploadResult.Error == null)
+                {
+              
+                    nouvelleAnnonce.Photos.Add(new Photo
+                    {
+                        Lienphoto = uploadResult.SecureUrl.ToString()
+                    });
+                }
             }
         }
 
-        await _annonceRepository.AddAsync(newAnnonce);
+        await _annonceRepository.AddAsync(nouvelleAnnonce);
 
-        return CreatedAtAction(nameof(GetAnnonce), new { id = newAnnonce.Idannonce }, newAnnonce);
+        return CreatedAtAction(nameof(GetAnnonce), new { id = nouvelleAnnonce.Idannonce }, nouvelleAnnonce);
     }
 
-    // Créez ce DTO pour matcher exactement ce que Vue envoie
-    public class AnnonceDto
+
+    private async Task<Adresse> CreateOrGetAdresseAsync(AnnonceDTO dto)
     {
-        public string Titreannonce { get; set; } = null!;
-        public string Descriptionannonce { get; set; } = null!;
-        public decimal Prixnuitee { get; set; }
-        public int Nombrepersonnesmax { get; set; }
-        public int Idadresse { get; set; }
-        public int Idutilisateur { get; set; }
-        public List<string> Liensphoto { get; set; } = new();
-    }   
+        var match = Regex.Match(dto.Rue ?? string.Empty, @"^(\d+)\s*(.*)$");
+
+        int num = 0;
+        string street = dto.Rue ?? string.Empty;
+
+        if (match.Success && match.Groups.Count >= 3)
+        {
+            int.TryParse(match.Groups[1].Value, out num);
+            street = match.Groups[2].Value.Trim();
+        }
+
+        string depCode = (dto.CodePostal?.Length >= 2) ? dto.CodePostal.Substring(0, 2) : "00";
+        string depName = "Inconnu";
+        string regName = "Inconnue";
+
+        if (UtilisateurManager.GeoData.TryGetValue(depCode, out var geo))
+        {
+            depName = geo.DepName;
+            regName = geo.RegName;
+        }
+        var region = await _dbContext.Regions.FirstOrDefaultAsync(r => r.Nomregion == regName)
+                     ?? new Region { Nomregion = regName };
+
+        var departement = await _dbContext.Departements.FirstOrDefaultAsync(d => d.Numerodepartement == depCode)
+                          ?? new Departement
+                          {
+                              Numerodepartement = depCode,
+                              Nomdepartement = depName,
+                              IdregionNavigation = region
+                          };
+
+        var ville = await _dbContext.Villes.FirstOrDefaultAsync(v =>
+                        v.Nomville.ToLower() == dto.Ville.ToLower() && v.Codepostal == dto.CodePostal)
+                    ?? new Ville
+                    {
+                        Nomville = dto.Ville,
+                        Codepostal = dto.CodePostal,
+                        IddepartementNavigation = departement
+                    };
+
+        return new Adresse
+        {
+            Numerorue = num,
+            Nomrue = street,
+            IdvilleNavigation = ville
+        };
+    }
+
+
 
     // PUT: api/Annonces/5
     [HttpPut("{id}")]

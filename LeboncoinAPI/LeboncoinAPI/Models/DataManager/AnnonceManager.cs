@@ -213,9 +213,42 @@ public class AnnonceManager : IAnnonceRepository
 
     public async Task AddAsync(Annonce entity)
     {
+        var today = DateOnly.FromDateTime(DateTime.Now);
+        var dateEntity = await _dbContext.Dates.FirstOrDefaultAsync(d => d.Date1 == today);
+
+        if (dateEntity == null)
+            if (dateEntity == null)
+            {
+                dateEntity = new Date { Date1 = today };
+                _dbContext.Dates.Add(dateEntity);
+                await _dbContext.SaveChangesAsync(); 
+            }
+        entity.Iddate = dateEntity.Iddate;
+        
+        var adr = entity.IdadresseNavigation;
+        var ville = adr.IdvilleNavigation;
+        var dep = ville.IddepartementNavigation;
+        var reg = dep.IdregionNavigation;
+
+        if (UtilisateurManager.GeoData.TryGetValue(dep.Numerodepartement, out var geo))
+        {
+            dep.Nomdepartement = geo.DepName;
+            reg.Nomregion = geo.RegName;
+        }
+        var existingReg = await _dbContext.Regions.FirstOrDefaultAsync(r => r.Nomregion == reg.Nomregion);
+        if (existingReg != null) dep.IdregionNavigation = existingReg;
+        var existingDep = await _dbContext.Departements.FirstOrDefaultAsync(d => d.Numerodepartement == dep.Numerodepartement);
+        if (existingDep != null) ville.IddepartementNavigation = existingDep;
+
+        var existingVille = await _dbContext.Villes.FirstOrDefaultAsync(v =>
+            v.Nomville.ToLower() == ville.Nomville.ToLower() && v.Codepostal == ville.Codepostal);
+        if (existingVille != null) adr.IdvilleNavigation = existingVille;
+
+      
         await _dbContext.Annonces.AddAsync(entity);
         await _dbContext.SaveChangesAsync();
     }
+
 
     public async Task UpdateAsync(Annonce entityToUpdate, Annonce entity)
     {
@@ -228,6 +261,8 @@ public class AnnonceManager : IAnnonceRepository
         entityToUpdate.Nombrebebesmax = entity.Nombrebebesmax;
         entityToUpdate.Possibiliteanimaux = entity.Possibiliteanimaux;
         entityToUpdate.Possibilitefumeur = entity.Possibilitefumeur;
+        entityToUpdate.Idheurearrivee = entity.Idheurearrivee;
+        entityToUpdate.Idheuredepart = entity.Idheuredepart;
 
         await _dbContext.SaveChangesAsync();
     }
