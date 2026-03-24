@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -43,19 +43,19 @@ public partial class Reservation
 
     [ForeignKey("Idannonce")]
     [InverseProperty("Reservations")]
-    public virtual Annonce IdannonceNavigation { get; set; } = null!;
+    public virtual Annonce? IdannonceNavigation { get; set; } = null!;
 
     [ForeignKey("Iddatedebutreservation")]
     [InverseProperty("ReservationIddatedebutreservationNavigations")]
-    public virtual Date IddatedebutreservationNavigation { get; set; } = null!;
+    public virtual Date? IddatedebutreservationNavigation { get; set; } = null!;
 
     [ForeignKey("Iddatefinreservation")]
     [InverseProperty("ReservationIddatefinreservationNavigations")]
-    public virtual Date IddatefinreservationNavigation { get; set; } = null!;
+    public virtual Date? IddatefinreservationNavigation { get; set; } = null!;
 
     [ForeignKey("Idutilisateur")]
     [InverseProperty("Reservations")]
-    public virtual Utilisateur IdutilisateurNavigation { get; set; } = null!;
+    public virtual Utilisateur? IdutilisateurNavigation { get; set; } = null!;
 
     [InverseProperty("IdreservationNavigation")]
     public virtual ICollection<Incident> Incidents { get; set; } = new List<Incident>();
