@@ -84,6 +84,12 @@ const routes = [
     meta: { requiresAuth: true },
   },
   {
+    path: '/conversation/:id',
+    name: 'conversation',
+    component: () => import('../views/messages/ConversationView.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
     path: '/favorites',
     name: 'favorites',
     component: () => import('../views/account/FavoritesView.vue'),

@@ -67,7 +67,6 @@ onMounted(fetchChat)
       </div>
       <div>
         <h2 class="font-black text-gray-900 leading-none">{{ interlocuteur.pseudonyme }}</h2>
-        <span class="text-[10px] text-green-500 font-bold uppercase tracking-wider">En ligne</span>
       </div>
     </div>
 

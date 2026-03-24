@@ -13,7 +13,13 @@ const loading = ref(true)
 const error = ref(null)
 
 const modifDates = ref({ start: '', end: '' })
-const modifPeople = ref(1)
+const adultes = ref(1)
+const enfants = ref(0)
+const bebes = ref(0)
+const nomClient = ref('')
+const prenomClient = ref('')
+const telephoneClient = ref('')
+
 const updating = ref(false)
 const updateError = ref(null)
 
@@ -27,7 +33,15 @@ const fetchReservation = async () => {
             start: data.iddatedebutreservationNavigation?.date1?.split('T')[0] || '',
             end: data.iddatefinreservationNavigation?.date1?.split('T')[0] || ''
         }
-        modifPeople.value = data.inclures?.reduce((acc, c) => acc + c.nombrevoyageur, 0) || 1
+        
+        // Types: 1=Adulte, 2=Enfant, 3=Bébé
+        adultes.value = data.inclures?.find(i => i.idtypevoyageur === 1)?.nombrevoyageur || 1
+        enfants.value = data.inclures?.find(i => i.idtypevoyageur === 2)?.nombrevoyageur || 0
+        bebes.value = data.inclures?.find(i => i.idtypevoyageur === 3)?.nombrevoyageur || 0
+        
+        nomClient.value = data.nomclient || ''
+        prenomClient.value = data.prenomclient || ''
+        telephoneClient.value = data.telephoneclient || ''
     } catch (err) {
         console.error('Error fetching reservation:', err)
         error.value = 'Impossible de charger les détails de la réservation.'
@@ -42,6 +56,12 @@ onMounted(() => {
         return
     }
     fetchReservation()
+})
+
+const totalTravelers = computed(() => (adultes.value || 0) + (enfants.value || 0))
+const maxCapacite = computed(() => {
+    const cap = reservation.value?.idannonceNavigation?.capacite
+    return cap ? parseInt(cap) : 10
 })
 
 const supplementAmount = computed(() => {
@@ -66,16 +86,35 @@ const handleUpdate = async () => {
     updating.value = true
     updateError.value = null
     try {
-        const updatedRes = {
-            ...reservation.value,
-            iddatedebutreservationNavigation: { ...reservation.value.iddatedebutreservationNavigation, date1: modifDates.value.start },
-            iddatefinreservationNavigation: { ...reservation.value.iddatefinreservationNavigation, date1: modifDates.value.end },
-            inclures: reservation.value.inclures?.length > 0 
-                ? [{ ...reservation.value.inclures[0], nombrevoyageur: modifPeople.value }]
-                : [{ idtypevoyageur: 1, nombrevoyageur: modifPeople.value }]
+        const payload = {
+            idreservation: parseInt(reservationId),
+            idannonce: reservation.value.idannonce,
+            iddatedebutreservation: reservation.value.iddatedebutreservation,
+            iddatefinreservation: reservation.value.iddatefinreservation,
+            idutilisateur: reservation.value.idutilisateur,
+            nomclient: nomClient.value || '',
+            prenomclient: prenomClient.value || '',
+            telephoneclient: telephoneClient.value || '',
+            iddatedebutreservationNavigation: { 
+                iddate: reservation.value.iddatedebutreservation,
+                date1: modifDates.value.start 
+            },
+            iddatefinreservationNavigation: { 
+                iddate: reservation.value.iddatefinreservation,
+                date1: modifDates.value.end 
+            },
+            inclures: [
+                { idtypevoyageur: 1, nombrevoyageur: adultes.value },
+                { idtypevoyageur: 2, nombrevoyageur: enfants.value },
+                { idtypevoyageur: 3, nombrevoyageur: bebes.value }
+            ].filter(i => i.nombrevoyageur > 0).map(i => ({
+                idreservation: parseInt(reservationId),
+                idtypevoyageur: i.idtypevoyageur,
+                nombrevoyageur: i.nombrevoyageur
+            }))
         }
         
-        await reservationsService.update(reservationId, updatedRes)
+        await reservationsService.update(reservationId, payload)
         if (supplementAmount.value > 0) {
             authState.user.solde -= supplementAmount.value
         }
@@ -97,170 +136,187 @@ const formatDate = (dateStr) => {
 <template>
   <div class="bg-[#f8f9fb] min-h-screen pb-12">
     <main class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-      <div class="mb-8 flex items-center gap-4">
-        <button @click="router.back()" class="p-3 bg-white border border-gray-200 rounded-2xl text-gray-400 hover:text-gray-900 transition-all shadow-sm">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-5 h-5">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
-            </svg>
-        </button>
-        <div>
-            <h1 class="text-3xl font-black text-gray-900 tracking-tight">Modifier mon voyage</h1>
-            <p class="text-gray-500 font-medium">Ajustez vos dates ou le nombre de voyageurs.</p>
+      <!-- Header -->
+      <div class="mb-8 flex items-center justify-between">
+        <div class="flex items-center gap-4">
+            <button @click="router.back()" class="p-2 bg-white rounded-full text-gray-400 hover:text-gray-900 transition-all shadow-sm group border border-gray-100">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-5 h-5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                </svg>
+            </button>
+            <h1 class="text-2xl font-bold text-gray-900">Modifier la réservation</h1>
         </div>
       </div>
 
       <div v-if="loading" class="flex justify-center items-center py-32">
-        <div class="animate-spin rounded-full h-12 w-12 border-4 border-orange-100 border-t-orange-600"></div>
+        <div class="animate-spin rounded-full h-10 w-10 border-4 border-orange-100 border-t-orange-600"></div>
       </div>
 
-      <div v-else-if="error" class="bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-2xl shadow-sm font-medium">
-        {{ error }}
+      <div v-else-if="error" class="bg-white p-8 rounded-2xl shadow-sm border border-red-100 text-center">
+        <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4 text-red-600">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-8 h-8">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+            </svg>
+        </div>
+        <p class="text-gray-900 font-bold mb-4">{{ error }}</p>
+        <button @click="fetchReservation" class="text-orange-600 font-bold hover:underline">Réessayer</button>
       </div>
 
       <div v-else class="space-y-6">
-        <!-- Annonce Card -->
-        <div class="bg-white border border-gray-200 rounded-3xl p-6 shadow-sm flex items-center gap-6">
-            <div class="w-32 h-24 rounded-2xl overflow-hidden flex-shrink-0 bg-gray-100">
-                <img v-if="reservation.idannonceNavigation?.photos?.length > 0" :src="reservation.idannonceNavigation.photos[0].lienphoto" class="w-full h-full object-cover" />
-                <div v-else class="w-full h-full flex items-center justify-center text-gray-300">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
-                    </svg>
+        <!-- Main Form Card -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+            <!-- Summary Header -->
+            <div class="p-6 border-b border-gray-100 flex items-center gap-4 bg-gray-50/50">
+                <div class="w-20 h-20 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0">
+                    <img v-if="reservation.idannonceNavigation?.photos?.length > 0" :src="reservation.idannonceNavigation.photos[0].lienphoto" class="w-full h-full object-cover" />
+                </div>
+                <div>
+                    <h3 class="font-bold text-gray-900">{{ reservation.idannonceNavigation?.titreannonce }}</h3>
+                    <p class="text-sm text-gray-500">{{ reservation.idannonceNavigation?.idadresseNavigation?.idvilleNavigation?.nomville }}</p>
                 </div>
             </div>
-            <div>
-                <h3 class="text-xl font-black text-gray-900 leading-tight mb-1">{{ reservation.idannonceNavigation?.titreannonce }}</h3>
-                <p class="text-gray-500 text-sm font-medium">{{ reservation.idannonceNavigation?.idadresseNavigation?.idvilleNavigation?.nomville }}</p>
-                <div class="mt-2 flex items-center gap-2">
-                    <span class="text-lg font-black text-orange-600">{{ reservation.idannonceNavigation?.prixnuitee }}€</span>
-                    <span class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">par nuit</span>
+
+            <div class="p-6 md:p-8 space-y-8">
+                <div v-if="updateError" class="p-4 bg-red-50 text-red-700 text-sm font-bold rounded-xl border border-red-100">
+                    {{ updateError }}
                 </div>
-            </div>
-        </div>
 
-        <!-- Form Section -->
-        <div class="bg-white border border-gray-200 rounded-[40px] p-10 shadow-sm">
-            <div v-if="updateError" class="mb-8 p-4 bg-red-50 text-red-700 text-sm font-bold rounded-2xl border border-red-100 flex items-center gap-3">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5 flex-shrink-0">
-                    <path fill-rule="evenodd" d="M9.401 3.003c1.155-2 4.043-2 5.197 0l7.355 12.748c1.154 2-.29 4.5-2.599 4.5H4.645c-2.309 0-3.752-2.5-2.598-4.5L9.401 3.003zM12 8.25a.75.75 0 01.75.75v3.75a.75.75 0 01-1.5 0V9a.75.75 0 01.75-.75zm0 8.25a.75.75 0 100-1.5.75.75 0 000 1.5z" clip-rule="evenodd" />
-                </svg>
-                {{ updateError }}
-            </div>
-
-            <div class="space-y-10">
-                <!-- Date Section -->
-                <section>
-                    <div class="flex items-center gap-3 mb-6">
-                        <div class="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center text-orange-600">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
-                                <rect x="2" y="3" width="12" height="11" rx="2" stroke-width="1.2"/>
-                                <path d="M2 7H14" stroke-width="1.2"/>
-                                <path d="M5 2V4" stroke-width="1.2"/>
-                                <path d="M11 2V4" stroke-width="1.2"/>
-                            </svg>
+                <!-- Dates Section -->
+                <div>
+                    <h2 class="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
+                        <svg class="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                        </svg>
+                        Dates du séjour
+                    </h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="space-y-1.5">
+                            <label class="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Arrivée</label>
+                            <input v-model="modifDates.start" type="date" class="w-full border border-gray-300 rounded-xl py-3 px-4 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-600 outline-none transition-all font-medium" />
                         </div>
-                        <h2 class="text-xl font-black text-gray-900">Dates du séjour</h2>
-                    </div>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="space-y-2">
-                            <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Arrivée</label>
-                            <input v-model="modifDates.start" type="date" class="w-full px-5 py-4 rounded-2xl border border-gray-200 focus:ring-4 focus:ring-orange-100 focus:border-orange-500 outline-none transition-all font-bold text-gray-900 bg-gray-50/30" />
-                        </div>
-                        <div class="space-y-2">
-                            <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Départ</label>
-                            <input v-model="modifDates.end" type="date" class="w-full px-5 py-4 rounded-2xl border border-gray-200 focus:ring-4 focus:ring-orange-100 focus:border-orange-500 outline-none transition-all font-bold text-gray-900 bg-gray-50/30" />
+                        <div class="space-y-1.5">
+                            <label class="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Départ</label>
+                            <input v-model="modifDates.end" type="date" class="w-full border border-gray-300 rounded-xl py-3 px-4 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-600 outline-none transition-all font-medium" />
                         </div>
                     </div>
-                    <div class="mt-4 p-4 bg-blue-50/50 rounded-2xl flex items-center justify-between text-blue-700 font-medium text-sm border border-blue-100/50">
-                        <span>Période actuelle :</span>
-                        <span>{{ formatDate(reservation.iddatedebutreservationNavigation?.date1) }} - {{ formatDate(reservation.iddatefinreservationNavigation?.date1) }}</span>
-                    </div>
-                </section>
+                </div>
 
-                <!-- Travelers Section -->
-                <section>
-                    <div class="flex items-center gap-3 mb-6">
-                        <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center text-purple-600">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
-                            </svg>
-                        </div>
-                        <h2 class="text-xl font-black text-gray-900">Voyageurs</h2>
-                    </div>
-
-                    <div class="flex items-center justify-between bg-gray-50/50 p-6 rounded-[30px] border border-gray-100">
-                        <div>
-                            <p class="font-black text-gray-900">Nombre total</p>
-                            <p class="text-xs text-gray-500 font-medium">Capacité max: {{ reservation.idannonceNavigation?.capacite || 10 }} personnes</p>
-                        </div>
-                        <div class="flex items-center gap-6">
-                            <button @click="modifPeople > 1 && modifPeople--" class="w-12 h-12 flex items-center justify-center border-2 border-white rounded-2xl bg-white shadow-sm hover:bg-gray-50 active:scale-95 transition-all text-gray-400 hover:text-gray-900">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor" class="w-5 h-5">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 12h-15" />
-                                </svg>
-                            </button>
-                            <span class="text-2xl font-black w-10 text-center text-gray-900 tabular-nums">{{ modifPeople }}</span>
-                            <button @click="modifPeople < (reservation.idannonceNavigation?.capacite || 10) && modifPeople++" class="w-12 h-12 flex items-center justify-center border-2 border-white rounded-2xl bg-white shadow-sm hover:bg-gray-50 active:scale-95 transition-all text-gray-400 hover:text-gray-900">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor" class="w-5 h-5">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- Payment Summary -->
-                <transition enter-active-class="transition duration-300 ease-out" enter-from-class="opacity-0 translate-y-4" enter-to-class="opacity-100 translate-y-0">
-                    <div v-if="supplementAmount > 0" class="p-8 bg-orange-600 rounded-[35px] shadow-2xl shadow-orange-100 text-white">
-                        <div class="flex flex-col md:flex-row justify-between items-center gap-6">
-                            <div class="flex items-center gap-5">
-                                <div class="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm border border-white/20">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-8 h-8">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                </div>
-                                <div class="text-center md:text-left">
-                                    <p class="text-[10px] font-black uppercase tracking-[0.2em] opacity-80">Supplément dû</p>
-                                    <p class="text-4xl font-black">+{{ supplementAmount }}€</p>
-                                </div>
+                <!-- Travelers Section (Laravel Style) -->
+                <div>
+                    <h2 class="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
+                        <svg class="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        </svg>
+                        Voyageurs
+                    </h2>
+                    <div class="space-y-6">
+                        <!-- Adultes -->
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="font-bold text-gray-900 leading-none">Adultes</p>
+                                <p class="text-xs text-gray-500 mt-1">13 ans et plus</p>
                             </div>
-                            <div class="flex flex-col items-center md:items-end">
-                                <p class="text-[10px] font-black uppercase tracking-[0.2em] opacity-80 mb-1">Votre solde actuel</p>
-                                <p class="text-2xl font-bold flex items-center gap-2">
-                                    {{ authState.user.solde }}€
-                                    <svg v-if="supplementAmount > authState.user.solde" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-red-200">
-                                        <path fill-rule="evenodd" d="M9.401 3.003c1.155-2 4.043-2 5.197 0l7.355 12.748c1.154 2-.29 4.5-2.599 4.5H4.645c-2.309 0-3.752-2.5-2.598-4.5L9.401 3.003zM12 8.25a.75.75 0 01.75.75v3.75a.75.75 0 01-1.5 0V9a.75.75 0 01.75-.75zm0 8.25a.75.75 0 100-1.5.75.75 0 000 1.5z" clip-rule="evenodd" />
-                                    </svg>
-                                </p>
-                                <p v-if="supplementAmount > authState.user.solde" class="text-[10px] font-black uppercase text-red-100 mt-2">Solde insuffisant</p>
+                            <div class="flex items-center gap-4">
+                                <button type="button" @click="adultes > 1 && adultes--" class="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:border-gray-900 transition-colors">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/></svg>
+                                </button>
+                                <span class="font-bold text-lg w-4 text-center">{{ adultes }}</span>
+                                <button type="button" @click="totalTravelers < maxCapacite && adultes++" class="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:border-gray-900 transition-colors">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                                </button>
+                            </div>
+                        </div>
+                        <!-- Enfants -->
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="font-bold text-gray-900 leading-none">Enfants</p>
+                                <p class="text-xs text-gray-500 mt-1">De 2 à 12 ans</p>
+                            </div>
+                            <div class="flex items-center gap-4">
+                                <button type="button" @click="enfants > 0 && enfants--" class="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:border-gray-900 transition-colors">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/></svg>
+                                </button>
+                                <span class="font-bold text-lg w-4 text-center">{{ enfants }}</span>
+                                <button type="button" @click="totalTravelers < maxCapacite && enfants++" class="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:border-gray-900 transition-colors">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                                </button>
+                            </div>
+                        </div>
+                        <!-- Bébés -->
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="font-bold text-gray-900 leading-none">Bébés</p>
+                                <p class="text-xs text-gray-500 mt-1">Moins de 2 ans</p>
+                            </div>
+                            <div class="flex items-center gap-4">
+                                <button type="button" @click="bebes > 0 && bebes--" class="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:border-gray-900 transition-colors">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/></svg>
+                                </button>
+                                <span class="font-bold text-lg w-4 text-center">{{ bebes }}</span>
+                                <button type="button" @click="bebes < 5 && bebes++" class="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:border-gray-900 transition-colors">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                                </button>
                             </div>
                         </div>
                     </div>
-                </transition>
+                    <p class="mt-4 text-[10px] text-gray-500 font-bold uppercase tracking-widest border-t border-gray-100 pt-4">
+                        Capacité maximale : {{ maxCapacite }} voyageurs (hors bébés)
+                    </p>
+                </div>
 
-                <!-- Actions -->
-                <div class="pt-6">
+                <!-- Personal Info -->
+                <div class="pt-4">
+                    <h2 class="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
+                        <svg class="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                        </svg>
+                        Informations client
+                    </h2>
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="space-y-1.5">
+                                <label class="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Prénom</label>
+                                <input v-model="prenomClient" type="text" class="w-full border border-gray-300 rounded-xl py-3 px-4 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-600 outline-none transition-all font-medium" />
+                            </div>
+                            <div class="space-y-1.5">
+                                <label class="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Nom</label>
+                                <input v-model="nomClient" type="text" class="w-full border border-gray-300 rounded-xl py-3 px-4 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-600 outline-none transition-all font-medium" />
+                            </div>
+                        </div>
+                        <div class="space-y-1.5">
+                            <label class="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Téléphone</label>
+                            <input v-model="telephoneClient" type="tel" class="w-full border border-gray-300 rounded-xl py-3 px-4 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-600 outline-none transition-all font-medium" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer Section -->
+            <div class="p-6 md:p-8 bg-gray-50 border-t border-gray-100">
+                <div v-if="supplementAmount > 0" class="mb-6 flex items-center justify-between bg-orange-100/50 p-4 rounded-xl border border-orange-200">
+                    <div>
+                        <p class="text-orange-900 font-bold">Supplément à payer</p>
+                        <p class="text-xs text-orange-700">Votre solde : {{ authState.user.solde }}€</p>
+                    </div>
+                    <p class="text-2xl font-black text-orange-600">{{ supplementAmount }}€</p>
+                </div>
+                
+                <div class="flex flex-col sm:flex-row gap-3">
                     <button 
                         @click="handleUpdate" 
                         :disabled="updating || (supplementAmount > authState.user.solde)"
-                        class="w-full py-6 bg-gray-900 text-white font-black text-xl rounded-[28px] shadow-2xl shadow-gray-200 hover:bg-black hover:shadow-gray-300 active:scale-[0.98] transition-all disabled:opacity-30 disabled:scale-100 disabled:shadow-none uppercase tracking-widest flex items-center justify-center gap-4 group"
+                        class="flex-1 py-4 bg-orange-600 text-white font-bold rounded-xl hover:bg-orange-700 transition active:scale-95 disabled:opacity-50 disabled:scale-100 flex items-center justify-center gap-2"
                     >
-                        <span v-if="updating" class="flex items-center gap-3">
-                            <div class="w-6 h-6 border-4 border-white/20 border-b-white rounded-full animate-spin"></div>
-                            Traitement...
-                        </span>
-                        <span v-else class="flex items-center gap-3">
-                            {{ supplementAmount > 0 ? 'Payer & Confirmer' : 'Mettre à jour' }}
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-6 h-6 group-hover:translate-x-1 transition-transform">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-                            </svg>
-                        </span>
+                        <span v-if="updating" class="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin"></span>
+                        {{ supplementAmount > 0 ? 'Payer et confirmer' : 'Enregistrer' }}
                     </button>
-                    <button @click="router.back()" class="w-full mt-4 py-4 text-gray-400 font-bold hover:text-gray-900 transition-colors uppercase text-xs tracking-widest">
-                        Annuler et revenir
+                    <button @click="router.back()" class="flex-1 py-4 bg-white text-gray-700 font-bold rounded-xl border border-gray-300 hover:bg-gray-50 transition active:scale-95">
+                        Annuler
                     </button>
                 </div>
+                <p v-if="supplementAmount > authState.user.solde" class="text-center mt-3 text-xs text-red-600 font-bold">
+                    Solde insuffisant pour confirmer ces modifications.
+                </p>
             </div>
         </div>
       </div>
@@ -271,10 +327,6 @@ const formatDate = (dateStr) => {
 <style scoped>
 input[type="date"]::-webkit-calendar-picker-indicator {
     cursor: pointer;
-    opacity: 0.6;
-    transition: opacity 0.2s;
-}
-input[type="date"]:hover::-webkit-calendar-picker-indicator {
-    opacity: 1;
+    filter: invert(48%) sepia(79%) saturate(2476%) hue-rotate(352deg) brightness(96%) contrast(92%);
 }
 </style>
