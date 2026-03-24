@@ -673,6 +673,10 @@ namespace LeboncoinAPI.Migrations
                         .HasColumnType("character varying(1000)")
                         .HasColumnName("contenumessage");
 
+                    b.Property<DateTime?>("Dateenvoi")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("dateenvoi");
+
                     b.Property<int>("Iddate")
                         .HasColumnType("integer")
                         .HasColumnName("iddate");

@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "axios": "^1.13.6",
+    "flatpickr": "^4.6.13",
     "pinia": "^3.0.4",
     "vue": "^3.5.29",
     "vue-advanced-cropper": "^2.8.9",
