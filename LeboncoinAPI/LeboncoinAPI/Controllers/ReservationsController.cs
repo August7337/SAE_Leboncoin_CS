@@ -1,3 +1,4 @@
+using LeboncoinAPI.Models.DTOs;
 using LeboncoinAPI.Models.EntityFramework;
 using LeboncoinAPI.Models.Repository;
 using Microsoft.AspNetCore.Mvc;
@@ -51,9 +52,37 @@ public class ReservationsController : ControllerBase
 
     // POST: api/Reservations
     [HttpPost]
-    public async Task<ActionResult<Reservation>> PostReservation(Reservation reservation)
+    public async Task<ActionResult<Reservation>> PostReservation([FromBody] ReservationCreateDto dto)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
+
+        var dateDebutRecord = await GetOrCreateDate(DateOnly.FromDateTime(dto.DateDebut));
+        var dateFinRecord = await GetOrCreateDate(DateOnly.FromDateTime(dto.DateFin));
+
+        var listeVoyageurs = new List<Inclure>();
+        if (dto.Inclures != null && dto.Inclures.Any())
+        {
+            foreach (var voyageur in dto.Inclures)
+            {
+                listeVoyageurs.Add(new Inclure
+                {
+                    Idtypevoyageur = voyageur.Idtypevoyageur,
+                    Nombrevoyageur = voyageur.Nombrevoyageur
+                });
+            }
+        }
+
+        var reservation = new Reservation
+        {
+            Idannonce = dto.Idannonce,
+            Idutilisateur = dto.Idutilisateur,
+            Iddatedebutreservation = dateDebutRecord.Iddate,
+            Iddatefinreservation = dateFinRecord.Iddate,
+            Nomclient = dto.Nomclient,
+            Prenomclient = dto.Prenomclient,
+            Telephoneclient = dto.Telephoneclient,
+            Inclures = listeVoyageurs
+        };
 
         await _dataRepository.AddAsync(reservation);
 
@@ -83,7 +112,7 @@ public class ReservationsController : ControllerBase
 
         var oldStart = reservationToUpdate.IddatedebutreservationNavigation.Date1;
         var oldEnd = reservationToUpdate.IddatefinreservationNavigation.Date1;
-        
+
         // Use the dates from the incoming object if provided, otherwise keep old ones
         var newStart = reservation.IddatedebutreservationNavigation?.Date1 ?? oldStart;
         var newEnd = reservation.IddatefinreservationNavigation?.Date1 ?? oldEnd;
@@ -131,11 +160,11 @@ public class ReservationsController : ControllerBase
                 }
                 else
                 {
-                    reservationToUpdate.Inclures.Add(new Inclure 
-                    { 
-                        Idreservation = id, 
-                        Idtypevoyageur = incomingInclure.Idtypevoyageur, 
-                        Nombrevoyageur = incomingInclure.Nombrevoyageur 
+                    reservationToUpdate.Inclures.Add(new Inclure
+                    {
+                        Idreservation = id,
+                        Idtypevoyageur = incomingInclure.Idtypevoyageur,
+                        Nombrevoyageur = incomingInclure.Nombrevoyageur
                     });
                 }
             }

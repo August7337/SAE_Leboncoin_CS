@@ -8,6 +8,14 @@ const routes = [
     component: () => import('../views/HomeView.vue'),
   },
 
+  // --- Réserver une annonce ---
+  {
+    path: '/reservation/create/:id',
+    name: 'ReservationCreate',
+    component: () => import('@/views/annonces/ReservationCreate.vue'),
+    props: true
+  },
+
   // --- Authentification & Inscription ---
   {
     path: '/login',

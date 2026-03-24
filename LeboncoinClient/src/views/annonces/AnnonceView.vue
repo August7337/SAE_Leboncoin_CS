@@ -1,4 +1,5 @@
 <script setup>
+import { useRouter } from 'vue-router';
 import { ref, onMounted, computed, watch, nextTick, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 import axios from 'axios'
@@ -8,6 +9,16 @@ import flatpickr from 'flatpickr'
 import { French } from 'flatpickr/dist/l10n/fr.js'
 import rangePlugin from 'flatpickr/dist/plugins/rangePlugin.js'
 import 'flatpickr/dist/flatpickr.min.css'
+
+const router = useRouter();
+
+const reserverMaintenant = (annonceId, dateDebut, dateFin) => {
+  router.push({
+    name: 'ReservationCreate',
+    params: { id: annonceId },
+    query: { start: dateDebut, end: dateFin }
+  });
+};
 
 const route = useRoute()
 const annonce = ref(null)
@@ -880,6 +891,7 @@ onMounted(fetchAnnonce)
 
             <!-- Bouton réserver -->
             <button
+              @click="reserverMaintenant(annonce.idannonce, dateArrivee, dateDepart)"
               :disabled="!canReserve"
               :class="
                 canReserve
