@@ -1,6 +1,6 @@
 <script setup>
 import { reactive, ref,onMounted } from 'vue'
-import api from '@/api/axios'
+
 import { useRouter } from 'vue-router'
 import { authState } from '@/auth.js'
 import api from '@/api/axios'

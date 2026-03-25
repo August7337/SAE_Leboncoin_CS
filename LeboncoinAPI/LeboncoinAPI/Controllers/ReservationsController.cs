@@ -35,13 +35,14 @@ public class ReservationsController : ControllerBase
     // =========================================================================
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Reservation>>> GetReservations()
+    public async Task<ActionResult<IEnumerable<ReservationReadDto>>> GetReservations()
     {
-        return Ok(await _dataRepository.GetAllAsync());
+        var reservations = await _dataRepository.GetAllAsync();
+        return Ok(reservations.Select(MapToReadDto));
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<Reservation>> GetReservation(int id)
+    public async Task<ActionResult<ReservationReadDto>> GetReservation(int id)
     {
         var reservation = await _dataRepository.GetByIdAsync(id);
 
@@ -50,13 +51,50 @@ public class ReservationsController : ControllerBase
             return NotFound();
         }
 
-        return Ok(reservation);
+        return Ok(MapToReadDto(reservation));
     }
 
     [HttpGet("user/{userId}")]
-    public async Task<ActionResult<IEnumerable<Reservation>>> GetByUserId(int userId)
+    public async Task<ActionResult<IEnumerable<ReservationReadDto>>> GetByUserId(int userId)
     {
-        return Ok(await _dataRepository.GetByUserIdAsync(userId));
+        var reservations = await _dataRepository.GetByUserIdAsync(userId);
+        return Ok(reservations.Select(MapToReadDto));
+    }
+
+    private static ReservationReadDto MapToReadDto(Reservation r)
+    {
+        return new ReservationReadDto
+        {
+            Idreservation = r.Idreservation,
+            Nomclient = r.Nomclient,
+            Prenomclient = r.Prenomclient,
+            Telephoneclient = r.Telephoneclient,
+            IddatedebutreservationNavigation = r.IddatedebutreservationNavigation == null ? null : new DateReadDto { Date1 = r.IddatedebutreservationNavigation.Date1 },
+            IddatefinreservationNavigation = r.IddatefinreservationNavigation == null ? null : new DateReadDto { Date1 = r.IddatefinreservationNavigation.Date1 },
+            IdannonceNavigation = r.IdannonceNavigation == null ? null : new AnnonceReadDto
+            {
+                Idannonce = r.IdannonceNavigation.Idannonce,
+                Titreannonce = r.IdannonceNavigation.Titreannonce,
+                Prixnuitee = r.IdannonceNavigation.Prixnuitee,
+                Idutilisateur = r.IdannonceNavigation.Idutilisateur,
+                Photos = r.IdannonceNavigation.Photos.Select(p => new PhotoReadDto { Lienphoto = p.Lienphoto }).ToList(),
+                IdadresseNavigation = r.IdannonceNavigation.IdadresseNavigation == null ? null : new AdresseReadDto
+                {
+                    IdvilleNavigation = r.IdannonceNavigation.IdadresseNavigation.IdvilleNavigation == null ? null : new VilleReadDto
+                    {
+                        Nomville = r.IdannonceNavigation.IdadresseNavigation.IdvilleNavigation.Nomville
+                    }
+                }
+            },
+            Inclures = r.Inclures.Select(i => new InclureReadDto
+            {
+                Nombrevoyageur = i.Nombrevoyageur,
+                IdtypevoyageurNavigation = i.IdtypevoyageurNavigation == null ? null : new TypeVoyageurReadDto
+                {
+                    Nomtypevoyageur = i.IdtypevoyageurNavigation.Nomtypevoyageur
+                }
+            }).ToList()
+        };
     }
 
 

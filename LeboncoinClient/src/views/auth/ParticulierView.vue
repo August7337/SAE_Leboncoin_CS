@@ -89,7 +89,6 @@
 <script setup>
 import { onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import api from '@/api/axios'
 import { authState } from '@/auth'
 import api from '@/api/axios'
 const router = useRouter()
@@ -194,8 +193,8 @@ const submitFinal = async () => {
       '/Utilisateurs/register-particulier',
       payload,
     )
-
-    if (res.data.user || res.status === 200) {
+    const userData = res.data.user || res.data;
+    if (userData) {
       sessionStorage.removeItem('registration_draft')
       authState.login(res.data)
       loginSuccess.value = true
