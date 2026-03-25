@@ -32,7 +32,7 @@ Console.WriteLine($"[DB] Connexion vers : {dbHost}:{dbPort}/{dbName} avec user={
 
 builder.Services.AddDbContext<LeboncoinDBContext>(options =>
     options.UseNpgsql(connectionString));
-
+builder.Services.AddScoped<ICommoditeRepository, CommoditeManager>();
 builder.Services.AddScoped<IDataUtilisateurRepository<Utilisateur>, UtilisateurManager>();
 builder.Services.AddScoped<IAnnonceRepository, AnnonceManager>();
 builder.Services.AddScoped<IReservationRepository, ReservationManager>();
