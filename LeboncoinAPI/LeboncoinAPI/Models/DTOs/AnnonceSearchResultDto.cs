@@ -1,4 +1,6 @@
-namespace LeboncoinAPI.Models.EntityFramework;
+using LeboncoinAPI.Models.EntityFramework;
+
+namespace LeboncoinAPI.Models.DTOs;
 
 public class AnnonceSearchResultDto
 {
@@ -12,5 +14,7 @@ public class AnnonceSearchResultDto
     public decimal Prixnuitee { get; set; }
     public int? Capacite { get; set; }
     public int? Nombreetoilesleboncoin { get; set; }
+    public bool Estverifie { get; set; }
     public ICollection<Photo>? Photos { get; set; }
+    public ICollection<AnnonceReservationDto>? Reservations { get; set; }
 }

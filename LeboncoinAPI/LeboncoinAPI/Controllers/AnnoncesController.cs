@@ -46,6 +46,7 @@ public class AnnoncesController : ControllerBase
             Prixnuitee = a.Prixnuitee,
             Capacite = a.Capacite,
             Nombreetoilesleboncoin = a.Nombreetoilesleboncoin,
+            Estverifie = a.Estverifie,
             Photos = a.Photos.Select(p => new Photo
             {
                 Idphoto = p.Idphoto,

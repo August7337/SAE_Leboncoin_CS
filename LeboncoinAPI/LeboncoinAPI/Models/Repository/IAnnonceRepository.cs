@@ -1,4 +1,5 @@
 using LeboncoinAPI.Models.EntityFramework;
+using LeboncoinAPI.Models.DTOs;
 
 namespace LeboncoinAPI.Models.Repository;
 
