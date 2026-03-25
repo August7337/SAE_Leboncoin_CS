@@ -98,8 +98,31 @@ const touristTax = computed(() => 4.00 * nbNuits.value * adultes.value)
 const currentDepositAmount = computed(() => serviceFee.value + (totalRent.value * 0.35) + touristTax.value)
 
 const alreadyPaid = computed(() => {
-    if (!reservation.value?.transactions) return 0
-    return reservation.value.transactions.reduce((sum, t) => sum + t.montanttransaction, 0)
+    let paid = 0
+    if (reservation.value?.transactions?.length > 0) {
+        paid = reservation.value.transactions.reduce((sum, t) => sum + (t.montanttransaction || 0), 0)
+    }
+    
+    // Fallback pour les anciennes réservations (sans historique de transactions)
+    if (paid <= 0 && reservation.value) {
+        const adults = reservation.value.inclures?.find(i => i.idtypevoyageur === 1)?.nombrevoyageur || 1
+        const startStr = reservation.value.iddatedebutreservationNavigation?.date1
+        const endStr = reservation.value.iddatefinreservationNavigation?.date1
+        
+        if (startStr && endStr) {
+            const start = new Date(startStr)
+            const end = new Date(endStr)
+            const diff = end - start
+            const oldNights = diff > 0 ? Math.ceil(diff / (1000 * 60 * 60 * 24)) : 1
+            
+            const oldPrice = reservation.value.idannonceNavigation?.prixnuitee || 0
+            const oldTotalRent = oldPrice * oldNights
+            const oldServiceFee = oldTotalRent * 0.14
+            const oldTouristTax = 4.00 * oldNights * adults
+            paid = oldServiceFee + (oldTotalRent * 0.35) + oldTouristTax
+        }
+    }
+    return paid
 })
 
 const supplementAmount = computed(() => Math.max(0, currentDepositAmount.value - alreadyPaid.value))

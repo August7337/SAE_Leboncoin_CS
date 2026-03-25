@@ -116,6 +116,8 @@ public class ReservationsController : ControllerBase
         var existingRes = await _dbContext.Reservations
             .Include(r => r.Transactions)
             .Include(r => r.Inclures)
+            .Include(r => r.IddatedebutreservationNavigation)
+            .Include(r => r.IddatefinreservationNavigation)
             .FirstOrDefaultAsync(r => r.Idreservation == dto.Idreservation);
             
         if (existingRes == null) return NotFound("Réservation introuvable.");
@@ -140,6 +142,28 @@ public class ReservationsController : ControllerBase
         decimal newDepositAmount = serviceFee + (totalRent * 0.35m) + touristTax;
 
         decimal alreadyPaid = existingRes.Transactions.Sum(t => t.Montanttransaction);
+        
+        // --- FALLBACK POUR ANCIENNES RÉSERVATIONS ---
+        if (alreadyPaid <= 0)
+        {
+            // Si pas de transactions, on estime ce qui a dû être payé initialement
+            int oldAdults = existingRes.Inclures.FirstOrDefault(i => i.Idtypevoyageur == 1)?.Nombrevoyageur ?? 1;
+            int oldNights = 1;
+            if (existingRes.IddatedebutreservationNavigation?.Date1 != null && existingRes.IddatefinreservationNavigation?.Date1 != null)
+            {
+                oldNights = (existingRes.IddatefinreservationNavigation.Date1.Value.ToDateTime(TimeOnly.MinValue) - 
+                             existingRes.IddatedebutreservationNavigation.Date1.Value.ToDateTime(TimeOnly.MinValue)).Days;
+            }
+            if (oldNights <= 0) oldNights = 1;
+
+            decimal oldTotalRent = annonce.Prixnuitee * oldNights;
+            decimal oldServiceFee = oldTotalRent * 0.14m;
+            decimal oldTouristTax = 4.00m * oldNights * oldAdults;
+            alreadyPaid = oldServiceFee + (oldTotalRent * 0.35m) + oldTouristTax;
+            
+            Console.WriteLine($"[DEBUG] Fallback calculation for Res {existingRes.Idreservation}: Estimated Paid={alreadyPaid}");
+        }
+
         decimal supplementAmount = newDepositAmount - alreadyPaid;
 
         Console.WriteLine($"[DEBUG] Update Reservation {dto.Idreservation}: New Deposit={newDepositAmount}, Already Paid={alreadyPaid}, Supplement={supplementAmount}");
