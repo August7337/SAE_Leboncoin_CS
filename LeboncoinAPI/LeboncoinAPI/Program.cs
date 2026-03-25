@@ -1,15 +1,37 @@
 using LeboncoinAPI.Models.DataManager;
 using LeboncoinAPI.Models.EntityFramework;
 using LeboncoinAPI.Models.Repository;
+using LeboncoinAPI.Services;
 using Microsoft.EntityFrameworkCore;
 using DotNetEnv;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
-var builder = WebApplication.CreateBuilder(args);
+void LogBoot(string step)
+{
+    var managedMemoryMb = GC.GetTotalMemory(forceFullCollection: false) / (1024d * 1024d);
+    var workingSetMb = Environment.WorkingSet / (1024d * 1024d);
+    Console.WriteLine($"[BOOT {DateTime.Now:HH:mm:ss.fff}] {step} | Managed={managedMemoryMb:F1} MB | WorkingSet={workingSetMb:F1} MB");
+}
 
+AppDomain.CurrentDomain.UnhandledException += (_, eventArgs) =>
+{
+    Console.WriteLine($"[FATAL] Unhandled exception: {eventArgs.ExceptionObject}");
+};
+
+TaskScheduler.UnobservedTaskException += (_, eventArgs) =>
+{
+    Console.WriteLine($"[FATAL] Unobserved task exception: {eventArgs.Exception}");
+};
+
+LogBoot("CreateBuilder:start");
+var builder = WebApplication.CreateBuilder(args);
+LogBoot("CreateBuilder:done");
+
+LogBoot("Env.Load:start");
 Env.TraversePath().Load();
+LogBoot("Env.Load:done");
 
 builder.Configuration["CloudinarySettings:CloudName"] = Environment.GetEnvironmentVariable("CLOUDINARY_CLOUD_NAME");
 builder.Configuration["CloudinarySettings:ApiKey"] = Environment.GetEnvironmentVariable("CLOUDINARY_API_KEY");
@@ -28,18 +50,27 @@ var dbPass = Environment.GetEnvironmentVariable("DB_PASS") ?? "postgres";
 var connectionString = $"Server={dbHost};Port={dbPort};Database={dbName};User Id={dbUser};Password={dbPass};";
 
 Console.WriteLine($"[DEBUG] Current Dir: {Environment.CurrentDirectory}");
+Console.WriteLine($"[DEBUG] Environment: {builder.Environment.EnvironmentName}");
 Console.WriteLine($"[DB] Connexion vers : {dbHost}:{dbPort}/{dbName} avec user={dbUser}");
 
+LogBoot("Services.AddDbContext:start");
 builder.Services.AddDbContext<LeboncoinDBContext>(options =>
-    options.UseNpgsql(connectionString));
+    options.UseNpgsql(connectionString, npgsql =>
+        npgsql.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery)));
+LogBoot("Services.AddDbContext:done");
 
+LogBoot("Services.RegisterRepositories:start");
 builder.Services.AddScoped<IDataUtilisateurRepository<Utilisateur>, UtilisateurManager>();
 builder.Services.AddScoped<IAnnonceRepository, AnnonceManager>();
 builder.Services.AddScoped<IReservationRepository, ReservationManager>();
 builder.Services.AddScoped<IMessageRepository, MessageManager>();
+builder.Services.AddScoped<IIncidentRepository, IncidentManager>();
+builder.Services.AddScoped<IncidentWorkflowService>();
 // Particulier creation is handled through UtilisateurManager (full registration)
 // Removed explicit ParticulierManager registration to prefer using UtilisateurManager flows
+LogBoot("Services.RegisterRepositories:done");
 
+LogBoot("Services.AddAuthentication:start");
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -58,7 +89,9 @@ builder.Services.AddAuthentication(options =>
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:SecretKey"]!))
     };
 });
+LogBoot("Services.AddAuthentication:done");
 
+LogBoot("Services.AddCors:start");
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll",
@@ -69,30 +102,48 @@ builder.Services.AddCors(options =>
                   .AllowAnyMethod();
         });
 });
+LogBoot("Services.AddCors:done");
 
+LogBoot("Services.AddControllers:start");
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.ReferenceHandler =
         System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
     });
+LogBoot("Services.AddControllers:done");
 
+LogBoot("Services.AddSwagger:start");
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+LogBoot("Services.AddSwagger:done");
 
+LogBoot("App.Build:start");
 var app = builder.Build();
+LogBoot("App.Build:done");
+
+app.Lifetime.ApplicationStarted.Register(() => LogBoot("ApplicationStarted"));
+app.Lifetime.ApplicationStopping.Register(() => LogBoot("ApplicationStopping"));
+app.Lifetime.ApplicationStopped.Register(() => LogBoot("ApplicationStopped"));
 
 if (app.Environment.IsDevelopment())
 {
+    LogBoot("Middleware.UseSwagger:start");
     app.UseSwagger();
     app.UseSwaggerUI();
+    LogBoot("Middleware.UseSwagger:done");
 }
 
 
+LogBoot("MiddlewarePipeline:start");
 app.UseCors("AllowAll");
 
 // app.UseHttpsRedirection();
+app.UseStaticFiles();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+LogBoot("MiddlewarePipeline:done");
+Console.WriteLine($"[BOOT] URLs: {string.Join(", ", app.Urls.DefaultIfEmpty("<configured by host>"))}");
+LogBoot("App.Run:start");
 app.Run();

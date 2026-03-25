@@ -21,6 +21,11 @@ export const authState = reactive({
     return !!this.user && !!this.token
   },
 
+  hasPermission(permissionName) {
+    if (!this.user || !this.user.permissions) return false
+    return this.user.permissions.includes(permissionName)
+  },
+
   clearUser() {
     this.user = null
     this.token = null
@@ -31,15 +36,20 @@ export const authState = reactive({
   async refreshUser() {
     if (!this.user?.idutilisateur || !this.token) return
     try {
-      const response = await api.get(`/utilisateurs/${this.user.idutilisateur}`)
-      
-      const fresh = response.data
+      const [profileRes, authRes] = await Promise.all([
+        api.get(`/utilisateurs/${this.user.idutilisateur}`),
+        api.get(`/utilisateurs/${this.user.idutilisateur}/auth-profile`),
+      ])
+
       this.setUser({
         ...this.user,
-        solde: fresh.solde,
+        solde: profileRes.data.solde,
+        roles: authRes.data.roles,
+        permissions: authRes.data.permissions,
       })
+      console.log('[refreshUser] permissions reçues :', authRes.data.permissions)
     } catch (e) {
-      console.error('Erreur lors du rafraîchissement du profil utilisateur', e)
+      console.error('[refreshUser] Erreur lors du rafraîchissement :', e?.response?.status, e?.response?.data ?? e?.message)
       if (e.response && e.response.status === 401) {
         this.clearUser()
       }

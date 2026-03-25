@@ -104,16 +104,30 @@ const onFileChange = (event) => {
   imageSource.value = URL.createObjectURL(file);
 };
 
-const addPhotoToList = async () => {
+const addPhotoToList = () => {
   const { canvas } = cropperRef.value.getResult();
   if (!canvas) return;
-  const base64Image = canvas.toDataURL('image/jpeg');
-  photosLocal.value.push({
-    base64: base64Image, 
-    previewUrl: base64Image 
-  });
 
-  imageSource.value = null;
+  // Redimensionner à 1280px max pour éviter la saturation RAM
+  const MAX_SIZE = 1280;
+  let w = canvas.width;
+  let h = canvas.height;
+  if (w > MAX_SIZE || h > MAX_SIZE) {
+    if (w > h) { h = Math.round(h * MAX_SIZE / w); w = MAX_SIZE; }
+    else { w = Math.round(w * MAX_SIZE / h); h = MAX_SIZE; }
+  }
+
+  const scaled = document.createElement('canvas');
+  scaled.width = w;
+  scaled.height = h;
+  scaled.getContext('2d').drawImage(canvas, 0, 0, w, h);
+
+  // toBlob est bien plus léger que toDataURL (pas de chaîne Base64 en RAM)
+  scaled.toBlob((blob) => {
+    const previewUrl = URL.createObjectURL(blob);
+    photosLocal.value.push({ blob, previewUrl });
+    imageSource.value = null;
+  }, 'image/jpeg', 0.80);
 };
 
 const publishAnnonce = async () => {
@@ -145,12 +159,9 @@ const publishAnnonce = async () => {
     if (nouvelleAnnonceId && photosLocal.value.length > 0) {
       for (let i = 0; i < photosLocal.value.length; i++) {
         const photo = photosLocal.value[i];
-        
-        const res = await fetch(photo.base64);
-        const blob = await res.blob();
 
         const formData = new FormData();
-        formData.append('file', blob, `photo_${i}.jpg`);
+        formData.append('file', photo.blob, `photo_${i}.jpg`);
 
         await api.post(`/Annonces/${nouvelleAnnonceId}/upload-photo`, formData, {
           headers: { 'Content-Type': 'multipart/form-data' }

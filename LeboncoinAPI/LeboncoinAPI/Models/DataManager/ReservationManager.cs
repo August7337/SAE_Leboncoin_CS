@@ -25,6 +25,9 @@ public class ReservationManager : IReservationRepository
     {
         return await _dbContext.Reservations
             .Include(r => r.IdannonceNavigation)
+                .ThenInclude(a => a.IdadresseNavigation)
+                    .ThenInclude(ad => ad.IdvilleNavigation)
+            .Include(r => r.IdannonceNavigation)
                 .ThenInclude(a => a.Photos)
             .Include(r => r.IddatedebutreservationNavigation)
             .Include(r => r.IddatefinreservationNavigation)
@@ -37,6 +40,9 @@ public class ReservationManager : IReservationRepository
     {
         return await _dbContext.Reservations
             .Where(r => r.Idutilisateur == userId)
+            .Include(r => r.IdannonceNavigation)
+                .ThenInclude(a => a.IdadresseNavigation)
+                    .ThenInclude(ad => ad.IdvilleNavigation)
             .Include(r => r.IdannonceNavigation)
                 .ThenInclude(a => a.Photos)
             .Include(r => r.IddatedebutreservationNavigation)

@@ -77,6 +77,67 @@ INSERT INTO typevoyageur (nomtypevoyageur) VALUES
 ('Animal de compagnie');
 
 /*==============================================================*/
+/* Table : statut_incident                                      */
+/*==============================================================*/
+
+INSERT INTO statut_incident (idstatutincident, code, libelle, ordre, estfinal) VALUES
+(1, 'SIGNALE', 'Signale', 1, FALSE),
+(2, 'EN_ANALYSE_SERVICE_LOCATION', 'En cours d''analyse par le service location', 2, FALSE),
+(3, 'CLASSE_SANS_SUITE', 'Classe sans suite', 3, TRUE),
+(4, 'EN_ATTENTE_EXPLICATION_PROPRIETAIRE', 'En attente de l''explication du proprietaire', 4, FALSE),
+(5, 'EXPLICATION_PROPRIETAIRE_RECUE', 'Explication du proprietaire recue', 5, FALSE),
+(6, 'REMBOURSEMENT_ACCEPTE', 'Remboursement accepte', 6, FALSE),
+(7, 'REFUS_REMBOURSEMENT', 'Remboursement refuse', 7, FALSE),
+(9, 'TRANSFERE_CONTENTIEUX', 'Transfere au contentieux', 8, FALSE),
+(10, 'CLOTURE_SANS_REMBOURSEMENT', 'Cloture sans remboursement', 9, TRUE),
+(11, 'PROCEDURE_JURIDIQUE_ENGAGEE', 'Procedure juridique engagee', 10, TRUE),
+(12, 'REMBOURSEMENT_EFFECTUE', 'Remboursement effectue', 11, TRUE);
+
+/*==============================================================*/
+/* Table : permission                                           */
+/*==============================================================*/
+
+INSERT INTO permission (idpermission, nompermission) VALUES
+(4, 'incident.read.all'),
+(5, 'incident.take_in_charge'),
+(6, 'incident.class_without_follow_up'),
+(7, 'incident.request_owner_explanation'),
+(9, 'incident.decide_refund'),
+(10, 'incident.process_refund'),
+(13, 'incident.contentieux.close'),
+(14, 'incident.contentieux.legal'),
+(15, 'app.view.home'),
+(16, 'app.view.favorites'),
+(17, 'app.view.messages'),
+(18, 'app.view.my_annonces'),
+(19, 'app.view.my_reservations'),
+(20, 'dashboard.settings'),
+(21, 'dashboard.incidents.location'),
+(22, 'dashboard.incidents.comptabilite'),
+(23, 'dashboard.incidents.contentieux'),
+(24, 'app.view.gdpr_data');
+
+/*==============================================================*/
+/* Table : role                                                 */
+/*==============================================================*/
+
+INSERT INTO role (idrole, nomrole) VALUES
+(3, 'Service_Location'),
+(4, 'Service_Comptabilite'),
+(5, 'Service_Contentieux');
+
+/*==============================================================*/
+/* Table : permettre                                            */
+/*==============================================================*/
+
+INSERT INTO permettre (idrole, idpermission) VALUES
+(2, 15), (2, 16), (2, 17), (2, 18), (2, 19), (2, 20), (2, 24),
+(3, 4), (3, 5), (3, 6), (3, 7), (3, 9),
+(3, 20), (3, 21),
+(4, 4), (4, 10), (4, 20), (4, 22),
+(5, 4), (5, 13), (5, 14), (5, 20), (5, 23);
+
+/*==============================================================*/
 /* Table : date (nombre de dates variable)                      */
 /*==============================================================*/
 
@@ -665,7 +726,10 @@ INSERT INTO utilisateur (   idadresse, iddate,
 (35,45511,'Nexilo','marchandelisabeth3377@google.edu','2024-02-29 12:00:00','$2y$12$H4eLsRsll3MNHvM.BMTx0OIbZFhpwXiWgYM54XI7nv.u97sy3w9Py','0677117676',TRUE,TRUE,977.10,NULL,NULL,NULL,NULL),
 (40,45335,'Vanyth','c-berger3570@protonmail.com','2024-05-17 06:22:58','$2y$12$7NfqDgpV5R4a6.efu.i0feVFe7oiP64ArLb2ogcH1xLiK0IbJTc3a','0678877669',TRUE,TRUE,973.61,NULL,NULL,NULL,NULL),
 (45,44067,'Vanyth','c-glenn7427@icloud.org','2024-07-15 12:45:30','$2y$12$/dyX4DJiOjQbwMYXT4ndYuKuy./JjxvYPNwXUsrF.kc3VvywJt3HW','0678188426',TRUE,TRUE,934.58,NULL,NULL,NULL,NULL),
-(50,45546,'EchoFlare','igeelen@yahoo.edu','2024-09-12 16:16:16','$2y$12$mS4ttJ3QRQZU8JoHuEp/8OrYpmtgLQWDzq.5CSu.1A9azbBY29XXG','0677425458',TRUE,TRUE,815.79,NULL,NULL,NULL,NULL);
+(50,45546,'EchoFlare','igeelen@yahoo.edu','2024-09-12 16:16:16','$2y$12$mS4ttJ3QRQZU8JoHuEp/8OrYpmtgLQWDzq.5CSu.1A9azbBY29XXG','0677425458',TRUE,TRUE,815.79,NULL,NULL,NULL,NULL),
+(1,44087,'svc_location','service.location@leboncoin.local','2026-03-25 09:00:00','$2a$11$TLEucTKy3A3Zn3C6x4Wgy.SLEXObaeIMvQ88mR.2MSwTibscWXGCq','0600000051',TRUE,TRUE,0,NULL,NULL,NULL,NULL),
+(2,44125,'svc_compta','service.comptabilite@leboncoin.local','2026-03-25 09:00:00','$2a$11$TLEucTKy3A3Zn3C6x4Wgy.SLEXObaeIMvQ88mR.2MSwTibscWXGCq','0600000052',TRUE,TRUE,0,NULL,NULL,NULL,NULL),
+(3,44152,'svc_contentieux','service.contentieux@leboncoin.local','2026-03-25 09:00:00','$2a$11$TLEucTKy3A3Zn3C6x4Wgy.SLEXObaeIMvQ88mR.2MSwTibscWXGCq','0600000053',TRUE,TRUE,0,NULL,NULL,NULL,NULL);
 
 /*============================================================================================================================================*/
 /*============================================================================================================================================*/
@@ -844,6 +908,15 @@ INSERT INTO particulier (idutilisateur, nomutilisateur, prenomutilisateur, civil
 (33,'Bellamy','Charlotte', 'Monsieur', 23980),
 (34,'Prinsen','Tristan', 'Madame', 13999),
 (35,'Blanc','Danny', 'Non spécifié', 36379);
+
+/*==============================================================*/
+/* Table : attribuer                                            */
+/*==============================================================*/
+
+INSERT INTO attribuer (idutilisateur, idrole) VALUES
+(51, 3),
+(52, 4),
+(53, 5);
 
 /*==============================================================*/
 /* Table : message (15 messages)                                */

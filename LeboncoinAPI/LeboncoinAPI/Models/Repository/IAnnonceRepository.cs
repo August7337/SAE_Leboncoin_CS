@@ -1,3 +1,4 @@
+using LeboncoinAPI.Models.DTOs;
 using LeboncoinAPI.Models.EntityFramework;
 
 namespace LeboncoinAPI.Models.Repository;
@@ -15,7 +16,7 @@ public interface IAnnonceRepository : IDataRepository<Annonce>
         DateTime? dateArrivee = null,
         DateTime? dateDepart = null,
         List<int>? commoditeIds = null);
-        
+
     Task<IEnumerable<AnnonceSearchResultDto>> GetFavoritesByUserIdAsync(int userId);
     Task<IEnumerable<int>> GetFavoriteIdsByUserIdAsync(int userId);
     Task AddFavoriteAsync(int userId, int annonceId);

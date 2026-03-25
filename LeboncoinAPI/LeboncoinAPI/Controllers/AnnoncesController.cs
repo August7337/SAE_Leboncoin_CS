@@ -108,6 +108,11 @@ public class AnnoncesController : ControllerBase
         var annonce = await _annonceRepository.GetByIdAsync(id);
         if (annonce == null) return NotFound("Annonce introuvable.");
 
+        // COUNT séparé pour éviter de charger toutes les annonces du propriétaire en mémoire
+        var nombreAnnonces = annonce.IdutilisateurNavigation != null
+            ? await _dbContext.Annonces.CountAsync(a => a.Idutilisateur == annonce.Idutilisateur)
+            : 0;
+
         var result = new
         {
             annonce.Idannonce,
@@ -140,7 +145,7 @@ public class AnnoncesController : ControllerBase
                 annonce.IdutilisateurNavigation.Pseudonyme,
                 annonce.IdutilisateurNavigation.ProfilePhotoPath,
                 DateInscription = annonce.IdutilisateurNavigation.IddateNavigation?.Date1,
-                NombreAnnonces = annonce.IdutilisateurNavigation.Annonces.Count,
+                NombreAnnonces = nombreAnnonces,
                 annonce.IdutilisateurNavigation.IdentityVerified,
                 annonce.IdutilisateurNavigation.PhoneVerified,
                 NoteMoyenne = annonce.IdutilisateurNavigation.Avis.Any() ? (decimal?)annonce.IdutilisateurNavigation.Avis.Average(a => a.Nombreetoiles) : null,

@@ -35,13 +35,13 @@ public class ReservationsController : ControllerBase
     // =========================================================================
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Reservation>>> GetReservations()
+    public async Task<ActionResult<IEnumerable<ReservationResponseDto>>> GetReservations()
     {
-        return Ok(await _dataRepository.GetAllAsync());
+        return Ok((await _dataRepository.GetAllAsync()).Select(MapReservation));
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<Reservation>> GetReservation(int id)
+    public async Task<ActionResult<ReservationResponseDto>> GetReservation(int id)
     {
         var reservation = await _dataRepository.GetByIdAsync(id);
 
@@ -50,13 +50,13 @@ public class ReservationsController : ControllerBase
             return NotFound();
         }
 
-        return Ok(reservation);
+        return Ok(MapReservation(reservation));
     }
 
     [HttpGet("user/{userId}")]
-    public async Task<ActionResult<IEnumerable<Reservation>>> GetByUserId(int userId)
+    public async Task<ActionResult<IEnumerable<ReservationResponseDto>>> GetByUserId(int userId)
     {
-        return Ok(await _dataRepository.GetByUserIdAsync(userId));
+        return Ok((await _dataRepository.GetByUserIdAsync(userId)).Select(MapReservation));
     }
 
 
@@ -270,6 +270,68 @@ public class ReservationsController : ControllerBase
             await _dbContext.SaveChangesAsync();
         }
         return dateRecord;
+    }
+
+    private static ReservationResponseDto MapReservation(Reservation reservation)
+    {
+        return new ReservationResponseDto
+        {
+            Idreservation = reservation.Idreservation,
+            Idannonce = reservation.Idannonce,
+            Iddatedebutreservation = reservation.Iddatedebutreservation,
+            Iddatefinreservation = reservation.Iddatefinreservation,
+            Idutilisateur = reservation.Idutilisateur,
+            Nomclient = reservation.Nomclient,
+            Prenomclient = reservation.Prenomclient,
+            Telephoneclient = reservation.Telephoneclient,
+            IdannonceNavigation = reservation.IdannonceNavigation == null ? null : new ReservationAnnonceDto
+            {
+                Idannonce = reservation.IdannonceNavigation.Idannonce,
+                Idutilisateur = reservation.IdannonceNavigation.Idutilisateur,
+                Titreannonce = reservation.IdannonceNavigation.Titreannonce,
+                Prixnuitee = reservation.IdannonceNavigation.Prixnuitee,
+                Capacite = reservation.IdannonceNavigation.Capacite,
+                IdadresseNavigation = reservation.IdannonceNavigation.IdadresseNavigation == null ? null : new ReservationAdresseDto
+                {
+                    Idadresse = reservation.IdannonceNavigation.IdadresseNavigation.Idadresse,
+                    IdvilleNavigation = reservation.IdannonceNavigation.IdadresseNavigation.IdvilleNavigation == null ? null : new ReservationVilleDto
+                    {
+                        Idville = reservation.IdannonceNavigation.IdadresseNavigation.IdvilleNavigation.Idville,
+                        Nomville = reservation.IdannonceNavigation.IdadresseNavigation.IdvilleNavigation.Nomville,
+                    }
+                },
+                Photos = reservation.IdannonceNavigation.Photos
+                    .Select(photo => new ReservationPhotoDto
+                    {
+                        Idphoto = photo.Idphoto,
+                        Lienphoto = photo.Lienphoto,
+                    })
+                    .ToList(),
+            },
+            IddatedebutreservationNavigation = reservation.IddatedebutreservationNavigation == null ? null : new ReservationDateDto
+            {
+                Iddate = reservation.IddatedebutreservationNavigation.Iddate,
+                Date1 = reservation.IddatedebutreservationNavigation.Date1,
+            },
+            IddatefinreservationNavigation = reservation.IddatefinreservationNavigation == null ? null : new ReservationDateDto
+            {
+                Iddate = reservation.IddatefinreservationNavigation.Iddate,
+                Date1 = reservation.IddatefinreservationNavigation.Date1,
+            },
+            Inclures = reservation.Inclures
+                .Select(inclure => new ReservationInclureDto
+                {
+                    Idreservation = inclure.Idreservation,
+                    Idtypevoyageur = inclure.Idtypevoyageur,
+                    Nombrevoyageur = inclure.Nombrevoyageur,
+                    IdtypevoyageurNavigation = inclure.IdtypevoyageurNavigation == null ? null : new ReservationTypeVoyageurDto
+                    {
+                        Idtypevoyageur = inclure.IdtypevoyageurNavigation.Idtypevoyageur,
+                        Nomtypevoyageur = inclure.IdtypevoyageurNavigation.Nomtypevoyageur,
+                    }
+                })
+                .ToList(),
+        };
     }
 }
 

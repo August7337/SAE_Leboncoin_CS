@@ -566,34 +566,14 @@ namespace LeboncoinAPI.Migrations
                         .HasColumnType("character varying(2000)")
                         .HasColumnName("descriptionincident");
 
-                    b.Property<bool>("Estclasse")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false)
-                        .HasColumnName("estclasse");
-
-                    b.Property<bool>("Estrembourse")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false)
-                        .HasColumnName("estrembourse");
-
-                    b.Property<bool>("Estremisaucontentieux")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false)
-                        .HasColumnName("estremisaucontentieux");
-
-                    b.Property<int>("Etape")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasDefaultValue(1)
-                        .HasColumnName("etape");
-
                     b.Property<string>("Explicationproprietaire")
                         .HasMaxLength(2000)
                         .HasColumnType("character varying(2000)")
                         .HasColumnName("explicationproprietaire");
+
+                    b.Property<int?>("IdagentAssigne")
+                        .HasColumnType("integer")
+                        .HasColumnName("idagentassigne");
 
                     b.Property<int>("Iddate")
                         .HasColumnType("integer")
@@ -602,6 +582,12 @@ namespace LeboncoinAPI.Migrations
                     b.Property<int>("Idreservation")
                         .HasColumnType("integer")
                         .HasColumnName("idreservation");
+
+                    b.Property<int>("Idstatutincident")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(1)
+                        .HasColumnName("idstatutincident");
 
                     b.Property<int>("Idutilisateur")
                         .HasColumnType("integer")
@@ -615,13 +601,54 @@ namespace LeboncoinAPI.Migrations
                     b.HasKey("Idincident")
                         .HasName("pk_incident");
 
+                    b.HasIndex("IdagentAssigne");
+
                     b.HasIndex("Iddate");
 
                     b.HasIndex(new[] { "Idreservation" }, "idx_incident_idreservation");
 
+                    b.HasIndex(new[] { "Idstatutincident" }, "idx_incident_idstatutincident");
+
                     b.HasIndex(new[] { "Idutilisateur" }, "idx_incident_idutilisateur");
 
                     b.ToTable("incident");
+                });
+
+            modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.IncidentHistorique", b =>
+                {
+                    b.Property<int>("Idincidentshistorique")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("idincidentshistorique");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Idincidentshistorique"));
+
+                    b.Property<DateTime>("Datechangement")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("datechangement");
+
+                    b.Property<int>("Idincident")
+                        .HasColumnType("integer")
+                        .HasColumnName("idincident");
+
+                    b.Property<int>("Idstatutincident")
+                        .HasColumnType("integer")
+                        .HasColumnName("idstatutincident");
+
+                    b.Property<int>("Idutilisateurmodificateur")
+                        .HasColumnType("integer")
+                        .HasColumnName("idutilisateurmodificateur");
+
+                    b.HasKey("Idincidentshistorique")
+                        .HasName("pk_incident_historique");
+
+                    b.HasIndex("Idstatutincident");
+
+                    b.HasIndex("Idutilisateurmodificateur");
+
+                    b.HasIndex(new[] { "Idincident" }, "idx_incident_historique_idincident");
+
+                    b.ToTable("incident_historique");
                 });
 
             modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.Inclure", b =>
@@ -740,7 +767,103 @@ namespace LeboncoinAPI.Migrations
                     b.HasKey("Idpermission")
                         .HasName("pk_permission");
 
+                    b.HasIndex("Nompermission")
+                        .IsUnique()
+                        .HasDatabaseName("uq_permission_nompermission");
+
                     b.ToTable("permission");
+
+                    b.HasData(
+                        new
+                        {
+                            Idpermission = 4,
+                            Nompermission = "incident.read.all"
+                        },
+                        new
+                        {
+                            Idpermission = 5,
+                            Nompermission = "incident.take_in_charge"
+                        },
+                        new
+                        {
+                            Idpermission = 6,
+                            Nompermission = "incident.class_without_follow_up"
+                        },
+                        new
+                        {
+                            Idpermission = 7,
+                            Nompermission = "incident.request_owner_explanation"
+                        },
+                        new
+                        {
+                            Idpermission = 9,
+                            Nompermission = "incident.decide_refund"
+                        },
+                        new
+                        {
+                            Idpermission = 10,
+                            Nompermission = "incident.process_refund"
+                        },
+                        new
+                        {
+                            Idpermission = 13,
+                            Nompermission = "incident.contentieux.close"
+                        },
+                        new
+                        {
+                            Idpermission = 14,
+                            Nompermission = "incident.contentieux.legal"
+                        },
+                        new
+                        {
+                            Idpermission = 15,
+                            Nompermission = "app.view.home"
+                        },
+                        new
+                        {
+                            Idpermission = 16,
+                            Nompermission = "app.view.favorites"
+                        },
+                        new
+                        {
+                            Idpermission = 17,
+                            Nompermission = "app.view.messages"
+                        },
+                        new
+                        {
+                            Idpermission = 18,
+                            Nompermission = "app.view.my_annonces"
+                        },
+                        new
+                        {
+                            Idpermission = 19,
+                            Nompermission = "app.view.my_reservations"
+                        },
+                        new
+                        {
+                            Idpermission = 20,
+                            Nompermission = "dashboard.settings"
+                        },
+                        new
+                        {
+                            Idpermission = 21,
+                            Nompermission = "dashboard.incidents.location"
+                        },
+                        new
+                        {
+                            Idpermission = 22,
+                            Nompermission = "dashboard.incidents.comptabilite"
+                        },
+                        new
+                        {
+                            Idpermission = 23,
+                            Nompermission = "dashboard.incidents.contentieux"
+                        },
+                        new
+                        {
+                            Idpermission = 24,
+                            Nompermission = "app.view.gdpr_data"
+                        });
                 });
 
             modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.Photo", b =>
@@ -764,6 +887,10 @@ namespace LeboncoinAPI.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)")
                         .HasColumnName("lienphoto");
+
+                    b.Property<int?>("Originephoto")
+                        .HasColumnType("integer")
+                        .HasColumnName("originephoto");
 
                     b.HasKey("Idphoto")
                         .HasName("pk_photo");
@@ -1008,7 +1135,33 @@ namespace LeboncoinAPI.Migrations
                     b.HasKey("Idrole")
                         .HasName("pk_role");
 
+                    b.HasIndex("Nomrole")
+                        .IsUnique()
+                        .HasDatabaseName("uq_role_nomrole");
+
                     b.ToTable("role");
+
+                    b.HasData(
+                        new
+                        {
+                            Idrole = 2,
+                            Nomrole = "Client"
+                        },
+                        new
+                        {
+                            Idrole = 3,
+                            Nomrole = "Service_Location"
+                        },
+                        new
+                        {
+                            Idrole = 4,
+                            Nomrole = "Service_Comptabilite"
+                        },
+                        new
+                        {
+                            Idrole = 5,
+                            Nomrole = "Service_Contentieux"
+                        });
                 });
 
             modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.StatutDemande", b =>
@@ -1029,6 +1182,135 @@ namespace LeboncoinAPI.Migrations
                     b.HasKey("IdStatut");
 
                     b.ToTable("statutdemande");
+                });
+
+            modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.StatutIncident", b =>
+                {
+                    b.Property<int>("Idstatutincident")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("idstatutincident");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Idstatutincident"));
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)")
+                        .HasColumnName("code");
+
+                    b.Property<bool>("Estfinal")
+                        .HasColumnType("boolean")
+                        .HasColumnName("estfinal");
+
+                    b.Property<string>("Libelle")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)")
+                        .HasColumnName("libelle");
+
+                    b.Property<int>("Ordre")
+                        .HasColumnType("integer")
+                        .HasColumnName("ordre");
+
+                    b.HasKey("Idstatutincident")
+                        .HasName("pk_statut_incident");
+
+                    b.HasIndex("Code")
+                        .IsUnique()
+                        .HasDatabaseName("uq_statut_incident_code");
+
+                    b.ToTable("statut_incident");
+
+                    b.HasData(
+                        new
+                        {
+                            Idstatutincident = 1,
+                            Code = "SIGNALE",
+                            Estfinal = false,
+                            Libelle = "Signale",
+                            Ordre = 1
+                        },
+                        new
+                        {
+                            Idstatutincident = 2,
+                            Code = "EN_ANALYSE_SERVICE_LOCATION",
+                            Estfinal = false,
+                            Libelle = "En cours d'analyse par le service location",
+                            Ordre = 2
+                        },
+                        new
+                        {
+                            Idstatutincident = 3,
+                            Code = "CLASSE_SANS_SUITE",
+                            Estfinal = true,
+                            Libelle = "Classe sans suite",
+                            Ordre = 3
+                        },
+                        new
+                        {
+                            Idstatutincident = 4,
+                            Code = "EN_ATTENTE_EXPLICATION_PROPRIETAIRE",
+                            Estfinal = false,
+                            Libelle = "En attente de l'explication du proprietaire",
+                            Ordre = 4
+                        },
+                        new
+                        {
+                            Idstatutincident = 5,
+                            Code = "EXPLICATION_PROPRIETAIRE_RECUE",
+                            Estfinal = false,
+                            Libelle = "Explication du proprietaire recue",
+                            Ordre = 5
+                        },
+                        new
+                        {
+                            Idstatutincident = 6,
+                            Code = "REMBOURSEMENT_ACCEPTE",
+                            Estfinal = false,
+                            Libelle = "Remboursement accepte",
+                            Ordre = 6
+                        },
+                        new
+                        {
+                            Idstatutincident = 7,
+                            Code = "REFUS_REMBOURSEMENT",
+                            Estfinal = false,
+                            Libelle = "Remboursement refuse",
+                            Ordre = 7
+                        },
+                        new
+                        {
+                            Idstatutincident = 9,
+                            Code = "TRANSFERE_CONTENTIEUX",
+                            Estfinal = false,
+                            Libelle = "Transfere au contentieux",
+                            Ordre = 8
+                        },
+                        new
+                        {
+                            Idstatutincident = 10,
+                            Code = "CLOTURE_SANS_REMBOURSEMENT",
+                            Estfinal = true,
+                            Libelle = "Cloture sans remboursement",
+                            Ordre = 9
+                        },
+                        new
+                        {
+                            Idstatutincident = 11,
+                            Code = "PROCEDURE_JURIDIQUE_ENGAGEE",
+                            Estfinal = true,
+                            Libelle = "Procedure juridique engagee",
+                            Ordre = 10
+                        },
+                        new
+                        {
+                            Idstatutincident = 12,
+                            Code = "REMBOURSEMENT_EFFECTUE",
+                            Estfinal = true,
+                            Libelle = "Remboursement effectue",
+                            Ordre = 11
+                        });
                 });
 
             modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.Transaction", b =>
@@ -1281,6 +1563,123 @@ namespace LeboncoinAPI.Migrations
                     b.HasIndex("Idpermission");
 
                     b.ToTable("permettre", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Idrole = 2,
+                            Idpermission = 15
+                        },
+                        new
+                        {
+                            Idrole = 2,
+                            Idpermission = 16
+                        },
+                        new
+                        {
+                            Idrole = 2,
+                            Idpermission = 17
+                        },
+                        new
+                        {
+                            Idrole = 2,
+                            Idpermission = 18
+                        },
+                        new
+                        {
+                            Idrole = 2,
+                            Idpermission = 19
+                        },
+                        new
+                        {
+                            Idrole = 2,
+                            Idpermission = 20
+                        },
+                        new
+                        {
+                            Idrole = 2,
+                            Idpermission = 24
+                        },
+                        new
+                        {
+                            Idrole = 3,
+                            Idpermission = 4
+                        },
+                        new
+                        {
+                            Idrole = 3,
+                            Idpermission = 5
+                        },
+                        new
+                        {
+                            Idrole = 3,
+                            Idpermission = 6
+                        },
+                        new
+                        {
+                            Idrole = 3,
+                            Idpermission = 7
+                        },
+                        new
+                        {
+                            Idrole = 3,
+                            Idpermission = 9
+                        },
+                        new
+                        {
+                            Idrole = 3,
+                            Idpermission = 20
+                        },
+                        new
+                        {
+                            Idrole = 3,
+                            Idpermission = 21
+                        },
+                        new
+                        {
+                            Idrole = 4,
+                            Idpermission = 4
+                        },
+                        new
+                        {
+                            Idrole = 4,
+                            Idpermission = 10
+                        },
+                        new
+                        {
+                            Idrole = 4,
+                            Idpermission = 20
+                        },
+                        new
+                        {
+                            Idrole = 4,
+                            Idpermission = 22
+                        },
+                        new
+                        {
+                            Idrole = 5,
+                            Idpermission = 4
+                        },
+                        new
+                        {
+                            Idrole = 5,
+                            Idpermission = 13
+                        },
+                        new
+                        {
+                            Idrole = 5,
+                            Idpermission = 14
+                        },
+                        new
+                        {
+                            Idrole = 5,
+                            Idpermission = 20
+                        },
+                        new
+                        {
+                            Idrole = 5,
+                            Idpermission = 23
+                        });
                 });
 
             modelBuilder.Entity("PermissionRole", b =>
@@ -1586,6 +1985,12 @@ namespace LeboncoinAPI.Migrations
 
             modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.Incident", b =>
                 {
+                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Utilisateur", "IdagentAssigneNavigation")
+                        .WithMany("IncidentsAssignes")
+                        .HasForeignKey("IdagentAssigne")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_incident_agent_assigne");
+
                     b.HasOne("LeboncoinAPI.Models.EntityFramework.Date", "IddateNavigation")
                         .WithMany("Incidents")
                         .HasForeignKey("Iddate")
@@ -1600,6 +2005,13 @@ namespace LeboncoinAPI.Migrations
                         .IsRequired()
                         .HasConstraintName("fk_incident_associati_reservat");
 
+                    b.HasOne("LeboncoinAPI.Models.EntityFramework.StatutIncident", "StatutIncidentNavigation")
+                        .WithMany("Incidents")
+                        .HasForeignKey("Idstatutincident")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_incident_statut_incident");
+
                     b.HasOne("LeboncoinAPI.Models.EntityFramework.Utilisateur", "IdutilisateurNavigation")
                         .WithMany("Incidents")
                         .HasForeignKey("Idutilisateur")
@@ -1607,11 +2019,45 @@ namespace LeboncoinAPI.Migrations
                         .IsRequired()
                         .HasConstraintName("fk_incident_associati_utilisat");
 
+                    b.Navigation("IdagentAssigneNavigation");
+
                     b.Navigation("IddateNavigation");
 
                     b.Navigation("IdreservationNavigation");
 
                     b.Navigation("IdutilisateurNavigation");
+
+                    b.Navigation("StatutIncidentNavigation");
+                });
+
+            modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.IncidentHistorique", b =>
+                {
+                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Incident", "IdincidentNavigation")
+                        .WithMany("Historiques")
+                        .HasForeignKey("Idincident")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_incident_historique_incident");
+
+                    b.HasOne("LeboncoinAPI.Models.EntityFramework.StatutIncident", "IdstatutincidentNavigation")
+                        .WithMany("HistoriquesStatut")
+                        .HasForeignKey("Idstatutincident")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_incident_historique_statut");
+
+                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Utilisateur", "IdutilisateurmodificateurNavigation")
+                        .WithMany("HistoriquesModifies")
+                        .HasForeignKey("Idutilisateurmodificateur")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_incident_historique_utilisateur");
+
+                    b.Navigation("IdincidentNavigation");
+
+                    b.Navigation("IdstatutincidentNavigation");
+
+                    b.Navigation("IdutilisateurmodificateurNavigation");
                 });
 
             modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.Inclure", b =>
@@ -2006,6 +2452,8 @@ namespace LeboncoinAPI.Migrations
 
             modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.Incident", b =>
                 {
+                    b.Navigation("Historiques");
+
                     b.Navigation("Photos");
                 });
 
@@ -2030,6 +2478,13 @@ namespace LeboncoinAPI.Migrations
                     b.Navigation("Demandes");
                 });
 
+            modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.StatutIncident", b =>
+                {
+                    b.Navigation("HistoriquesStatut");
+
+                    b.Navigation("Incidents");
+                });
+
             modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.Typehebergement", b =>
                 {
                     b.Navigation("Annonces");
@@ -2046,7 +2501,11 @@ namespace LeboncoinAPI.Migrations
 
                     b.Navigation("Avis");
 
+                    b.Navigation("HistoriquesModifies");
+
                     b.Navigation("Incidents");
+
+                    b.Navigation("IncidentsAssignes");
 
                     b.Navigation("MessageIdutilisateurexpediteurNavigations");
 

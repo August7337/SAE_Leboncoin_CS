@@ -2,7 +2,9 @@ import axios from 'axios'
 import { authState } from '@/auth.js'
 
 const api = axios.create({
-  baseURL: 'https://localhost:7057/api'
+  baseURL: import.meta.env.VITE_API_BASE_URL
+    ? `${import.meta.env.VITE_API_BASE_URL}/api`
+    : '/api'
 })
 
 api.interceptors.request.use((config) => {

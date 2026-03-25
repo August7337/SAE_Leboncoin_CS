@@ -1,3 +1,4 @@
+using LeboncoinAPI.Models.DTOs;
 using LeboncoinAPI.Models.EntityFramework;
 using LeboncoinAPI.Models.Repository;
 using Microsoft.EntityFrameworkCore;
@@ -16,16 +17,19 @@ public class AnnonceManager : IAnnonceRepository
     public async Task<IEnumerable<Annonce>> GetAllAsync()
     {
         return await _dbContext.Annonces
+            .AsNoTracking()
             .Include(a => a.Photos)
             .Include(a => a.IdadresseNavigation)
                 .ThenInclude(adr => adr.IdvilleNavigation)
             .Include(a => a.IdtypehebergementNavigation)
+            .AsSplitQuery()
             .ToListAsync();
     }
 
     public async Task<Annonce?> GetByIdAsync(int id)
     {
         return await _dbContext.Annonces
+            .AsNoTracking()
             .Include(a => a.Photos)
             .Include(a => a.IdadresseNavigation)
                 .ThenInclude(adr => adr.IdvilleNavigation)
@@ -34,8 +38,8 @@ public class AnnonceManager : IAnnonceRepository
                 .ThenInclude(c => c.IdcategorieNavigation)
             .Include(a => a.IdutilisateurNavigation)
                 .ThenInclude(u => u.IddateNavigation)
-            .Include(a => a.IdutilisateurNavigation)
-                .ThenInclude(u => u.Annonces)
+            // ThenInclude(u => u.Annonces) supprimé : charger TOUTES les annonces du propriétaire
+            // juste pour un .Count explosait la RAM (produit cartésien). Le COUNT est fait séparément.
             .Include(a => a.IdutilisateurNavigation)
                 .ThenInclude(u => u.Avis)
             .Include(a => a.IdheurearriveeNavigation)
@@ -44,36 +48,30 @@ public class AnnonceManager : IAnnonceRepository
                 .ThenInclude(r => r.IddatedebutreservationNavigation)
             .Include(a => a.Reservations)
                 .ThenInclude(r => r.IddatefinreservationNavigation)
+            .AsSplitQuery()
             .FirstOrDefaultAsync(a => a.Idannonce == id);
     }
 
     public async Task<IEnumerable<AnnonceSearchResultDto>> GetSimilairesAsync(int id)
     {
-        var similaires = await _dbContext.Annonces
+        return await _dbContext.Annonces
+            .AsNoTracking()
             .Where(a => a.IdannonceAs.Any(r => r.Idannonce == id)
                      || a.IdannonceBs.Any(r => r.Idannonce == id))
-            .Include(a => a.Photos)
-            .Include(a => a.IdadresseNavigation)
-                .ThenInclude(adr => adr.IdvilleNavigation)
-            .Include(a => a.IdtypehebergementNavigation)
             .Take(6)
-            .ToListAsync();
-
-        return similaires.Select(a => new AnnonceSearchResultDto
-        {
-            Idannonce = a.Idannonce,
-            Titreannonce = a.Titreannonce,
-            TypeHebergement = a.IdtypehebergementNavigation?.Nomtypehebergement,
-            Nomville = a.IdadresseNavigation?.IdvilleNavigation?.Nomville,
-            Codepostal = a.IdadresseNavigation?.IdvilleNavigation?.Codepostal,
-            Prixnuitee = a.Prixnuitee,
-            Photos = a.Photos.Select(p => new Photo
+            .Select(a => new AnnonceSearchResultDto
             {
-                Idphoto = p.Idphoto,
-                Idannonce = p.Idannonce,
-                Lienphoto = p.Lienphoto
-            }).ToList(),
-        });
+                Idannonce = a.Idannonce,
+                Titreannonce = a.Titreannonce,
+                TypeHebergement = a.IdtypehebergementNavigation.Nomtypehebergement,
+                Nomville = a.IdadresseNavigation.IdvilleNavigation.Nomville,
+                Codepostal = a.IdadresseNavigation.IdvilleNavigation.Codepostal,
+                Prixnuitee = a.Prixnuitee,
+                Photos = a.Photos
+                    .Select(p => new Photo { Idphoto = p.Idphoto, Idannonce = p.Idannonce, Lienphoto = p.Lienphoto })
+                    .ToList(),
+            })
+            .ToListAsync();
     }
 
     public async Task<IEnumerable<AnnonceSearchResultDto>> GetByLocalisationAsync(
@@ -88,15 +86,10 @@ public class AnnonceManager : IAnnonceRepository
     {
         var q = query?.Trim() ?? string.Empty;
 
-        var queryable = _dbContext.Annonces
-            .Include(a => a.IdadresseNavigation)
-                .ThenInclude(adr => adr.IdvilleNavigation)
-                    .ThenInclude(v => v.IddepartementNavigation)
-            .Include(a => a.IdtypehebergementNavigation)
-            .Include(a => a.IddateNavigation)
-            .Include(a => a.Idcommodites)
-            .Include(a => a.Photos)
-            .AsQueryable();
+        // Aucun Include() : EF Core génère les JOINs nécessaires depuis les accès
+        // aux propriétés de navigation dans Where(). La projection Select() finale
+        // ne charge que les colonnes demandées → impossible de saturer la RAM.
+        var queryable = _dbContext.Annonces.AsNoTracking().AsQueryable();
 
         // Filtrage par localisation
         if (!string.IsNullOrEmpty(q))
@@ -111,13 +104,9 @@ public class AnnonceManager : IAnnonceRepository
 
         // Filtre Prix
         if (minPrice.HasValue)
-        {
             queryable = queryable.Where(a => a.Prixnuitee >= minPrice.Value);
-        }
         if (maxPrice.HasValue)
-        {
             queryable = queryable.Where(a => a.Prixnuitee <= maxPrice.Value);
-        }
 
         // Filtre Chambres
         if (nbChambres.HasValue && nbChambres.Value > 0)
@@ -130,20 +119,16 @@ public class AnnonceManager : IAnnonceRepository
 
         // Filtre Type d'hébergement
         if (typeHebergementIds != null && typeHebergementIds.Any())
-        {
             queryable = queryable.Where(a => typeHebergementIds.Contains(a.Idtypehebergement));
-        }
 
         // Filtre Commodités (Doit avoir TOUTES les commodités sélectionnées)
         if (commoditeIds != null && commoditeIds.Any())
         {
             foreach (var commoditeId in commoditeIds)
-            {
                 queryable = queryable.Where(a => a.Idcommodites.Any(c => c.Idcommodite == commoditeId));
-            }
         }
 
-        // Filtrage par dates (basique : exclure les annonces ayant une réservation qui chevauche)
+        // Filtrage par dates
         if (dateArrivee.HasValue && dateDepart.HasValue)
         {
             var start = DateOnly.FromDateTime(dateArrivee.Value);
@@ -159,56 +144,67 @@ public class AnnonceManager : IAnnonceRepository
             ));
         }
 
-        var annonces = await queryable.ToListAsync();
-
-        return annonces.Select(a => new AnnonceSearchResultDto
-        {
-            Idannonce = a.Idannonce,
-            Titreannonce = a.Titreannonce,
-            TypeHebergement = a.IdtypehebergementNavigation?.Nomtypehebergement,
-            Adresse = FormatAdresse(a.IdadresseNavigation),
-            Nomville = a.IdadresseNavigation?.IdvilleNavigation?.Nomville,
-            Codepostal = a.IdadresseNavigation?.IdvilleNavigation?.Codepostal,
-            DateDepot = a.IddateNavigation?.Date1,
-            Prixnuitee = a.Prixnuitee,
-            Capacite = a.Capacite,
-            Nombreetoilesleboncoin = a.Nombreetoilesleboncoin,
-            Photos = a.Photos.Select(p => new Photo
+        // Projection SQL directe → seuls les champs utiles sont lus depuis la DB.
+        // Les Photos sont gérées via SplitQuery global (requête séparée, pas de produit cartésien).
+        return await queryable
+            .Select(a => new AnnonceSearchResultDto
             {
-                Idphoto = p.Idphoto,
-                Idannonce = p.Idannonce,
-                Lienphoto = p.Lienphoto
-            }).ToList(),
-        });
+                Idannonce = a.Idannonce,
+                Titreannonce = a.Titreannonce,
+                TypeHebergement = a.IdtypehebergementNavigation.Nomtypehebergement,
+                Adresse = a.IdadresseNavigation.Nomrue,
+                Nomville = a.IdadresseNavigation.IdvilleNavigation.Nomville,
+                Codepostal = a.IdadresseNavigation.IdvilleNavigation.Codepostal,
+                DateDepot = a.IddateNavigation.Date1,
+                Prixnuitee = a.Prixnuitee,
+                Capacite = a.Capacite,
+                Nombreetoilesleboncoin = a.Nombreetoilesleboncoin,
+                Photos = a.Photos
+                    .Select(p => new Photo { Idphoto = p.Idphoto, Idannonce = p.Idannonce, Lienphoto = p.Lienphoto })
+                    .ToList(),
+            })
+            .ToListAsync();
     }
 
     public async Task<IEnumerable<AnnonceSearchResultDto>> GetByUserIdAsync(int userId)
     {
-        var annonces = await _dbContext.Annonces
+        // Projection SQL directe : pas de Include(), EF Core ne charge que les colonnes utiles.
+        return await _dbContext.Annonces
             .Where(a => a.Idutilisateur == userId)
-            .Include(a => a.Photos)
-            .Include(a => a.IdadresseNavigation)
-                .ThenInclude(adr => adr.IdvilleNavigation)
-            .Include(a => a.IdtypehebergementNavigation)
-            .ToListAsync();
-
-        return annonces.Select(a => new AnnonceSearchResultDto
-        {
-            Idannonce = a.Idannonce,
-            Titreannonce = a.Titreannonce,
-            TypeHebergement = a.IdtypehebergementNavigation?.Nomtypehebergement,
-            Nomville = a.IdadresseNavigation?.IdvilleNavigation?.Nomville,
-            Codepostal = a.IdadresseNavigation?.IdvilleNavigation?.Codepostal,
-            Prixnuitee = a.Prixnuitee,
-            Capacite = a.Capacite,
-            Nombreetoilesleboncoin = a.Nombreetoilesleboncoin,
-            Photos = a.Photos.Select(p => new Photo
+            .AsNoTracking()
+            .Select(a => new AnnonceSearchResultDto
             {
-                Idphoto = p.Idphoto,
-                Idannonce = p.Idannonce,
-                Lienphoto = p.Lienphoto
-            }).ToList(),
-        });
+                Idannonce = a.Idannonce,
+                Titreannonce = a.Titreannonce,
+                TypeHebergement = a.IdtypehebergementNavigation.Nomtypehebergement,
+                Nomville = a.IdadresseNavigation.IdvilleNavigation.Nomville,
+                Codepostal = a.IdadresseNavigation.IdvilleNavigation.Codepostal,
+                Prixnuitee = a.Prixnuitee,
+                Capacite = a.Capacite,
+                Nombreetoilesleboncoin = a.Nombreetoilesleboncoin,
+                Photos = a.Photos
+                    .Select(p => new Photo { Idphoto = p.Idphoto, Idannonce = p.Idannonce, Lienphoto = p.Lienphoto })
+                    .ToList(),
+                Reservations = a.Reservations
+                    .Select(r => new
+                    {
+                        idreservation = r.Idreservation,
+                        prenomclient = r.Prenomclient,
+                        nomclient = r.Nomclient,
+                        datedebutreservation = r.IddatedebutreservationNavigation.Date1,
+                        datefinreservation = r.IddatefinreservationNavigation.Date1,
+                        incidents = r.Incidents
+                            .Select(i => new
+                            {
+                                idincident = i.Idincident,
+                                idstatutincident = i.Idstatutincident,
+                                statut = new { code = i.StatutIncidentNavigation.Code }
+                            })
+                            .ToList()
+                    })
+                    .ToList()
+            })
+            .ToListAsync();
     }
 
     public async Task AddAsync(Annonce entity)
@@ -221,10 +217,10 @@ public class AnnonceManager : IAnnonceRepository
             {
                 dateEntity = new Date { Date1 = today };
                 _dbContext.Dates.Add(dateEntity);
-                await _dbContext.SaveChangesAsync(); 
+                await _dbContext.SaveChangesAsync();
             }
         entity.Iddate = dateEntity.Iddate;
-        
+
         var adr = entity.IdadresseNavigation;
         var ville = adr.IdvilleNavigation;
         var dep = ville.IddepartementNavigation;
@@ -244,7 +240,7 @@ public class AnnonceManager : IAnnonceRepository
             v.Nomville.ToLower() == ville.Nomville.ToLower() && v.Codepostal == ville.Codepostal);
         if (existingVille != null) adr.IdvilleNavigation = existingVille;
 
-      
+
         await _dbContext.Annonces.AddAsync(entity);
         await _dbContext.SaveChangesAsync();
     }
@@ -275,34 +271,26 @@ public class AnnonceManager : IAnnonceRepository
 
     public async Task<IEnumerable<AnnonceSearchResultDto>> GetFavoritesByUserIdAsync(int userId)
     {
-        var annonces = await _dbContext.Annonces
-            .Include(a => a.IdadresseNavigation)
-                .ThenInclude(adr => adr.IdvilleNavigation)
-            .Include(a => a.IdtypehebergementNavigation)
-            .Include(a => a.IddateNavigation)
-            .Include(a => a.Photos)
+        return await _dbContext.Annonces
+            .AsNoTracking()
             .Where(a => a.Idutilisateurs.Any(u => u.Idutilisateur == userId))
-            .ToListAsync();
-
-        return annonces.Select(a => new AnnonceSearchResultDto
-        {
-            Idannonce = a.Idannonce,
-            Titreannonce = a.Titreannonce,
-            TypeHebergement = a.IdtypehebergementNavigation?.Nomtypehebergement,
-            Adresse = FormatAdresse(a.IdadresseNavigation),
-            Nomville = a.IdadresseNavigation?.IdvilleNavigation?.Nomville,
-            Codepostal = a.IdadresseNavigation?.IdvilleNavigation?.Codepostal,
-            DateDepot = a.IddateNavigation?.Date1,
-            Prixnuitee = a.Prixnuitee,
-            Capacite = a.Capacite,
-            Nombreetoilesleboncoin = a.Nombreetoilesleboncoin,
-            Photos = a.Photos.Select(p => new Photo
+            .Select(a => new AnnonceSearchResultDto
             {
-                Idphoto = p.Idphoto,
-                Idannonce = p.Idannonce,
-                Lienphoto = p.Lienphoto
-            }).ToList(),
-        });
+                Idannonce = a.Idannonce,
+                Titreannonce = a.Titreannonce,
+                TypeHebergement = a.IdtypehebergementNavigation.Nomtypehebergement,
+                Adresse = a.IdadresseNavigation.Nomrue,
+                Nomville = a.IdadresseNavigation.IdvilleNavigation.Nomville,
+                Codepostal = a.IdadresseNavigation.IdvilleNavigation.Codepostal,
+                DateDepot = a.IddateNavigation.Date1,
+                Prixnuitee = a.Prixnuitee,
+                Capacite = a.Capacite,
+                Nombreetoilesleboncoin = a.Nombreetoilesleboncoin,
+                Photos = a.Photos
+                    .Select(p => new Photo { Idphoto = p.Idphoto, Idannonce = p.Idannonce, Lienphoto = p.Lienphoto })
+                    .ToList(),
+            })
+            .ToListAsync();
     }
 
     public async Task<IEnumerable<int>> GetFavoriteIdsByUserIdAsync(int userId)
