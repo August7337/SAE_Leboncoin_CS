@@ -2,10 +2,13 @@
 import { ref, onMounted, computed } from 'vue'
 import { authState } from '@/auth'
 import reservationsService from '@/services/reservationsService'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import PhotoCarousel from '@/components/PhotoCarousel.vue'
+import { showSuccess } from '@/notification.js'
+import api from '@/api/axios'
 
 const router = useRouter()
+const route = useRoute()
 const reservations = ref([])
 const loading = ref(true)
 const error = ref(null)
@@ -26,12 +29,31 @@ const fetchReservations = async () => {
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
   if (!authState.isLoggedIn()) {
     router.push('/login')
     return
   }
+
+  const sessionId = route.query.session_id;
+  const payment = route.query.payment;
+
+  if (sessionId) {
+    try {
+      await api.post('/reservations/confirm-payment', { sessionId });
+      showSuccess("Modification confirmée et payée !");
+    } catch (e) {
+      console.error("Erreur confirmation paiement:", e);
+    }
+    // Nettoyer l'URL
+    router.replace('/my-reservations');
+  } else if (payment === 'success') {
+    showSuccess("Modification enregistrée avec succès !");
+    router.replace('/my-reservations');
+  }
+
   fetchReservations()
+  authState.refreshUser?.()
 })
 
 const upcomingReservations = computed(() => {
@@ -210,6 +232,7 @@ const goToMessage = (interlocutorId) => {
 .line-clamp-1 {
     display: -webkit-box;
     -webkit-line-clamp: 1;
+    line-clamp: 1;
     -webkit-box-orient: vertical;
     overflow: hidden;
 }

@@ -33,6 +33,7 @@ public class ReservationManager : IReservationRepository
             .Include(r => r.IddatefinreservationNavigation)
             .Include(r => r.Inclures)
                 .ThenInclude(i => i.IdtypevoyageurNavigation)
+            .Include(r => r.Transactions)
             .FirstOrDefaultAsync(r => r.Idreservation == id);
     }
 
@@ -49,6 +50,7 @@ public class ReservationManager : IReservationRepository
             .Include(r => r.IddatefinreservationNavigation)
             .Include(r => r.Inclures)
                 .ThenInclude(i => i.IdtypevoyageurNavigation)
+            .Include(r => r.Transactions)
             .ToListAsync();
     }
 

@@ -98,7 +98,8 @@ public class ReservationsController : ControllerBase
                 {
                     Nomtypevoyageur = i.IdtypevoyageurNavigation.Nomtypevoyageur
                 }
-            }).ToList()
+            }).ToList(),
+            Transactions = r.Transactions.Select(t => new TransactionReadDto { Montanttransaction = t.Montanttransaction }).ToList()
         };
     }
 
@@ -107,15 +108,25 @@ public class ReservationsController : ControllerBase
     // 2. MÉTHODES DE PAIEMENT ET CRÉATION (Stripe & Solde)
     // =========================================================================
 
-    [HttpPost("create-checkout-session")]
-    public async Task<IActionResult> CreateCheckoutSession([FromBody] ReservationCreateDto dto)
+    [HttpPost("create-update-checkout-session")]
+    public async Task<IActionResult> CreateUpdateCheckoutSession([FromBody] ReservationCreateDto dto)
     {
+        if (!dto.Idreservation.HasValue) return BadRequest("ID de réservation manquant.");
+
+        var existingRes = await _dbContext.Reservations
+            .Include(r => r.Transactions)
+            .Include(r => r.Inclures)
+            .FirstOrDefaultAsync(r => r.Idreservation == dto.Idreservation);
+            
+        if (existingRes == null) return NotFound("Réservation introuvable.");
+
         var annonce = await _dbContext.Annonces.FindAsync(dto.Idannonce);
         if (annonce == null) return NotFound("Annonce introuvable.");
 
         var utilisateur = await _dbContext.Utilisateurs.FindAsync(dto.Idutilisateur);
         if (utilisateur == null) return NotFound("Utilisateur introuvable.");
 
+        // Calcul du nouveau montant d'acompte
         var voyageurs = dto.Inclures ?? new List<InclureCreateDto>();
         int totalAdults = voyageurs.FirstOrDefault(i => i.Idtypevoyageur == 1)?.Nombrevoyageur ?? 1;
         int totalEnfants = voyageurs.FirstOrDefault(i => i.Idtypevoyageur == 2)?.Nombrevoyageur ?? 0;
@@ -126,59 +137,55 @@ public class ReservationsController : ControllerBase
         decimal totalRent = annonce.Prixnuitee * nights;
         decimal serviceFee = totalRent * 0.14m;
         decimal touristTax = 4.00m * nights * totalAdults;
-        decimal depositAmount = serviceFee + (totalRent * 0.35m) + touristTax;
+        decimal newDepositAmount = serviceFee + (totalRent * 0.35m) + touristTax;
+
+        decimal alreadyPaid = existingRes.Transactions.Sum(t => t.Montanttransaction);
+        decimal supplementAmount = newDepositAmount - alreadyPaid;
+
+        Console.WriteLine($"[DEBUG] Update Reservation {dto.Idreservation}: New Deposit={newDepositAmount}, Already Paid={alreadyPaid}, Supplement={supplementAmount}");
+
+        if (supplementAmount <= 0)
+        {
+            // Pas de supplément à payer, on met à jour directement
+            return await UpdateReservationInternal(existingRes, dto);
+        }
 
         decimal soldeDisponible = utilisateur.Solde;
 
-        // --- CAS A : Paiement 100% par Solde ---
-        if (soldeDisponible >= depositAmount && depositAmount > 0)
+        // --- CAS A : Paiement par Solde ---
+        if (soldeDisponible >= supplementAmount)
         {
-            utilisateur.Solde -= depositAmount;
-            var dDebutRecord = await GetOrCreateDate(DateOnly.FromDateTime(dto.DateDebut));
-            var dFinRecord = await GetOrCreateDate(DateOnly.FromDateTime(dto.DateFin));
+            utilisateur.Solde -= supplementAmount;
+            var result = await UpdateReservationInternal(existingRes, dto);
+            
+            // Ajouter la transaction du supplément
             var dToday = await GetOrCreateDate(DateOnly.FromDateTime(DateTime.Now));
-
-            var reservationDirecte = new Reservation
-            {
-                Idannonce = dto.Idannonce,
-                Idutilisateur = dto.Idutilisateur,
-                Iddatedebutreservation = dDebutRecord.Iddate,
-                Iddatefinreservation = dFinRecord.Iddate,
-                Nomclient = dto.Nomclient ?? "Inconnu",
-                Prenomclient = dto.Prenomclient ?? "Inconnu",
-                Telephoneclient = dto.Telephoneclient
-            };
-            _dbContext.Reservations.Add(reservationDirecte);
-            await _dbContext.SaveChangesAsync();
-
-            _dbContext.Inclures.Add(new Inclure { Idreservation = reservationDirecte.Idreservation, Idtypevoyageur = 1, Nombrevoyageur = totalAdults });
-            if (totalEnfants > 0) _dbContext.Inclures.Add(new Inclure { Idreservation = reservationDirecte.Idreservation, Idtypevoyageur = 2, Nombrevoyageur = totalEnfants });
-
-            var transactionDirecte = new Transaction
+            _dbContext.Transactions.Add(new Transaction
             {
                 Iddate = dToday.Iddate,
-                Idreservation = reservationDirecte.Idreservation,
+                Idreservation = existingRes.Idreservation,
                 Idutilisateur = dto.Idutilisateur,
-                Montanttransaction = depositAmount
-            };
-            _dbContext.Transactions.Add(transactionDirecte);
+                Montanttransaction = supplementAmount
+            });
             await _dbContext.SaveChangesAsync();
-
-            return Ok(new { url = "http://localhost:5173/?payment=success" });
+            
+            return result;
         }
 
-        // --- CAS B : Paiement Stripe (mixte ou 100% carte) ---
+        // --- CAS B : Stripe ---
         decimal soldeAUtiliser = 0;
-        decimal montantRestantStripe = depositAmount;
+        decimal montantRestantStripe = supplementAmount;
 
         if (soldeDisponible > 0)
         {
             soldeAUtiliser = soldeDisponible;
-            montantRestantStripe = depositAmount - soldeAUtiliser;
+            montantRestantStripe = supplementAmount - soldeAUtiliser;
         }
 
         var metadata = new Dictionary<string, string>
         {
+            { "type", "update" },
+            { "idreservation", existingRes.Idreservation.ToString() },
             { "idannonce", dto.Idannonce.ToString() },
             { "idutilisateur", dto.Idutilisateur.ToString() },
             { "dateDebut", dto.DateDebut.ToString("yyyy-MM-dd") },
@@ -188,6 +195,7 @@ public class ReservationsController : ControllerBase
             { "telephone", dto.Telephoneclient ?? "" },
             { "adultes", totalAdults.ToString() },
             { "enfants", totalEnfants.ToString() },
+            { "bebes", (voyageurs.FirstOrDefault(i => i.Idtypevoyageur == 3)?.Nombrevoyageur ?? 0).ToString() },
             { "soldeUsed", soldeAUtiliser.ToString(CultureInfo.InvariantCulture) }
         };
 
@@ -204,8 +212,8 @@ public class ReservationsController : ControllerBase
                         Currency = "eur",
                         ProductData = new SessionLineItemPriceDataProductDataOptions
                         {
-                            Name = $"Acompte réservation - {annonce.Titreannonce}",
-                            Description = soldeAUtiliser > 0 ? $"Solde déduit : {soldeAUtiliser}€" : $"Du {dto.DateDebut:dd/MM/yyyy} au {dto.DateFin:dd/MM/yyyy}"
+                            Name = $"Supplément réservation - {annonce.Titreannonce}",
+                            Description = $"Mise à jour des dates/voyageurs. Solde déduit : {soldeAUtiliser}€"
                         },
                     },
                     Quantity = 1,
@@ -213,13 +221,39 @@ public class ReservationsController : ControllerBase
             },
             Mode = "payment",
             Metadata = metadata,
-            SuccessUrl = "http://localhost:5173/?session_id={CHECKOUT_SESSION_ID}",
+            SuccessUrl = "http://localhost:5173/my-reservations?session_id={CHECKOUT_SESSION_ID}",
             CancelUrl = "http://localhost:5173/reservation/cancel",
         };
 
         var service = new SessionService();
         Session session = await service.CreateAsync(options);
         return Ok(new { url = session.Url });
+    }
+
+    private async Task<IActionResult> UpdateReservationInternal(Reservation existingRes, ReservationCreateDto dto)
+    {
+        existingRes.Nomclient = dto.Nomclient;
+        existingRes.Prenomclient = dto.Prenomclient;
+        existingRes.Telephoneclient = dto.Telephoneclient;
+
+        var dDebut = await GetOrCreateDate(DateOnly.FromDateTime(dto.DateDebut));
+        var dFin = await GetOrCreateDate(DateOnly.FromDateTime(dto.DateFin));
+        existingRes.Iddatedebutreservation = dDebut.Iddate;
+        existingRes.Iddatefinreservation = dFin.Iddate;
+
+        _dbContext.Inclures.RemoveRange(existingRes.Inclures);
+        foreach (var incDto in dto.Inclures)
+        {
+            _dbContext.Inclures.Add(new Inclure
+            {
+                Idreservation = existingRes.Idreservation,
+                Idtypevoyageur = incDto.Idtypevoyageur,
+                Nombrevoyageur = incDto.Nombrevoyageur
+            });
+        }
+
+        await _dbContext.SaveChangesAsync();
+        return Ok(new { url = "http://localhost:5173/my-reservations?payment=success" });
     }
 
     [HttpPost("confirm-payment")]
@@ -248,24 +282,43 @@ public class ReservationsController : ControllerBase
         var dateFinRecord = await GetOrCreateDate(dateFin);
         var dateAujourdhui = await GetOrCreateDate(DateOnly.FromDateTime(DateTime.Now));
 
-        var reservation = new Reservation
+        Reservation reservation;
+        if (meta.ContainsKey("type") && meta["type"] == "update")
         {
-            Idannonce = int.Parse(meta["idannonce"]),
-            Idutilisateur = idUtilisateur,
-            Iddatedebutreservation = dateDebutRecord.Iddate,
-            Iddatefinreservation = dateFinRecord.Iddate,
-            Nomclient = meta["nomclient"],
-            Prenomclient = meta["prenomclient"],
-            Telephoneclient = meta["telephone"]
-        };
-        _dbContext.Reservations.Add(reservation);
+            int idRes = int.Parse(meta["idreservation"]);
+            reservation = await _dbContext.Reservations.Include(r => r.Inclures).FirstOrDefaultAsync(r => r.Idreservation == idRes);
+            if (reservation == null) return NotFound("Réservation à mettre à jour introuvable.");
+
+            reservation.Iddatedebutreservation = dateDebutRecord.Iddate;
+            reservation.Iddatefinreservation = dateFinRecord.Iddate;
+            reservation.Nomclient = meta["nomclient"];
+            reservation.Prenomclient = meta["prenomclient"];
+            reservation.Telephoneclient = meta["telephone"];
+
+            _dbContext.Inclures.RemoveRange(reservation.Inclures);
+        }
+        else
+        {
+            reservation = new Reservation
+            {
+                Idannonce = int.Parse(meta["idannonce"]),
+                Idutilisateur = idUtilisateur,
+                Iddatedebutreservation = dateDebutRecord.Iddate,
+                Iddatefinreservation = dateFinRecord.Iddate,
+                Nomclient = meta["nomclient"],
+                Prenomclient = meta["prenomclient"],
+                Telephoneclient = meta["telephone"]
+            };
+            _dbContext.Reservations.Add(reservation);
+        }
+
         await _dbContext.SaveChangesAsync();
 
         _dbContext.Inclures.Add(new Inclure { Idreservation = reservation.Idreservation, Idtypevoyageur = 1, Nombrevoyageur = int.Parse(meta["adultes"]) });
         if (int.Parse(meta["enfants"]) > 0)
-        {
             _dbContext.Inclures.Add(new Inclure { Idreservation = reservation.Idreservation, Idtypevoyageur = 2, Nombrevoyageur = int.Parse(meta["enfants"]) });
-        }
+        if (meta.ContainsKey("bebes") && int.Parse(meta["bebes"]) > 0)
+            _dbContext.Inclures.Add(new Inclure { Idreservation = reservation.Idreservation, Idtypevoyageur = 3, Nombrevoyageur = int.Parse(meta["bebes"]) });
 
         decimal montantPayeViaStripe = session.AmountTotal.HasValue ? session.AmountTotal.Value / 100m : 0m;
 
@@ -280,7 +333,7 @@ public class ReservationsController : ControllerBase
 
         await _dbContext.SaveChangesAsync();
 
-        return Ok(new { message = "Réservation créée avec succès !" });
+        return Ok(new { message = meta.ContainsKey("type") ? "Réservation mise à jour !" : "Réservation créée avec succès !" });
     }
 
 

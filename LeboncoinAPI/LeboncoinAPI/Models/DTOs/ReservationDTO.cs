@@ -5,6 +5,7 @@ namespace LeboncoinAPI.Models.DTOs
 {
     public class ReservationCreateDto
     {
+        public int? Idreservation { get; set; }
         public int Idannonce { get; set; }
         public int Idutilisateur { get; set; }
         public DateTime DateDebut { get; set; }
@@ -35,6 +36,12 @@ namespace LeboncoinAPI.Models.DTOs
         public DateReadDto IddatedebutreservationNavigation { get; set; }
         public DateReadDto IddatefinreservationNavigation { get; set; }
         public List<InclureReadDto> Inclures { get; set; }
+        public List<TransactionReadDto> Transactions { get; set; }
+    }
+
+    public class TransactionReadDto
+    {
+        public decimal Montanttransaction { get; set; }
     }
 
     public class AnnonceReadDto
