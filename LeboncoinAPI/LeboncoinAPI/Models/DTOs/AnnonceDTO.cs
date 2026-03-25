@@ -26,7 +26,7 @@ namespace LeboncoinAPI.Models.DTOs
         public string Rue { get; set; }
         public string Ville { get; set; }
         public string CodePostal { get; set; }
-
+        public List<int> Idcommodites { get; set; }
         public int Idutilisateur { get; set; }
         public List<string> Liensphoto { get; set; }
     }
