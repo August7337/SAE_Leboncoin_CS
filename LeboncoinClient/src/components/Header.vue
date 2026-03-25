@@ -3,7 +3,12 @@ import { useRouter } from 'vue-router'
 import { authState } from '@/auth.js'
 
 const router = useRouter()
+import { computed } from 'vue'
 
+const getProfileLink = computed(() => {
+ 
+  return (authState.user && authState.user.idutilisateur) ? '/profil' : '/login'
+})
 const logout = () => {
   authState.clearUser()
   router.push('/login')
@@ -106,7 +111,7 @@ const logout = () => {
           ></span>
         </router-link>
 
-  <router-link :to="authState.user ? '/profil' : '/login'" class="relative flex flex-col items-center gap-1 group">
+  <router-link :to="getProfileLink" class="relative flex flex-col items-center gap-1 group">
     <div class="h-6 w-6 rounded-full overflow-hidden border border-gray-200 group-hover:border-black transition-colors bg-gray-100 flex items-center justify-center">
       <img
         v-if="authState.user"
