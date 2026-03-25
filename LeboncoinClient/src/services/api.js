@@ -34,7 +34,10 @@ export const buildAssetUrl = (assetPath = '') => {
 }
 
 export const apiFetch = async (path, options = {}) => {
-  const response = await fetch(buildApiUrl(path), options)
+  const response = await fetch(buildApiUrl(path), {
+    ...options,
+    cache: 'no-cache'
+  })
 
   if (!response.ok) {
     throw new Error(`Erreur HTTP ${response.status}`)

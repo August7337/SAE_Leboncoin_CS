@@ -66,6 +66,10 @@ public class ReservationsController : ControllerBase
         return new ReservationReadDto
         {
             Idreservation = r.Idreservation,
+            Idannonce = r.Idannonce,
+            Iddatedebutreservation = r.Iddatedebutreservation,
+            Iddatefinreservation = r.Iddatefinreservation,
+            Idutilisateur = r.Idutilisateur,
             Nomclient = r.Nomclient,
             Prenomclient = r.Prenomclient,
             Telephoneclient = r.Telephoneclient,
@@ -88,6 +92,7 @@ public class ReservationsController : ControllerBase
             },
             Inclures = r.Inclures.Select(i => new InclureReadDto
             {
+                Idtypevoyageur = i.Idtypevoyageur,
                 Nombrevoyageur = i.Nombrevoyageur,
                 IdtypevoyageurNavigation = i.IdtypevoyageurNavigation == null ? null : new TypeVoyageurReadDto
                 {
@@ -282,6 +287,70 @@ public class ReservationsController : ControllerBase
     // =========================================================================
     // 3. MÉTHODES DE MODIFICATION ET SUPPRESSION
     // =========================================================================
+
+    [HttpPut("{id}")]
+    public async Task<IActionResult> PutReservation(int id, Reservation reservation)
+    {
+        if (id != reservation.Idreservation)
+        {
+            return BadRequest("L'ID de la réservation ne correspond pas.");
+        }
+
+        var existingReservation = await _dbContext.Reservations
+            .Include(r => r.Inclures)
+            .FirstOrDefaultAsync(r => r.Idreservation == id);
+
+        if (existingReservation == null)
+        {
+            return NotFound("Réservation introuvable.");
+        }
+
+        // 1. Mise à jour des champs simples
+        existingReservation.Nomclient = reservation.Nomclient;
+        existingReservation.Prenomclient = reservation.Prenomclient;
+        existingReservation.Telephoneclient = reservation.Telephoneclient;
+
+        // 2. Mise à jour des dates (via GetOrCreateDate)
+        if (reservation.IddatedebutreservationNavigation != null && reservation.IddatedebutreservationNavigation.Date1.HasValue)
+        {
+            var newDateDebut = await GetOrCreateDate(reservation.IddatedebutreservationNavigation.Date1.Value);
+            existingReservation.Iddatedebutreservation = newDateDebut.Iddate;
+        }
+
+        if (reservation.IddatefinreservationNavigation != null && reservation.IddatefinreservationNavigation.Date1.HasValue)
+        {
+            var newDateFin = await GetOrCreateDate(reservation.IddatefinreservationNavigation.Date1.Value);
+            existingReservation.Iddatefinreservation = newDateFin.Iddate;
+        }
+
+        // 3. Mise à jour des voyageurs (Inclures)
+        // On supprime les anciens et on ajoute les nouveaux
+        _dbContext.Inclures.RemoveRange(existingReservation.Inclures);
+        foreach (var inc in reservation.Inclures)
+        {
+            inc.Idreservation = id; // Sécurité
+            _dbContext.Inclures.Add(inc);
+        }
+
+        try
+        {
+            await _dbContext.SaveChangesAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[ERROR] Failed to update reservation {id}: {ex.Message}");
+            if (!_dbContext.Reservations.Any(e => e.Idreservation == id))
+            {
+                return NotFound();
+            }
+            else
+            {
+                throw;
+            }
+        }
+
+        return NoContent();
+    }
 
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteReservation(int id)

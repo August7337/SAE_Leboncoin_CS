@@ -24,6 +24,10 @@ namespace LeboncoinAPI.Models.DTOs
     public class ReservationReadDto
     {
         public int Idreservation { get; set; }
+        public int Idannonce { get; set; }
+        public int Iddatedebutreservation { get; set; }
+        public int Iddatefinreservation { get; set; }
+        public int Idutilisateur { get; set; }
         public string Nomclient { get; set; }
         public string Prenomclient { get; set; }
         public string Telephoneclient { get; set; }
@@ -65,6 +69,7 @@ namespace LeboncoinAPI.Models.DTOs
 
     public class InclureReadDto
     {
+        public int Idtypevoyageur { get; set; }
         public int Nombrevoyageur { get; set; }
         public TypeVoyageurReadDto IdtypevoyageurNavigation { get; set; }
     }
