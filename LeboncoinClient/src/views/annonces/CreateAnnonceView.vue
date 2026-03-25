@@ -1,5 +1,8 @@
-<script setup>
+
+
+<script  setup>
 import { reactive, ref } from 'vue'
+import axios from 'axios'
 import api from '@/api/axios'
 import { useRouter } from 'vue-router'
 import { authState } from '@/auth.js'
@@ -11,7 +14,8 @@ const isPublishing = ref(false)
 const showSuccess = ref(false)
 const apiError = ref('')
 const cropperRef = ref(null)
-
+const suggestions = ref([]);
+const showSuggestions = ref(false);
 const imageSource = ref(null); 
 const photosList = ref([]); 
 const isUploading = ref(false);
@@ -29,6 +33,38 @@ const typesHebergement = [
   { id: 9, nom: "Bungalow" }
 ]
 
+const fetchAutocomplete = async () => {
+  if (form.rue.length < 3) {
+    suggestions.value = [];
+    return;
+  }
+
+  try {
+    const apiKey = 'd1f65bc8100b4c868d082eb1f125364e';
+    const response = await axios.get(`https://api.geoapify.com/v1/geocode/autocomplete`, {
+      params: {
+        text: form.rue,
+        apiKey: apiKey,
+        lang: 'fr',
+        filter: 'countrycode:fr' 
+      }
+    });
+    suggestions.value = response.data.features;
+    showSuggestions.value = true;
+  } catch (error) {
+    console.error("Error fetching autocomplete:", error);
+  }
+};
+
+const selectSuggestion = (suggestion) => {
+  const props = suggestion.properties;
+  form.rue = props.housenumber ? `${props.housenumber} ${props.street}` : props.street || props.name;
+  form.ville = props.city || props.town || '';
+  form.codePostal = props.postcode || '';
+  
+  showSuggestions.value = false;
+  suggestions.value = [];
+};
 const form = reactive({
   titreannonce: '',
   descriptionannonce: '',
@@ -87,8 +123,9 @@ const removePhoto = (index) => {
   URL.revokeObjectURL(photosLocal.value[index].previewUrl);
   photosLocal.value.splice(index, 1);
 };
-
-
+var requestOptions = {
+  method: 'GET',
+};
 const onFileChange = (event) => {
   const files = event.target.files;
   if (!files || files.length === 0) return;
@@ -138,26 +175,7 @@ const publishAnnonce = async () => {
       prixnuitee: Number(form.prixnuitee)
     };
     
-    const response = await api.post(`/Annonces`, payload);
-    
-    const nouvelleAnnonceId = response.data.idannonce || response.data.annonceId || response.data.id;
-
-    if (nouvelleAnnonceId && photosLocal.value.length > 0) {
-      for (let i = 0; i < photosLocal.value.length; i++) {
-        const photo = photosLocal.value[i];
-        
-        const res = await fetch(photo.base64);
-        const blob = await res.blob();
-
-        const formData = new FormData();
-        formData.append('file', blob, `photo_${i}.jpg`);
-
-        await api.post(`/Annonces/${nouvelleAnnonceId}/upload-photo`, formData, {
-          headers: { 'Content-Type': 'multipart/form-data' }
-        });
-      }
-    }
-
+    await api.post(`/Annonces`, payload)
     showSuccess.value = true
     setTimeout(() => router.push({ name: 'home' }), 1500)
 
@@ -273,10 +291,26 @@ const publishAnnonce = async () => {
 </div>
 <div class="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 space-y-4">
   <h2 class="font-bold text-lg mb-2">Localisation du bien</h2>
-  
-  <div>
+  <div class="relative">
     <label class="block text-sm font-bold mb-2">Rue et numéro</label>
-    <input v-model="form.rue" type="text" placeholder="Ex: 12 rue de la Paix" class="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none" />
+    <input 
+      v-model="form.rue" 
+      @input="fetchAutocomplete"
+      type="text" 
+      placeholder="Commencez à taper votre adresse..." 
+      class="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:border-[#ea580c]" 
+    />
+
+    <ul v-if="showSuggestions && suggestions.length" class="absolute z-50 w-full bg-white border border-gray-200 rounded-xl mt-1 shadow-xl max-h-60 overflow-auto">
+      <li 
+        v-for="(s, index) in suggestions" 
+        :key="index"
+        @click="selectSuggestion(s)"
+        class="px-4 py-3 hover:bg-orange-50 cursor-pointer border-b last:border-b-0 text-sm"
+      >
+        <span class="font-bold">{{ s.properties.formatted }}</span>
+      </li>
+    </ul>
   </div>
 
   <div class="grid grid-cols-2 gap-4">

@@ -34,12 +34,39 @@
         <span v-if="errors.telephoneUtilisateur" class="error-text">{{ errors.telephoneUtilisateur }}</span>
       </div>
 
-      <div class="field">
-        <label>Adresse</label>
-        <input v-model="form.adresseUtilisateur.rue" type="text" placeholder="Rue"/>
-        <input v-model="form.adresseUtilisateur.ville" type="text" placeholder="Ville"/>
-        <input v-model="form.adresseUtilisateur.codePostal" type="text" placeholder="Code postal"/>
-        <span v-if="errors.adresseUtilisateur" class="error-text">{{ errors.adresseUtilisateur }}</span>
+      <div class="field relative">
+        <label>Rue et numéro</label>
+        <input 
+          v-model="form.adresseUtilisateur.rue" 
+          @input="fetchAutocomplete"
+          @blur="closeSuggestions"
+          type="text" 
+          placeholder="Commencez à taper votre adresse..." 
+          class="w-full"
+          :class="{ 'error': errors.adresseUtilisateur }"
+        />
+
+        <ul v-if="showSuggestions && suggestions.length" class="absolute z-50 w-full bg-white border border-gray-200 rounded-xl mt-1 shadow-xl max-h-60 overflow-auto">
+      <li 
+        v-for="(s, index) in suggestions" 
+        :key="index"
+        @click="selectSuggestion(s)"
+        class="px-4 py-3 hover:bg-orange-50 cursor-pointer border-b last:border-b-0 text-sm"
+      >
+        <span class="font-bold">{{ s.properties.formatted }}</span>
+      </li>
+    </ul>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4 mb-4">
+        <div class="field">
+          <label>Code Postal</label>
+          <input v-model="form.adresseUtilisateur.codePostal" type="text" placeholder="75001" />
+        </div>
+        <div class="field">
+          <label>Ville</label>
+          <input v-model="form.adresseUtilisateur.ville" type="text" placeholder="Paris" />
+        </div>
       </div>
 
       <div class="field">
@@ -76,7 +103,7 @@
         </div>
       </div>
 
-      <button type="submit">Continuer</button>
+      <button type="submit" class="submit-btn">Continuer</button>
     </form>
 
     <p class="success" v-if="successMessage">{{ successMessage }}</p>
@@ -88,7 +115,7 @@
 import { reactive, ref, onMounted } from "vue"
 import { useRouter, useRoute } from "vue-router"
 import { authState } from '@/auth.js'
-
+import axios from 'axios'
 const router = useRouter()
 const route = useRoute()
 
@@ -99,6 +126,48 @@ const apiError = ref("")
 const showPassword = ref(false)
 const showPasswordConfirm = ref(false)
 const typeUtilisateur = ref('particulier')
+const suggestions = ref([]);
+const showSuggestions = ref(false);
+
+const closeSuggestions = () => {
+  
+  setTimeout(() => {
+    showSuggestions.value = false;
+  }, 200);
+};
+const fetchAutocomplete = async () => {
+  if (form.adresseUtilisateur.rue.length < 3) {
+    suggestions.value = [];
+    return;
+  }
+
+  try {
+    const apiKey = 'd1f65bc8100b4c868d082eb1f125364e';
+    const response = await axios.get(`https://api.geoapify.com/v1/geocode/autocomplete`, {
+      params: {
+        text: form.adresseUtilisateur.rue,
+        apiKey: apiKey,
+        lang: 'fr',
+        filter: 'countrycode:fr' 
+      }
+    });
+    suggestions.value = response.data.features;
+    showSuggestions.value = true;
+  } catch (error) {
+    console.error("Error fetching autocomplete:", error);
+  }
+};
+
+const selectSuggestion = (suggestion) => {
+  const props = suggestion.properties;
+  form.adresseUtilisateur.rue = props.housenumber ? `${props.housenumber} ${props.street}` : props.street || props.name;
+  form.adresseUtilisateur.ville = props.city || props.town || '';
+  form.adresseUtilisateur.codePostal = props.postcode || '';
+  
+  showSuggestions.value = false;
+  suggestions.value = [];
+};
+
 
 const form = reactive({
   pseudonyme: "",
