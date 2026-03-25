@@ -91,7 +91,7 @@ import { onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
 import { authState } from '@/auth'
-
+import api from '@/api/axios'
 const router = useRouter()
 const dataFromStep1 = ref(null)
 const loginSuccess = ref(false)
@@ -190,8 +190,8 @@ const submitFinal = async () => {
   }
 
   try {
-    const res = await axios.post(
-      'https://localhost:7057/api/Utilisateurs/register-particulier',
+    const res = await api.post(
+      '/Utilisateurs/register-particulier',
       payload,
     )
 

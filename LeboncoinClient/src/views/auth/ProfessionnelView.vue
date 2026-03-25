@@ -87,7 +87,7 @@ import { onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
 import { authState } from '@/auth'
-
+import api from '@/api/axios'
 const loginSuccess = ref(false)
 const router = useRouter()
 const dataFromStep1 = ref(null)
@@ -150,8 +150,8 @@ const submitFinal = async () => {
   apiPayload.numsiret = parseFloat(proForm.numsiret)
 
   try {
-    const response = await axios.post(
-      'https://localhost:7057/api/Utilisateurs/register-professionnel',
+    const response = await api.post(
+      '/Utilisateurs/register-professionnel',
       apiPayload,
     )
     sessionStorage.removeItem('registration_draft')

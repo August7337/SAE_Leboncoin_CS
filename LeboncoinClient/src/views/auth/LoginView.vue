@@ -3,7 +3,7 @@ import { reactive, ref,onMounted } from 'vue'
 import axios from 'axios'
 import { useRouter } from 'vue-router'
 import { authState } from '@/auth.js'
-
+import api from '@/api/axios'
 const router = useRouter()
 const showPassword = ref(false)
 const showPasswordConfirm = ref(false)
@@ -37,7 +37,7 @@ async function login() {
 
   if (emailExists.value) {
     try {
-      const response = await axios.post(`https://localhost:7057/api/Utilisateurs/login`, {
+      const response = await api.post('/Utilisateurs/login', {
         email: form.email,
         password: form.password,
       })
@@ -59,7 +59,7 @@ async function login() {
   }
 
   try {
-    await axios.get(`https://localhost:7057/api/Utilisateurs/email/${form.email}`)
+    await api.get(`/Utilisateurs/email/${form.email}`)
     emailExists.value = true
   } catch (error) {
     if (error.response?.status === 404) {
