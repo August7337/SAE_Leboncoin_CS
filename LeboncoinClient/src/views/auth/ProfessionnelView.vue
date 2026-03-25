@@ -87,7 +87,6 @@ import { onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '@/api/axios'
 import { authState } from '@/auth'
-import api from '@/api/axios'
 const loginSuccess = ref(false)
 const router = useRouter()
 const dataFromStep1 = ref(null)
