@@ -5,11 +5,17 @@ using LeboncoinAPI.Models.DTOs;
 using LeboncoinAPI.Models.DTOs.LeboncoinAPI.Models.DTOs;
 using LeboncoinAPI.Models.EntityFramework;
 using LeboncoinAPI.Models.Repository;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using System.Collections.Generic;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+
 namespace LeboncoinAPI.Controllers;
 
 [Route("api/[controller]")]
@@ -186,10 +192,10 @@ public class UtilisateursController : ControllerBase
 
         return NoContent();
     }
+
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequest loginRequest)
     {
-
         var user = await ((UtilisateurManager)_dataRepository).GetByEmailAsync(loginRequest.Email);
 
         if (user == null) return NotFound("Utilisateur non trouvé.");
@@ -197,29 +203,34 @@ public class UtilisateursController : ControllerBase
         if (!BCrypt.Net.BCrypt.Verify(loginRequest.Password, user.Password))
             return BadRequest("Mot de passe incorrect.");
 
-
         string userType = user.Professionnel != null ? "professionnel" : "particulier";
 
+        var token = GenerateJwtToken(user);
 
         return Ok(new
         {
-            idutilisateur = user.Idutilisateur,
-            pseudonyme = user.Pseudonyme,
-            email = user.Email,
-            telephone = user.Telephoneutilisateur,
-            typeUtilisateur = userType,
-            profilePhotoPath = user.ProfilePhotoPath,
-            solde = user.Solde,
+            Token = token,
+            User = new
+            {
+                idutilisateur = user.Idutilisateur,
+                pseudonyme = user.Pseudonyme,
+                email = user.Email,
+                telephone = user.Telephoneutilisateur,
+                typeUtilisateur = userType,
+                profilePhotoPath = user.ProfilePhotoPath,
+                solde = user.Solde,
 
-            civilite = user.Particulier?.Civilite,
-            nomutilisateur = user.Particulier?.Nomutilisateur,
-            prenomutilisateur = user.Particulier?.Prenomutilisateur,
+                civilite = user.Particulier?.Civilite,
+                nomutilisateur = user.Particulier?.Nomutilisateur,
+                prenomutilisateur = user.Particulier?.Prenomutilisateur,
 
-            nomEntreprise = user.Professionnel?.Nomsociete,
-            siret = user.Professionnel?.Numsiret,
-            secteuractivite = user.Professionnel?.Secteuractivite
+                nomEntreprise = user.Professionnel?.Nomsociete,
+                siret = user.Professionnel?.Numsiret,
+                secteuractivite = user.Professionnel?.Secteuractivite
+            }
         });
     }
+
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterParticulierDTO dto)
     {
@@ -297,6 +308,79 @@ public class UtilisateursController : ControllerBase
         {
             return StatusCode(500, "Erreur interne lors de la création du compte.");
         }
+    }
+
+    [HttpGet("{id}/export-rgpd")]
+    [Authorize]
+    public async Task<IActionResult> ExportGdprData(int id)
+    {
+        var currentUserId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+        if (currentUserId != id) return Forbid();
+
+
+        try
+        {
+            var exportData = await ((UtilisateurManager)_dataRepository).GetGdprDataAsync(id);
+
+            if (exportData == null) return NotFound("Utilisateur introuvable.");
+
+            return Ok(exportData);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"Erreur lors de l'export des données : {ex.Message}");
+        }
+    }
+
+    [HttpPost("{id}/demande-suppression")]
+    [Authorize]
+    public async Task<IActionResult> DemanderSuppression(int id)
+    {
+        var claimId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(claimId) || int.Parse(claimId) != id)
+        {
+            return Forbid("Vous n'êtes pas autorisé à demander la suppression d'un autre compte.");
+        }
+
+        try
+        {
+            var success = await _dataRepository.CreerDemandeSuppressionAsync(id);
+
+            if (!success)
+            {
+                return BadRequest(new { message = "Une demande de suppression est déjà en cours de traitement pour ce compte." });
+            }
+
+            return Ok(new { message = "Votre demande de suppression a bien été prise en compte. Notre Délégué à la Protection des Données (DPO) reviendra vers vous sous 30 jours." });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"Erreur lors de la création de la demande : {ex.Message}");
+        }
+    }
+
+    private string GenerateJwtToken(Utilisateur user)
+    {
+        var jwtSettings = HttpContext.RequestServices.GetService<IConfiguration>()!.GetSection("JwtSettings");
+        var secretKey = jwtSettings["SecretKey"];
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey!));
+
+        var claims = new List<Claim>
+    {
+        new Claim(ClaimTypes.NameIdentifier, user.Idutilisateur.ToString()),
+        new Claim(ClaimTypes.Email, user.Email),
+        new Claim(ClaimTypes.Name, user.Pseudonyme)
+    };
+
+        var token = new JwtSecurityToken(
+            issuer: jwtSettings["Issuer"],
+            audience: jwtSettings["Audience"],
+            claims: claims,
+            expires: DateTime.UtcNow.AddDays(7),
+            signingCredentials: new SigningCredentials(key, SecurityAlgorithms.HmacSha256)
+        );
+
+        return new JwtSecurityTokenHandler().WriteToken(token);
     }
 
 

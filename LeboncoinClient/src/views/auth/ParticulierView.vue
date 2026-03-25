@@ -89,7 +89,7 @@
 <script setup>
 import { onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import axios from 'axios'
+import api from '@/api/axios'
 import { authState } from '@/auth'
 
 const router = useRouter()
@@ -190,18 +190,14 @@ const submitFinal = async () => {
   }
 
   try {
-    const res = await axios.post(
-      'https://localhost:7057/api/Utilisateurs/register-particulier',
+    const res = await api.post(
+      '/Utilisateurs/register-particulier',
       payload,
     )
 
     if (res.data.user || res.status === 200) {
       sessionStorage.removeItem('registration_draft')
-      authState.user = res.data.user
-      authState.isAuthenticated = true
-      if (res.data.token) {
-        localStorage.setItem('user_token', res.data.token)
-      }
+      authState.login(res.data)
       loginSuccess.value = true
       setTimeout(() => {
         router.push({ name: 'home' })

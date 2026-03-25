@@ -290,7 +290,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import axios from 'axios';
+import api from '@/api/axios';
 import { authState } from '@/auth.js';
 
 const route = useRoute();
@@ -374,7 +374,7 @@ function adjustCursor(input, oldCursor, oldValue, newValue) {
 onMounted(async () => {
   await authState.refreshUser?.();
   try {
-    const response = await axios.get(`/api/annonces/${annonceId}`);
+    const response = await api.get(`/annonces/${annonceId}`);
     const annonce = response.data;
 
     pricePerNight.value = annonce.prixnuitee;
@@ -454,7 +454,7 @@ const submitReservation = async () => {
       inclures:        voyageursInclures
     };
 
-    const response = await axios.post('/api/reservations/create-checkout-session', payload);
+    const response = await api.post('/reservations/create-checkout-session', payload);
     window.location.href = response.data.url;
 
   } catch (error) {

@@ -1,6 +1,6 @@
 <script setup>
 import { reactive, ref,onMounted } from 'vue'
-import axios from 'axios'
+import api from '@/api/axios'
 import { useRouter } from 'vue-router'
 import { authState } from '@/auth.js'
 
@@ -37,12 +37,12 @@ async function login() {
 
   if (emailExists.value) {
     try {
-      const response = await axios.post(`https://localhost:7057/api/Utilisateurs/login`, {
+      const response = await api.post(`/Utilisateurs/login`, {
         email: form.email,
         password: form.password,
       })
 
-      authState.setUser(response.data)
+      authState.login(response.data)
 
       setTimeout(() => {
         router.push({ name: 'home' })
@@ -59,7 +59,7 @@ async function login() {
   }
 
   try {
-    await axios.get(`https://localhost:7057/api/Utilisateurs/email/${form.email}`)
+    await api.get(`/Utilisateurs/email/${form.email}`)
     emailExists.value = true
   } catch (error) {
     if (error.response?.status === 404) {

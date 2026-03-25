@@ -123,21 +123,18 @@
               <p class="text-xs text-gray-500">Vous opposer à tout moment à l'utilisation de vos données pour de la prospection.</p>
             </div>
           </div>
-          <div class="bg-slate-900 text-white p-8 rounded-2xl flex flex-col items-center text-center">
-            <p class="mb-5">Pour exercer ces droits, contactez-nous par mail ou via votre espace personnel.</p>
-            <a href="mailto:dpo@leboncoin.fr" class="bg-white text-slate-900 font-bold py-3 px-8 rounded-xl hover:bg-gray-100 transition-colors shadow-sm">dpo@leboncoin.fr</a>
-          </div>
-        </section>
-
-        <section>
-          <h2 class="text-xl font-bold mb-4 text-gray-900">Droit de réclamation</h2>
-          <div class="flex items-start gap-4 p-5 bg-orange-50 border-l-4 border-orange-600 rounded-r-xl">
-            <div class="shrink-0 text-orange-600 mt-0.5">
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+          <div class="bg-slate-900 text-white p-8 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-6 mt-8">
+            <div>
+              <h3 class="font-bold text-lg mb-2">Exercez vos droits en un clic</h3>
+              <p class="text-slate-300 text-sm">Consultez toutes les données que nous possédons sur vous ou demandez leur suppression directement depuis votre espace.</p>
             </div>
-            <p class="text-gray-700 text-sm leading-relaxed">
-              Si vous estimez, après nous avoir contactés, que vos droits "Informatique et Libertés" ne sont pas respectés, vous pouvez adresser une réclamation à la CNIL sur leur site internet : <a href="https://cnil.fr" target="_blank" class="text-orange-600 hover:underline font-bold">cnil.fr</a>.
-            </p>
+            <button @click="consulterMesDonnees" class="bg-orange-600 text-white font-bold py-3 px-8 rounded-xl hover:bg-orange-700 transition-colors shadow-sm whitespace-nowrap">
+              Accéder à mes données
+            </button>
+          </div>
+
+          <div class="mt-4 text-center">
+            <p class="text-sm text-gray-500">Pour toute autre question, contactez notre DPO : <a href="mailto:dpo@leboncoin.fr" class="text-orange-600 font-bold hover:underline">dpo@leboncoin.fr</a></p>
           </div>
         </section>
 
@@ -145,3 +142,18 @@
     </div>
   </div>
 </template>
+
+<script setup>
+import { useRouter } from 'vue-router';
+import { authState } from '@/auth.js';
+
+const router = useRouter();
+
+const consulterMesDonnees = () => {
+  if (authState.isLoggedIn()) {
+    router.push('/mes-donnees-personnelles');
+  } else {
+    router.push('/login?redirect=/mes-donnees-personnelles');
+  }
+};
+</script>

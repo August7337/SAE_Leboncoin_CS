@@ -1,6 +1,6 @@
 <script setup>
 import { reactive, ref } from 'vue'
-import axios from 'axios'
+import api from '@/api/axios'
 import { useRouter } from 'vue-router'
 import { authState } from '@/auth.js'
 import { Cropper, CircleStencil } from 'vue-advanced-cropper';
@@ -128,27 +128,46 @@ const publishAnnonce = async () => {
 
   isPublishing.value = true
   try {
-const payload = {
-  ...form, 
-  idutilisateur: authState.user.idutilisateur,
-  liensphoto: photosLocal.value.map(p => p.base64),
-  acomptefixe: !form.isAcomptePercentage ? Number(form.acompte) : 0,
-  acomptepourcentage: form.isAcomptePercentage ? Number(form.acompte) : 0,
- 
-  minimumnuitee: Number(form.minimumnuitee), 
-  prixnuitee: Number(form.prixnuitee)
-};
+    const payload = {
+      ...form, 
+      idutilisateur: authState.user.idutilisateur,
+      liensphoto: [],
+      acomptefixe: !form.isAcomptePercentage ? Number(form.acompte) : 0,
+      acomptepourcentage: form.isAcomptePercentage ? Number(form.acompte) : 0,
+      minimumnuitee: Number(form.minimumnuitee), 
+      prixnuitee: Number(form.prixnuitee)
+    };
     
-    await axios.post(`https://localhost:7057/api/Annonces`, payload)
+    const response = await api.post(`/Annonces`, payload);
+    
+    const nouvelleAnnonceId = response.data.idannonce || response.data.annonceId || response.data.id;
+
+    if (nouvelleAnnonceId && photosLocal.value.length > 0) {
+      for (let i = 0; i < photosLocal.value.length; i++) {
+        const photo = photosLocal.value[i];
+        
+        const res = await fetch(photo.base64);
+        const blob = await res.blob();
+
+        const formData = new FormData();
+        formData.append('file', blob, `photo_${i}.jpg`);
+
+        await api.post(`/Annonces/${nouvelleAnnonceId}/upload-photo`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+      }
+    }
+
     showSuccess.value = true
-    setTimeout(() => router.push({ name: 'home' }), 1000)
+    setTimeout(() => router.push({ name: 'home' }), 1500)
+
   } catch (error) {
     if (error.response && error.response.data) {
-      apiError.value = "Le serveur a refusé l'annonce. Vérifiez les données."
+      apiError.value = "Le serveur a refusé l'annonce ou l'upload d'une photo."
     } else {
       apiError.value = "Impossible de contacter le serveur."
     }
-    console.error(error)
+    console.error("Détail de l'erreur :", error)
   } finally {
     isPublishing.value = false
   }

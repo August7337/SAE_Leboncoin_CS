@@ -1,4 +1,4 @@
-const DEFAULT_API_BASE_URL = 'http://localhost:5150'
+const DEFAULT_API_BASE_URL = 'https://localhost:7057'
 
 const normalizeBaseUrl = (url) => (url || '').trim().replace(/\/+$/, '')
 

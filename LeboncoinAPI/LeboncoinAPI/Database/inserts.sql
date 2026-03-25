@@ -906,6 +906,14 @@ paiementenligne, capaciteminimumvoyageur, prixminimum, prixmaximum, nombreminimu
 /*============================================================================================================================================*/
 
 /*==============================================================*/
+/* Table : statutdemande (3 statuts de demande)                 */
+/*==============================================================*/
+
+INSERT INTO statutdemande (nomstatut) VALUES ('En attente');
+INSERT INTO statutdemande (nomstatut) VALUES ('Validée');
+INSERT INTO statutdemande (nomstatut) VALUES ('Refusée');
+
+/*==============================================================*/
 /* Table : reservation (104 reservations)                       */
 /*==============================================================*/
 

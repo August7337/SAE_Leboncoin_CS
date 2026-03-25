@@ -24,13 +24,13 @@ public class UtilisateurManager : IDataUtilisateurRepository<Utilisateur>
 
     public async Task<IEnumerable<Utilisateur>> GetAllAsync()
     {
-      
+
         return await _dbContext.Utilisateurs.ToListAsync();
     }
 
     public async Task<Utilisateur?> GetByIdAsync(int id)
     {
-        
+
         return await _dbContext.Utilisateurs.FindAsync(id);
     }
 
@@ -45,39 +45,39 @@ public class UtilisateurManager : IDataUtilisateurRepository<Utilisateur>
 
     public async Task AddAsync(Utilisateur entity)
     {
-      
+
         var today = DateOnly.FromDateTime(DateTime.Now);
         entity.IddateNavigation = await _dbContext.Dates.FirstOrDefaultAsync(d => d.Date1 == today)
                                  ?? new Date { Date1 = today };
 
-    
+
         var adr = entity.IdadresseNavigation;
         var ville = adr.IdvilleNavigation;
         var dep = ville.IddepartementNavigation;
         var reg = dep.IdregionNavigation;
 
-        
+
         if (GeoData.TryGetValue(dep.Numerodepartement, out var geo))
         {
             dep.Nomdepartement = geo.DepName;
             reg.Nomregion = geo.RegName;
         }
 
-        
+
         var existingReg = await _dbContext.Regions.FirstOrDefaultAsync(r => r.Nomregion == reg.Nomregion);
         if (existingReg != null)
         {
             dep.IdregionNavigation = existingReg;
         }
 
-       
+
         var existingDep = await _dbContext.Departements.FirstOrDefaultAsync(d => d.Numerodepartement == dep.Numerodepartement);
         if (existingDep != null)
         {
             ville.IddepartementNavigation = existingDep;
         }
 
-       
+
         var existingVille = await _dbContext.Villes
             .FirstOrDefaultAsync(v => v.Nomville.ToLower() == ville.Nomville.ToLower() && v.Codepostal == ville.Codepostal);
         if (existingVille != null)
@@ -127,7 +127,7 @@ public class UtilisateurManager : IDataUtilisateurRepository<Utilisateur>
             {
                 Pseudonyme = dto.Pseudonyme,
                 Email = dto.Email,
-                Password = dto.Password, // Sera haché dans AddAsync
+                Password = dto.Password,
                 Telephoneutilisateur = dto.Telephoneutilisateur,
                 IdadresseNavigation = BuildAdresseFromDto(dto)
             };
@@ -170,18 +170,18 @@ public class UtilisateurManager : IDataUtilisateurRepository<Utilisateur>
     }
     public async Task UpdateProfileAsync(Utilisateur existingUser, UtilisateurUpdateDTO dto)
     {
-        
+
         if (existingUser.Particulier == null)
         {
             await _dbContext.Entry(existingUser).Reference(u => u.Particulier).LoadAsync();
         }
 
-    
+
         existingUser.Pseudonyme = dto.Pseudonyme;
         existingUser.Email = dto.Email;
         existingUser.Telephoneutilisateur = dto.Telephoneutilisateur;
 
-       
+
         if (existingUser.Particulier != null)
         {
             existingUser.Particulier.Civilite = dto.Civilite;
@@ -194,7 +194,7 @@ public class UtilisateurManager : IDataUtilisateurRepository<Utilisateur>
 
     private static Adresse BuildAdresseFromDto(RegisterParticulierDTO dto)
     {
-    
+
         var match = Regex.Match(dto.Rue ?? string.Empty, "^(\\d+)\\s*(.*)$");
         int num = match.Success && int.TryParse(match.Groups[1].Value, out var n) ? n : 0;
         string street = match.Success ? match.Groups[2].Value : dto.Rue;
@@ -264,11 +264,11 @@ public class UtilisateurManager : IDataUtilisateurRepository<Utilisateur>
             if (inner.Contains("utilisateur_email_key"))
                 throw new RegistrationConflictException("email", "Cet email est déjà utilisé.");
 
-          
+
             if (inner.Contains("utilisateur_telephoneutilisateur_key"))
                 throw new RegistrationConflictException("telephoneUtilisateur", "Ce numéro de téléphone est déjà utilisé.");
 
-            
+
             if (inner.Contains("professionnel_numsiret_key"))
                 throw new RegistrationConflictException("numsiret", "Ce numéro SIRET est déjà utilisé.");
 
@@ -287,5 +287,85 @@ public class UtilisateurManager : IDataUtilisateurRepository<Utilisateur>
         {
             TargetField = target;
         }
+    }
+    public async Task<GdprExportDTO> GetGdprDataAsync(int idUtilisateur)
+    {
+        var user = await _dbContext.Utilisateurs
+            .AsNoTracking()
+            .AsSplitQuery()
+            .Include(u => u.IdadresseNavigation).ThenInclude(a => a.IdvilleNavigation)
+            .Include(u => u.IddateNavigation)
+            .Include(u => u.Particulier).ThenInclude(p => p.IddateNavigation)
+            .Include(u => u.Professionnel)
+            .Include(u => u.Annonces)
+            .Include(u => u.Idannonces)
+            .Include(u => u.Recherches)
+            .Include(u => u.Reservations)
+            .Include(u => u.Transactions)
+            .Include(u => u.Avis)
+            .Include(u => u.Incidents)
+            .Include(u => u.MessageIdutilisateurexpediteurNavigations)
+            .Include(u => u.MessageIdutilisateurreceveurNavigations)
+            .FirstOrDefaultAsync(u => u.Idutilisateur == idUtilisateur);
+
+        if (user == null) return null;
+
+        var export = new GdprExportDTO
+        {
+            Profil = new UtilisateurGdprDTO
+            {
+                Id = user.Idutilisateur,
+                Pseudonyme = user.Pseudonyme,
+                Email = user.Email,
+                Telephone = user.Telephoneutilisateur,
+                Solde = user.Solde,
+                IsVerified = user.IdentityVerified,
+                TypeCompte = user.Particulier != null ? "Particulier" : "Professionnel",
+                AdresseComplete = user.IdadresseNavigation != null ? $"{user.IdadresseNavigation.Numerorue} {user.IdadresseNavigation.Nomrue}, {user.IdadresseNavigation.IdvilleNavigation?.Codepostal} {user.IdadresseNavigation.IdvilleNavigation?.Nomville}" : null,
+
+                Nom = user.Particulier?.Nomutilisateur,
+                Prenom = user.Particulier?.Prenomutilisateur,
+                Civilite = user.Particulier?.Civilite,
+                DateNaissance = user.Particulier?.IddateNavigation?.Date1,
+
+                NumSiret = user.Professionnel?.Numsiret.ToString(),
+                NomSociete = user.Professionnel?.Nomsociete,
+                SecteurActivite = user.Professionnel?.Secteuractivite
+            },
+
+            AnnoncesPubliees = user.Annonces.Select(a => (dynamic)new { a.Idannonce, a.Titreannonce, a.Prixnuitee }).ToList(),
+            Favoris = user.Idannonces.Select(f => (dynamic)new { f.Idannonce, f.Titreannonce }).ToList(),
+
+            RecherchesSauvegardees = user.Recherches.Select(r => (dynamic)new
+            { r.Idrecherche, r.Prixminimum, r.Prixmaximum, r.Capaciteminimumvoyageur }).ToList(),
+
+            ReservationsEffectuees = user.Reservations.Select(r => (dynamic)new { r.Idreservation, r.Idannonce, r.Nomclient, r.Prenomclient }).ToList(),
+            Transactions = user.Transactions.Select(t => (dynamic)new { t.Idtransaction, t.Montanttransaction }).ToList(),
+            AvisPublies = user.Avis.Select(a => (dynamic)new { a.Idavis, a.Nombreetoiles, a.Texteavis }).ToList(),
+            IncidentsSignales = user.Incidents.Select(i => (dynamic)new { i.Idincident, i.Descriptionincident }).ToList(),
+
+            MessagesEnvoyes = user.MessageIdutilisateurexpediteurNavigations.Select(m => (dynamic)new { m.Idmessage, m.Contenumessage }).ToList(),
+            MessagesRecus = user.MessageIdutilisateurreceveurNavigations.Select(m => (dynamic)new { m.Idmessage, m.Contenumessage }).ToList()
+        };
+
+        return export;
+    }
+    public async Task<bool> CreerDemandeSuppressionAsync(int idUtilisateur)
+    {
+        var demandeExistante = await _dbContext.DemandesSuppressionCompte
+            .FirstOrDefaultAsync(d => d.IdUtilisateur == idUtilisateur && d.IdStatut == 1);
+
+        if (demandeExistante != null) return false;
+
+        var demande = new DemandeSuppressionCompte
+        {
+            IdUtilisateur = idUtilisateur,
+            IdStatut = 1,
+            DateDemande = DateTime.Now
+        };
+
+        _dbContext.DemandesSuppressionCompte.Add(demande);
+        await _dbContext.SaveChangesAsync();
+        return true;
     }
 }

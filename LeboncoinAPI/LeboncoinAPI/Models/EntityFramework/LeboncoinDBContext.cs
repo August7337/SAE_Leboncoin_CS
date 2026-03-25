@@ -29,6 +29,8 @@ public partial class LeboncoinDBContext : DbContext
 
     public virtual DbSet<Date> Dates { get; set; }
 
+    public virtual DbSet<DemandeSuppressionCompte> DemandesSuppressionCompte { get; set; }
+
     public virtual DbSet<Departement> Departements { get; set; }
 
     public virtual DbSet<Heure> Heures { get; set; }

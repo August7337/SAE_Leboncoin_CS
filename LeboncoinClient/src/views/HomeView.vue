@@ -1,7 +1,6 @@
 <template>
   <div class="min-h-screen bg-[#f5f5f5]">
     <div class="max-w-6xl mx-auto px-4 md:px-12 xl:px-6 py-8">
-      <!-- Titre de bienvenue style Laravel -->
       <div class="w-full flex justify-center mt-4 mb-10">
         <div
           class="bg-[#f0f4f7] w-fit mx-auto rounded-[32px] px-10 md:px-16 py-8 text-center shadow-sm"
@@ -12,10 +11,8 @@
         </div>
       </div>
 
-      <!-- Barre de recherche et Filtres style Laravel -->
       <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 mb-10">
         <div class="flex items-center gap-3 overflow-x-auto hide-scrollbar pb-2">
-          <!-- Input Recherche Localisation -->
           <div class="relative flex-grow min-w-[280px]">
             <div
               class="flex items-center gap-3 px-5 py-3 bg-white border border-gray-200 rounded-[15px] shadow-sm hover:bg-gray-50 text-sm font-medium transition-colors w-full group focus-within:border-[#ea580c]"
@@ -81,7 +78,6 @@
             </div>
           </div>
 
-          <!-- Boutons Filtres -->
           <button @click="openSidebar" class="filter-btn">
             <span>Dates</span>
             <svg
@@ -141,7 +137,6 @@
         </div>
       </div>
 
-      <!-- Liste des annonces -->
       <div class="mb-6">
         <h1 class="text-2xl font-black text-gray-900 tracking-tight">
           {{ searchQuery ? `Résultats pour "${searchQuery}"` : 'Locations de vacances' }}
@@ -169,7 +164,6 @@
       </div>
     </div>
 
-    <!-- Sidebar de Filtres -->
     <FilterSidebar
       :isOpen="isSidebarOpen"
       :initialFilters="filters"
@@ -189,7 +183,7 @@ import annoncesService from '../services/annoncesService'
 import recherchesService from '../services/recherchesService'
 import { authState } from '@/auth.js'
 import { showSuccess } from '@/notification.js'
-import axios from 'axios'
+import api from '@/api/axios'
 
 const route = useRoute()
 const router = useRouter()
@@ -303,7 +297,7 @@ onMounted(async () => {
 
   if (sessionId) {
     try {
-      await axios.post('/api/reservations/confirm-payment', { sessionId });
+      await api.post('/reservations/confirm-payment', { sessionId });
       showSuccess("Votre réservation a bien été payée et enregistrée !");
     } catch (error) {
       console.error("Erreur de confirmation Stripe:", error);

@@ -27,6 +27,12 @@ const routes = [
     component: () => import('@/views/infos-legales/CookiesPolicyView.vue'),
     meta: { title: 'Politique de cookies - leboncoin' }
   },
+  {
+    path: '/mes-donnees-personnelles',
+    name: 'gdpr-data',
+    component: () => import('../views/account/GdprDataView.vue'),
+    meta: { requiresAuth: true },
+  },
 
   // --- Réserver une annonce ---
   {

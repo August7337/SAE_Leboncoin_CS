@@ -1,7 +1,7 @@
 <script setup>
 import { reactive, ref } from 'vue'
 import { authState } from '@/auth.js'
-import axios from 'axios'
+import api from '@/api/axios'
 
 const isSaving = ref(false)
 const showSuccess = ref(false)
@@ -23,7 +23,7 @@ async function updatePassword() {
 
   isSaving.value = true
   try {
-    await axios.post(`https://localhost:7057/api/Utilisateurs/change-password`, {
+    await api.post(`/Utilisateurs/change-password`, {
       idutilisateur: authState.user.idutilisateur,
       oldPassword: form.currentPassword,
       newPassword: form.newPassword,

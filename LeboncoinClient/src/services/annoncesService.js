@@ -1,11 +1,19 @@
-import { deleteRequest, getJson, postJson, putJson } from './api'
+import api from '@/api/axios'
 
-const BASE_PATH = '/api/annonces'
+const BASE_PATH = '/Annonces'
 
 export const annoncesService = {
-  getAll: () => getJson(BASE_PATH),
-  getById: (id) => getJson(`${BASE_PATH}/${id}`),
-  searchByLocation: (query, filters = {}) => {
+  getAll: async () => {
+    const response = await api.get(BASE_PATH)
+    return response.data
+  },
+  
+  getById: async (id) => {
+    const response = await api.get(`${BASE_PATH}/${id}`)
+    return response.data
+  },
+  
+  searchByLocation: async (query, filters = {}) => {
     let url = `${BASE_PATH}/search?q=${encodeURIComponent(query ?? '')}`
     if (filters.minPrice) url += `&minPrice=${filters.minPrice}`
     if (filters.maxPrice) url += `&maxPrice=${filters.maxPrice}`
@@ -16,14 +24,40 @@ export const annoncesService = {
       url += `&commoditeIds=${filters.commoditeIds.join(',')}`
     if (filters.dateArrivee) url += `&dateArrivee=${filters.dateArrivee}`
     if (filters.dateDepart) url += `&dateDepart=${filters.dateDepart}`
-    return getJson(url)
+    
+    const response = await api.get(url)
+    return response.data
   },
-  getTypeHebergements: () => getJson('/api/TypeHebergements'),
-  getCommoditesByCategories: () => getJson('/api/Commodites/by-categories'),
-  getFavorites: (userId) => getJson(`${BASE_PATH}/favorites/${userId}`),
-  getFavoriteIds: (userId) => getJson(`${BASE_PATH}/favorites/ids/${userId}`),
-  addFavorite: (annonceId, userId) => postJson(`${BASE_PATH}/${annonceId}/favorite/${userId}`, {}),
-  removeFavorite: (annonceId, userId) => deleteRequest(`${BASE_PATH}/${annonceId}/favorite/${userId}`),
+  
+  getTypeHebergements: async () => {
+    const response = await api.get('/TypeHebergements')
+    return response.data
+  },
+  
+  getCommoditesByCategories: async () => {
+    const response = await api.get('/Commodites/by-categories')
+    return response.data
+  },
+  
+  getFavorites: async (userId) => {
+    const response = await api.get(`${BASE_PATH}/favorites/${userId}`)
+    return response.data
+  },
+  
+  getFavoriteIds: async (userId) => {
+    const response = await api.get(`${BASE_PATH}/favorites/ids/${userId}`)
+    return response.data
+  },
+  
+  addFavorite: async (annonceId, userId) => {
+    const response = await api.post(`${BASE_PATH}/${annonceId}/favorite/${userId}`, {})
+    return response.data
+  },
+  
+  removeFavorite: async (annonceId, userId) => {
+    const response = await api.delete(`${BASE_PATH}/${annonceId}/favorite/${userId}`)
+    return response.data
+  },
 }
 
 export default annoncesService

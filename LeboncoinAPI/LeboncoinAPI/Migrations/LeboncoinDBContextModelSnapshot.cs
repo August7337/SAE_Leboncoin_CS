@@ -467,6 +467,41 @@ namespace LeboncoinAPI.Migrations
                     b.ToTable("date");
                 });
 
+            modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.DemandeSuppressionCompte", b =>
+                {
+                    b.Property<int>("IdDemande")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("iddemande");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("IdDemande"));
+
+                    b.Property<DateTime>("DateDemande")
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("datedemande");
+
+                    b.Property<int>("IdStatut")
+                        .HasColumnType("integer")
+                        .HasColumnName("idstatut");
+
+                    b.Property<int>("IdUtilisateur")
+                        .HasColumnType("integer")
+                        .HasColumnName("idutilisateur");
+
+                    b.Property<string>("MotifRefus")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("motifrefus");
+
+                    b.HasKey("IdDemande");
+
+                    b.HasIndex("IdStatut");
+
+                    b.HasIndex("IdUtilisateur");
+
+                    b.ToTable("demandesuppressioncompte");
+                });
+
             modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.Departement", b =>
                 {
                     b.Property<int>("Iddepartement")
@@ -974,6 +1009,26 @@ namespace LeboncoinAPI.Migrations
                         .HasName("pk_role");
 
                     b.ToTable("role");
+                });
+
+            modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.StatutDemande", b =>
+                {
+                    b.Property<int>("IdStatut")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("idstatut");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("IdStatut"));
+
+                    b.Property<string>("NomStatut")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("nomstatut");
+
+                    b.HasKey("IdStatut");
+
+                    b.ToTable("statutdemande");
                 });
 
             modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.Transaction", b =>
@@ -1498,6 +1553,25 @@ namespace LeboncoinAPI.Migrations
                     b.Navigation("IdcategorieNavigation");
                 });
 
+            modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.DemandeSuppressionCompte", b =>
+                {
+                    b.HasOne("LeboncoinAPI.Models.EntityFramework.StatutDemande", "StatutNavigation")
+                        .WithMany("Demandes")
+                        .HasForeignKey("IdStatut")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("LeboncoinAPI.Models.EntityFramework.Utilisateur", "UtilisateurNavigation")
+                        .WithMany()
+                        .HasForeignKey("IdUtilisateur")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("StatutNavigation");
+
+                    b.Navigation("UtilisateurNavigation");
+                });
+
             modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.Departement", b =>
                 {
                     b.HasOne("LeboncoinAPI.Models.EntityFramework.Region", "IdregionNavigation")
@@ -1949,6 +2023,11 @@ namespace LeboncoinAPI.Migrations
                     b.Navigation("Inclures");
 
                     b.Navigation("Transactions");
+                });
+
+            modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.StatutDemande", b =>
+                {
+                    b.Navigation("Demandes");
                 });
 
             modelBuilder.Entity("LeboncoinAPI.Models.EntityFramework.Typehebergement", b =>

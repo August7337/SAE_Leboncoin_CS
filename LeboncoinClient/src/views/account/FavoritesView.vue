@@ -76,7 +76,7 @@ onMounted(fetchFavorites)
         <p class="text-gray-500 mt-2 max-w-sm mx-auto">
           Parcourez les annonces et cliquez sur le cœur pour les retrouver ici.
         </p>
-        <router-link to="/search" class="inline-block mt-6 font-bold text-[#ea580c]"
+        <router-link to="/" class="inline-block mt-6 font-bold text-[#ea580c]"
           >Explorer les annonces</router-link
         >
       </div>

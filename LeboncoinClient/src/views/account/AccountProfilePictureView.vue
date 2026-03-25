@@ -52,7 +52,7 @@
   import { ref } from 'vue';
   import { Cropper, CircleStencil } from 'vue-advanced-cropper';
   
-  import axios from 'axios';
+  import api from '@/api/axios';
   import { authState } from '@/auth';
   const loginSuccess = ref(false)
   const successMessage = ref("photo de profil changée avec succès")
@@ -84,7 +84,9 @@
       formData.append('file', blob);
   
       try {
-        const response = await axios.post(`https://localhost:7057/api/Utilisateurs/${authState.user.idutilisateur}/upload-pfp`, formData);
+        const response = await api.post(`/Utilisateurs/${authState.user.idutilisateur}/upload-pfp`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
   
  
   const timestampedUrl = `${response.data.newUrl}?t=${new Date().getTime()}`;
