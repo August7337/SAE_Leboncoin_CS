@@ -42,6 +42,7 @@ onMounted(async () => {
     try {
       await api.post('/reservations/confirm-payment', { sessionId });
       showSuccess("Modification confirmée et payée !");
+      setTimeout(() => authState.refreshUser?.(), 500)
     } catch (e) {
       console.error("Erreur confirmation paiement:", e);
     }
@@ -49,6 +50,7 @@ onMounted(async () => {
     router.replace('/my-reservations');
   } else if (payment === 'success') {
     showSuccess("Modification enregistrée avec succès !");
+    setTimeout(() => authState.refreshUser?.(), 500)
     router.replace('/my-reservations');
   }
 

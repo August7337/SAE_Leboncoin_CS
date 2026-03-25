@@ -125,8 +125,8 @@ public class ReservationsController : ControllerBase
         var annonce = await _dbContext.Annonces.FindAsync(dto.Idannonce);
         if (annonce == null) return NotFound("Annonce introuvable.");
 
-        var utilisateur = await _dbContext.Utilisateurs.FindAsync(dto.Idutilisateur);
-        if (utilisateur == null) return NotFound("Utilisateur introuvable.");
+        var utilisateur = await _dbContext.Utilisateurs.FindAsync(existingRes.Idutilisateur);
+        if (utilisateur == null) return NotFound("Utilisateur propriétaire introuvable.");
 
         // Calcul du nouveau montant d'acompte
         var voyageurs = dto.Inclures ?? new List<InclureCreateDto>();
@@ -168,18 +168,48 @@ public class ReservationsController : ControllerBase
 
         Console.WriteLine($"[DEBUG] Update Reservation {dto.Idreservation}: New Deposit={newDepositAmount}, Already Paid={alreadyPaid}, Supplement={supplementAmount}");
 
-        if (supplementAmount <= 0)
+        // --- CAS A : Remboursement (Si nouveau montant < déjà payé) ---
+        if (supplementAmount < 0)
         {
-            // Pas de supplément à payer, on met à jour directement
+            decimal refundAmount = Math.Abs(supplementAmount);
+            Console.WriteLine($"[DEBUG] Refund triggered for User {utilisateur.Idutilisateur}: Current Solde={utilisateur.Solde}, Refund={refundAmount}");
+            
+            utilisateur.Solde += refundAmount;
+            _dbContext.Utilisateurs.Update(utilisateur); // Force tracking update
+
+            var result = await UpdateReservationInternal(existingRes, dto);
+            
+            // Ajouter la transaction de remboursement
+            var dToday = await GetOrCreateDate(DateOnly.FromDateTime(DateTime.Now));
+            _dbContext.Transactions.Add(new Transaction
+            {
+                Iddate = dToday.Iddate,
+                Idreservation = existingRes.Idreservation,
+                Idutilisateur = utilisateur.Idutilisateur,
+                Montanttransaction = -refundAmount
+            });
+            await _dbContext.SaveChangesAsync();
+
+            Console.WriteLine($"[DEBUG] Refund saved. New Solde={utilisateur.Solde}");
+
+            return Ok(new { url = "http://localhost:5173/my-reservations?payment=success", message = $"La modification a été enregistrée. Un remboursement de {refundAmount:F2}€ a été ajouté à votre solde." });
+        }
+
+        // --- CAS B : Pas de supplément à payer (Équilibre) ---
+        if (supplementAmount == 0)
+        {
             return await UpdateReservationInternal(existingRes, dto);
         }
 
         decimal soldeDisponible = utilisateur.Solde;
 
-        // --- CAS A : Paiement par Solde ---
+        // --- CAS C : Paiement par Solde ---
         if (soldeDisponible >= supplementAmount)
         {
+            Console.WriteLine($"[DEBUG] Solde payment triggered for User {utilisateur.Idutilisateur}: Current Solde={utilisateur.Solde}, Deducting={supplementAmount}");
             utilisateur.Solde -= supplementAmount;
+            _dbContext.Utilisateurs.Update(utilisateur);
+
             var result = await UpdateReservationInternal(existingRes, dto);
             
             // Ajouter la transaction du supplément
@@ -188,15 +218,17 @@ public class ReservationsController : ControllerBase
             {
                 Iddate = dToday.Iddate,
                 Idreservation = existingRes.Idreservation,
-                Idutilisateur = dto.Idutilisateur,
+                Idutilisateur = utilisateur.Idutilisateur,
                 Montanttransaction = supplementAmount
             });
             await _dbContext.SaveChangesAsync();
+
+            Console.WriteLine($"[DEBUG] Solde payment saved. New Solde={utilisateur.Solde}");
             
             return result;
         }
 
-        // --- CAS B : Stripe ---
+        // --- CAS D : Stripe ---
         decimal soldeAUtiliser = 0;
         decimal montantRestantStripe = supplementAmount;
 
@@ -296,8 +328,11 @@ public class ReservationsController : ControllerBase
 
         if (utilisateur != null && soldeUsed > 0)
         {
+            Console.WriteLine($"[DEBUG] Deducting solde from ConfirmPayment: User={utilisateur.Idutilisateur}, Current={utilisateur.Solde}, Used={soldeUsed}");
             utilisateur.Solde -= soldeUsed;
             if (utilisateur.Solde < 0) utilisateur.Solde = 0;
+            _dbContext.Utilisateurs.Update(utilisateur);
+            Console.WriteLine($"[DEBUG] New solde after ConfirmPayment: {utilisateur.Solde}");
         }
 
         var dateDebut = DateOnly.Parse(meta["dateDebut"]);

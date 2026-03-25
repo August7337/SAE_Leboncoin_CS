@@ -125,9 +125,9 @@ const alreadyPaid = computed(() => {
     return paid
 })
 
-const supplementAmount = computed(() => Math.max(0, currentDepositAmount.value - alreadyPaid.value))
+const supplementAmount = computed(() => currentDepositAmount.value - alreadyPaid.value)
 
-const modalSoldeUsed = computed(() => Math.min(authState.user?.solde || 0, supplementAmount.value))
+const modalSoldeUsed = computed(() => Math.min(authState.user?.solde || 0, Math.max(0, supplementAmount.value)))
 const modalRemainder = computed(() => Math.max(0, supplementAmount.value - (authState.user?.solde || 0)))
 
 const handleUpdate = async () => {
@@ -142,27 +142,29 @@ const handleUpdate = async () => {
             }
         }
 
-        const voyageursInclures = [{ idtypevoyageur: 1, nombrevoyageur: adultes.value }];
-        if (enfants.value > 0) voyageursInclures.push({ idtypevoyageur: 2, nombrevoyageur: enfants.value });
-        if (bebes.value > 0) voyageursInclures.push({ idtypevoyageur: 3, nombrevoyageur: bebes.value });
-
-        const payload = {
+        const dto = {
             idreservation: parseInt(reservationId),
             idannonce: reservation.value.idannonce,
-            idutilisateur: reservation.value.idutilisateur,
+            idutilisateur: authState.user.idutilisateur,
             dateDebut: modifDates.value.start,
             dateFin: modifDates.value.end,
-            nomclient: nomClient.value || '',
-            prenomclient: prenomClient.value || '',
-            telephoneclient: telephoneClient.value || '',
-            inclures: voyageursInclures
+            nomclient: nomClient.value,
+            prenomclient: prenomClient.value,
+            telephoneclient: telephoneClient.value,
+            inclures: [
+                { idtypevoyageur: 1, nombrevoyageur: adultes.value },
+                { idtypevoyageur: 2, nombrevoyageur: enfants.value },
+                { idtypevoyageur: 3, nombrevoyageur: bebes.value }
+            ]
         }
+
+        const res = await reservationsService.createUpdateSession(dto)
         
-        const response = await reservationsService.createUpdateSession(payload)
-        if (response.url) {
-            window.location.href = response.url
+        if (res.url) {
+            window.location.href = res.url
         } else {
-            router.push('/my-reservations?payment=success')
+            // Cas Solde ou Remboursement : redirection immédiate
+            router.push({ name: 'my-reservations', query: { payment: 'success' } })
         }
     } catch (err) {
         console.error('Error updating reservation:', err)
@@ -338,9 +340,8 @@ const formatDate = (dateStr) => {
                 </div>
             </div>
 
-            <!-- Footer Section -->
             <div class="p-6 md:p-8 bg-gray-50 border-t border-gray-100">
-                <div v-if="supplementAmount > 0" class="mb-6 space-y-3">
+                <div v-if="supplementAmount !== 0" class="mb-6 space-y-3">
                     <div class="flex items-center justify-between text-sm text-gray-500 font-medium px-1">
                         <span>Acompte déjà réglé</span>
                         <span>{{ formatPrice(alreadyPaid) }}€</span>
@@ -349,12 +350,23 @@ const formatDate = (dateStr) => {
                         <span>Nouvel acompte (estimé)</span>
                         <span>{{ formatPrice(currentDepositAmount) }}€</span>
                     </div>
-                    <div class="flex items-center justify-between bg-orange-100/50 p-4 rounded-xl border border-orange-200">
+                    
+                    <!-- Supplément -->
+                    <div v-if="supplementAmount > 0" class="flex items-center justify-between bg-orange-100/50 p-4 rounded-xl border border-orange-200">
                         <div>
                             <p class="text-orange-900 font-bold">Supplément à régler</p>
                             <p class="text-xs text-orange-700">Votre solde : {{ formatPrice(authState.user?.solde || 0) }}€</p>
                         </div>
                         <p class="text-2xl font-black text-orange-600">{{ formatPrice(supplementAmount) }}€</p>
+                    </div>
+
+                    <!-- Remboursement -->
+                    <div v-else class="flex items-center justify-between bg-green-100/50 p-4 rounded-xl border border-green-200">
+                        <div>
+                            <p class="text-green-900 font-bold">Remboursement vers solde</p>
+                            <p class="text-xs text-green-700">Différence créditée immédiatement</p>
+                        </div>
+                        <p class="text-2xl font-black text-green-600">{{ formatPrice(Math.abs(supplementAmount)) }}€</p>
                     </div>
                 </div>
                 
@@ -365,7 +377,9 @@ const formatDate = (dateStr) => {
                         class="flex-1 py-4 bg-orange-600 text-white font-bold rounded-xl hover:bg-orange-700 transition active:scale-95 disabled:opacity-50 disabled:scale-100 flex items-center justify-center gap-2"
                     >
                         <span v-if="updating" class="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin"></span>
-                        {{ supplementAmount > 0 ? 'Payer et confirmer' : 'Enregistrer les modifications' }}
+                        <template v-else>
+                            {{ supplementAmount > 0 ? 'Payer et confirmer' : (supplementAmount < 0 ? 'Confirmer le remboursement' : 'Enregistrer les modifications') }}
+                        </template>
                     </button>
                     <button @click="router.back()" class="flex-1 py-4 bg-white text-gray-700 font-bold rounded-xl border border-gray-300 hover:bg-gray-50 transition active:scale-95">
                         Annuler
