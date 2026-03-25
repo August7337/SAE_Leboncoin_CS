@@ -83,7 +83,7 @@ const getFilterSummary = (filters) => {
         </div>
         <h2 class="text-xl font-bold text-gray-900">Aucune recherche sauvegardée</h2>
         <p class="text-gray-500 mt-2">Vous n'avez pas encore sauvegardé de recherche.</p>
-        <router-link to="/search" class="inline-block mt-6 bg-[#ea580c] hover:bg-[#c2410c] text-white font-bold py-3 px-6 rounded-xl transition-colors">
+        <router-link to="/" class="inline-block mt-6 bg-[#ea580c] hover:bg-[#c2410c] text-white font-bold py-3 px-6 rounded-xl transition-colors">
           Faire une recherche
         </router-link>
       </div>

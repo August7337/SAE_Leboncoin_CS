@@ -85,7 +85,7 @@
 <script setup>
 import { onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import axios from 'axios'
+import api from '@/api/axios'
 import { authState } from '@/auth'
 import api from '@/api/axios'
 const loginSuccess = ref(false)
@@ -156,9 +156,7 @@ const submitFinal = async () => {
     )
     sessionStorage.removeItem('registration_draft')
     if (response.data.user) {
-      authState.user = response.data.user
-      authState.isAuthenticated = true
-      if (response.data.token) localStorage.setItem('user_token', response.data.token)
+      authState.login(response.data)
     }
 
     loginSuccess.value = true

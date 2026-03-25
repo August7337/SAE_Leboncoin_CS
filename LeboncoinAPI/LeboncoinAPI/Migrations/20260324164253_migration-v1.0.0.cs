@@ -329,6 +329,46 @@ namespace LeboncoinAPI.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "utilisateur",
+                columns: table => new
+                {
+                    idutilisateur = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    idadresse = table.Column<int>(type: "integer", nullable: false),
+                    idtransaction = table.Column<int>(type: "integer", nullable: true),
+                    iddate = table.Column<int>(type: "integer", nullable: false),
+                    pseudonyme = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    email = table.Column<string>(type: "character varying(320)", maxLength: 320, nullable: false),
+                    email_verified_at = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
+                    password = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
+                    telephoneutilisateur = table.Column<string>(type: "character(10)", fixedLength: true, maxLength: 10, nullable: false),
+                    phone_verified = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
+                    identity_verified = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
+                    solde = table.Column<decimal>(type: "numeric(10,2)", precision: 10, scale: 2, nullable: false),
+                    remember_token = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    two_factor_secret = table.Column<string>(type: "text", nullable: true),
+                    two_factor_recovery_codes = table.Column<string>(type: "text", nullable: true),
+                    two_factor_confirmed_at = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
+                    profile_photo_path = table.Column<string>(type: "character varying(2048)", maxLength: 2048, nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_utilisateur", x => x.idutilisateur);
+                    table.ForeignKey(
+                        name: "fk_utilisat_creer_date",
+                        column: x => x.iddate,
+                        principalTable: "date",
+                        principalColumn: "iddate",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "fk_utilisat_resider_adresse",
+                        column: x => x.idadresse,
+                        principalTable: "adresse",
+                        principalColumn: "idadresse",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "annonce",
                 columns: table => new
                 {
@@ -365,6 +405,12 @@ namespace LeboncoinAPI.Migrations
                         principalColumn: "idheure",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
+                        name: "fk_annonce_diffuser_utilisateur",
+                        column: x => x.idutilisateur,
+                        principalTable: "utilisateur",
+                        principalColumn: "idutilisateur",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
                         name: "fk_annonce_partir_heure",
                         column: x => x.idheuredepart,
                         principalTable: "heure",
@@ -391,79 +437,6 @@ namespace LeboncoinAPI.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "AnnonceCommodite",
-                columns: table => new
-                {
-                    Idcommodite = table.Column<int>(type: "integer", nullable: false),
-                    Idannonce = table.Column<int>(type: "integer", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("pk_proposer", x => new { x.Idcommodite, x.Idannonce });
-                    table.ForeignKey(
-                        name: "fk_proposer_proposer2_annonce",
-                        column: x => x.Idannonce,
-                        principalTable: "annonce",
-                        principalColumn: "idannonce",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "fk_proposer_proposer_commodit",
-                        column: x => x.Idcommodite,
-                        principalTable: "commodite",
-                        principalColumn: "idcommodite",
-                        onDelete: ReferentialAction.Restrict);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "relier",
-                columns: table => new
-                {
-                    idannonce = table.Column<int>(type: "integer", nullable: false),
-                    iddate = table.Column<int>(type: "integer", nullable: false),
-                    estdisponible = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("pk_relier", x => new { x.idannonce, x.iddate });
-                    table.ForeignKey(
-                        name: "fk_relier_relier2_date",
-                        column: x => x.iddate,
-                        principalTable: "date",
-                        principalColumn: "iddate",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "fk_relier_relier_annonce",
-                        column: x => x.idannonce,
-                        principalTable: "annonce",
-                        principalColumn: "idannonce",
-                        onDelete: ReferentialAction.Restrict);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "ressembler",
-                columns: table => new
-                {
-                    idannonce_a = table.Column<int>(type: "integer", nullable: false),
-                    idannonce_b = table.Column<int>(type: "integer", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("pk_ressembler", x => new { x.idannonce_a, x.idannonce_b });
-                    table.ForeignKey(
-                        name: "fk_ressembler_idannonce_a",
-                        column: x => x.idannonce_a,
-                        principalTable: "annonce",
-                        principalColumn: "idannonce",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "fk_ressembler_idannonce_b",
-                        column: x => x.idannonce_b,
-                        principalTable: "annonce",
-                        principalColumn: "idannonce",
-                        onDelete: ReferentialAction.Restrict);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "attribuer",
                 columns: table => new
                 {
@@ -479,119 +452,8 @@ namespace LeboncoinAPI.Migrations
                         principalTable: "role",
                         principalColumn: "idrole",
                         onDelete: ReferentialAction.Restrict);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "avis",
-                columns: table => new
-                {
-                    idavis = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    idannonce = table.Column<int>(type: "integer", nullable: false),
-                    iddate = table.Column<int>(type: "integer", nullable: false),
-                    idutilisateur = table.Column<int>(type: "integer", nullable: false),
-                    texteavis = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
-                    nombreetoiles = table.Column<decimal>(type: "numeric(2,1)", precision: 2, scale: 1, nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("pk_avis", x => x.idavis);
                     table.ForeignKey(
-                        name: "fk_avis_deposer_date",
-                        column: x => x.iddate,
-                        principalTable: "date",
-                        principalColumn: "iddate",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "fk_avis_noter_annonce",
-                        column: x => x.idannonce,
-                        principalTable: "annonce",
-                        principalColumn: "idannonce",
-                        onDelete: ReferentialAction.Restrict);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "cartebancaire",
-                columns: table => new
-                {
-                    idcartebancaire = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    idutilisateur = table.Column<int>(type: "integer", nullable: false),
-                    nomtitulaire = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
-                    prenomtitulaire = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
-                    numerocartebancaire = table.Column<decimal>(type: "numeric(16,0)", precision: 16, scale: 0, nullable: true),
-                    dateexpiration = table.Column<DateOnly>(type: "date", nullable: true),
-                    numerocvv = table.Column<decimal>(type: "numeric(3,0)", precision: 3, scale: 0, nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("pk_cartebancaire", x => x.idcartebancaire);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "utilisateur",
-                columns: table => new
-                {
-                    idutilisateur = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    idadresse = table.Column<int>(type: "integer", nullable: false),
-                    idcartebancaire = table.Column<int>(type: "integer", nullable: true),
-                    iddate = table.Column<int>(type: "integer", nullable: false),
-                    pseudonyme = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    email = table.Column<string>(type: "character varying(320)", maxLength: 320, nullable: false),
-                    email_verified_at = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
-                    password = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
-                    telephoneutilisateur = table.Column<string>(type: "character(10)", fixedLength: true, maxLength: 10, nullable: false),
-                    phone_verified = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
-                    identity_verified = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
-                    solde = table.Column<decimal>(type: "numeric(10,2)", precision: 10, scale: 2, nullable: false),
-                    remember_token = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
-                    two_factor_secret = table.Column<string>(type: "text", nullable: true),
-                    two_factor_recovery_codes = table.Column<string>(type: "text", nullable: true),
-                    two_factor_confirmed_at = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
-                    profile_photo_path = table.Column<string>(type: "character varying(2048)", maxLength: 2048, nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("pk_utilisateur", x => x.idutilisateur);
-                    table.ForeignKey(
-                        name: "fk_utilisat_creer_date",
-                        column: x => x.iddate,
-                        principalTable: "date",
-                        principalColumn: "iddate",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "fk_utilisat_enregistr_carteban",
-                        column: x => x.idcartebancaire,
-                        principalTable: "cartebancaire",
-                        principalColumn: "idcartebancaire",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "fk_utilisat_resider_adresse",
-                        column: x => x.idadresse,
-                        principalTable: "adresse",
-                        principalColumn: "idadresse",
-                        onDelete: ReferentialAction.Restrict);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "favoriser",
-                columns: table => new
-                {
-                    idutilisateur = table.Column<int>(type: "integer", nullable: false),
-                    idannonce = table.Column<int>(type: "integer", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("pk_favoriser", x => new { x.idutilisateur, x.idannonce });
-                    table.ForeignKey(
-                        name: "fk_favorise_favoriser_annonce",
-                        column: x => x.idannonce,
-                        principalTable: "annonce",
-                        principalColumn: "idannonce",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "fk_favorise_favoriser_utilisateur",
+                        name: "fk_attribuer_utilisateur",
                         column: x => x.idutilisateur,
                         principalTable: "utilisateur",
                         principalColumn: "idutilisateur",
@@ -740,6 +602,114 @@ namespace LeboncoinAPI.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "AnnonceCommodite",
+                columns: table => new
+                {
+                    Idcommodite = table.Column<int>(type: "integer", nullable: false),
+                    Idannonce = table.Column<int>(type: "integer", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_proposer", x => new { x.Idcommodite, x.Idannonce });
+                    table.ForeignKey(
+                        name: "fk_proposer_proposer2_annonce",
+                        column: x => x.Idannonce,
+                        principalTable: "annonce",
+                        principalColumn: "idannonce",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "fk_proposer_proposer_commodit",
+                        column: x => x.Idcommodite,
+                        principalTable: "commodite",
+                        principalColumn: "idcommodite",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "avis",
+                columns: table => new
+                {
+                    idavis = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    idannonce = table.Column<int>(type: "integer", nullable: false),
+                    iddate = table.Column<int>(type: "integer", nullable: false),
+                    idutilisateur = table.Column<int>(type: "integer", nullable: false),
+                    texteavis = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    nombreetoiles = table.Column<decimal>(type: "numeric(2,1)", precision: 2, scale: 1, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_avis", x => x.idavis);
+                    table.ForeignKey(
+                        name: "fk_avis_commenter_utilisateur",
+                        column: x => x.idutilisateur,
+                        principalTable: "utilisateur",
+                        principalColumn: "idutilisateur",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "fk_avis_deposer_date",
+                        column: x => x.iddate,
+                        principalTable: "date",
+                        principalColumn: "iddate",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "fk_avis_noter_annonce",
+                        column: x => x.idannonce,
+                        principalTable: "annonce",
+                        principalColumn: "idannonce",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "favoriser",
+                columns: table => new
+                {
+                    idutilisateur = table.Column<int>(type: "integer", nullable: false),
+                    idannonce = table.Column<int>(type: "integer", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_favoriser", x => new { x.idutilisateur, x.idannonce });
+                    table.ForeignKey(
+                        name: "fk_favorise_favoriser_annonce",
+                        column: x => x.idannonce,
+                        principalTable: "annonce",
+                        principalColumn: "idannonce",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "fk_favorise_favoriser_utilisateur",
+                        column: x => x.idutilisateur,
+                        principalTable: "utilisateur",
+                        principalColumn: "idutilisateur",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "relier",
+                columns: table => new
+                {
+                    idannonce = table.Column<int>(type: "integer", nullable: false),
+                    iddate = table.Column<int>(type: "integer", nullable: false),
+                    estdisponible = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_relier", x => new { x.idannonce, x.iddate });
+                    table.ForeignKey(
+                        name: "fk_relier_relier2_date",
+                        column: x => x.iddate,
+                        principalTable: "date",
+                        principalColumn: "iddate",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "fk_relier_relier_annonce",
+                        column: x => x.idannonce,
+                        principalTable: "annonce",
+                        principalColumn: "idannonce",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "reservation",
                 columns: table => new
                 {
@@ -779,6 +749,30 @@ namespace LeboncoinAPI.Migrations
                         column: x => x.idutilisateur,
                         principalTable: "utilisateur",
                         principalColumn: "idutilisateur",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ressembler",
+                columns: table => new
+                {
+                    idannonce_a = table.Column<int>(type: "integer", nullable: false),
+                    idannonce_b = table.Column<int>(type: "integer", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_ressembler", x => new { x.idannonce_a, x.idannonce_b });
+                    table.ForeignKey(
+                        name: "fk_ressembler_idannonce_a",
+                        column: x => x.idannonce_a,
+                        principalTable: "annonce",
+                        principalColumn: "idannonce",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "fk_ressembler_idannonce_b",
+                        column: x => x.idannonce_b,
+                        principalTable: "annonce",
+                        principalColumn: "idannonce",
                         onDelete: ReferentialAction.Restrict);
                 });
 
@@ -903,7 +897,7 @@ namespace LeboncoinAPI.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     iddate = table.Column<int>(type: "integer", nullable: false),
                     idreservation = table.Column<int>(type: "integer", nullable: false),
-                    idcartebancaire = table.Column<int>(type: "integer", nullable: false),
+                    idutilisateur = table.Column<int>(type: "integer", nullable: false),
                     montanttransaction = table.Column<decimal>(type: "numeric(10,2)", precision: 10, scale: 2, nullable: false)
                 },
                 constraints: table =>
@@ -916,10 +910,10 @@ namespace LeboncoinAPI.Migrations
                         principalColumn: "iddate",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "fk_transact_faire_carteban",
-                        column: x => x.idcartebancaire,
-                        principalTable: "cartebancaire",
-                        principalColumn: "idcartebancaire",
+                        name: "fk_transact_faire_utilisat",
+                        column: x => x.idutilisateur,
+                        principalTable: "utilisateur",
+                        principalColumn: "idutilisateur",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "fk_transact_regler_reservat",
@@ -1058,11 +1052,6 @@ namespace LeboncoinAPI.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_avis_idutilisateur",
                 table: "avis",
-                column: "idutilisateur");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_cartebancaire_idutilisateur",
-                table: "cartebancaire",
                 column: "idutilisateur");
 
             migrationBuilder.CreateIndex(
@@ -1228,11 +1217,6 @@ namespace LeboncoinAPI.Migrations
                 column: "idannonce_b");
 
             migrationBuilder.CreateIndex(
-                name: "idx_transaction_idcartebancaire",
-                table: "transaction",
-                column: "idcartebancaire");
-
-            migrationBuilder.CreateIndex(
                 name: "idx_transaction_iddate",
                 table: "transaction",
                 column: "iddate");
@@ -1241,6 +1225,11 @@ namespace LeboncoinAPI.Migrations
                 name: "idx_transaction_idreservation",
                 table: "transaction",
                 column: "idreservation");
+
+            migrationBuilder.CreateIndex(
+                name: "idx_transaction_idutilisateur",
+                table: "transaction",
+                column: "idutilisateur");
 
             migrationBuilder.CreateIndex(
                 name: "idx_typehebergement_idcategorie",
@@ -1259,14 +1248,14 @@ namespace LeboncoinAPI.Migrations
                 column: "idadresse");
 
             migrationBuilder.CreateIndex(
-                name: "idx_utilisateur_idcartebancaire",
-                table: "utilisateur",
-                column: "idcartebancaire");
-
-            migrationBuilder.CreateIndex(
                 name: "idx_utilisateur_iddate",
                 table: "utilisateur",
                 column: "iddate");
+
+            migrationBuilder.CreateIndex(
+                name: "idx_utilisateur_idtransaction",
+                table: "utilisateur",
+                column: "idtransaction");
 
             migrationBuilder.CreateIndex(
                 name: "utilisateur_email_key",
@@ -1284,51 +1273,11 @@ namespace LeboncoinAPI.Migrations
                 name: "idx_ville_iddepartement",
                 table: "ville",
                 column: "iddepartement");
-
-            migrationBuilder.AddForeignKey(
-                name: "fk_annonce_diffuser_utilisateur",
-                table: "annonce",
-                column: "idutilisateur",
-                principalTable: "utilisateur",
-                principalColumn: "idutilisateur",
-                onDelete: ReferentialAction.Restrict);
-
-            migrationBuilder.AddForeignKey(
-                name: "fk_attribuer_utilisateur",
-                table: "attribuer",
-                column: "idutilisateur",
-                principalTable: "utilisateur",
-                principalColumn: "idutilisateur",
-                onDelete: ReferentialAction.Restrict);
-
-            migrationBuilder.AddForeignKey(
-                name: "fk_avis_commenter_utilisateur",
-                table: "avis",
-                column: "idutilisateur",
-                principalTable: "utilisateur",
-                principalColumn: "idutilisateur",
-                onDelete: ReferentialAction.Restrict);
-
-            migrationBuilder.AddForeignKey(
-                name: "fk_carteban_enregistr_utilisat",
-                table: "cartebancaire",
-                column: "idutilisateur",
-                principalTable: "utilisateur",
-                principalColumn: "idutilisateur",
-                onDelete: ReferentialAction.Restrict);
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropForeignKey(
-                name: "fk_adresse_posseder_ville",
-                table: "adresse");
-
-            migrationBuilder.DropForeignKey(
-                name: "fk_carteban_enregistr_utilisat",
-                table: "cartebancaire");
-
             migrationBuilder.DropTable(
                 name: "AnnonceAnnonce");
 
@@ -1429,7 +1378,16 @@ namespace LeboncoinAPI.Migrations
                 name: "heure");
 
             migrationBuilder.DropTable(
+                name: "utilisateur");
+
+            migrationBuilder.DropTable(
                 name: "typehebergement");
+
+            migrationBuilder.DropTable(
+                name: "date");
+
+            migrationBuilder.DropTable(
+                name: "adresse");
 
             migrationBuilder.DropTable(
                 name: "categorie");
@@ -1442,18 +1400,6 @@ namespace LeboncoinAPI.Migrations
 
             migrationBuilder.DropTable(
                 name: "region");
-
-            migrationBuilder.DropTable(
-                name: "utilisateur");
-
-            migrationBuilder.DropTable(
-                name: "date");
-
-            migrationBuilder.DropTable(
-                name: "cartebancaire");
-
-            migrationBuilder.DropTable(
-                name: "adresse");
         }
     }
 }

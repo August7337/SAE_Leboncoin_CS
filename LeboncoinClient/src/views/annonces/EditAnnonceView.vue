@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, reactive, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import axios from 'axios'
+import api from '@/api/axios'
 import { authState } from '@/auth.js'
 
 const route = useRoute()
@@ -136,11 +136,13 @@ async function handleDayClick(dateStr) {
          while(curr <= endD) {
             let dStr = curr.toISOString().split('T')[0]
             unavailabilities.value = unavailabilities.value.filter(d => d !== dStr)
-            try { await axios.delete(`https://localhost:7057/api/Annonces/${annonceId}/indisponibilites/${dStr}`) } catch(e){}
+            try { 
+              await api.delete(`/Annonces/${annonceId}/indisponibilites/${dStr}`) 
+            } catch(e){}
             curr.setDate(curr.getDate() + 1)
          }
       } else {
-         await axios.post(`https://localhost:7057/api/Annonces/${annonceId}/indisponibilites`, {
+         await api.post(`/Annonces/${annonceId}/indisponibilites`, {
            startDate: minStr,
            endDate: maxStr
          })
@@ -157,7 +159,7 @@ async function handleDayClick(dateStr) {
 
 async function fetchAnnonce() {
   try {
-    const response = await axios.get(`https://localhost:7057/api/Annonces/${annonceId}`)
+    const response = await api.get(`/Annonces/${annonceId}`)
     const data = response.data
     Object.assign(form, {
       idannonce: data.idannonce,
@@ -183,7 +185,7 @@ async function fetchAnnonce() {
 
 async function fetchUnavailabilities() {
   try {
-    const res = await axios.get(`https://localhost:7057/api/Annonces/${annonceId}/indisponibilites`)
+    const res = await api.get(`/Annonces/${annonceId}/indisponibilites`)
     unavailabilities.value = res.data
   } catch (error) {
     console.error("Erreur unavailabilities", error)
@@ -205,7 +207,7 @@ async function saveAnnonce() {
   errorMessage.value = ''
   successMessage.value = ''
   try {
-    await axios.put(`https://localhost:7057/api/Annonces/${annonceId}`, form)
+    await api.put(`/Annonces/${annonceId}`, form)
     successMessage.value = 'Annonce mise à jour avec succès.'
     setTimeout(() => successMessage.value = '', 3000)
     window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -222,7 +224,7 @@ async function saveAnnonce() {
 async function deleteAnnonce() {
   if (!confirm("Voulez-vous vraiment supprimer cette annonce ? Cette action est irréversible.")) return
   try {
-    await axios.delete(`https://localhost:7057/api/Annonces/${annonceId}`)
+    await api.delete(`/Annonces/${annonceId}`)
     router.push('/my-annonces')
   } catch (error) {
     errorMessage.value = "Erreur lors de la suppression."
@@ -253,8 +255,10 @@ async function uploadFile(file) {
   formData.append('file', file)
 
   try {
-    const res = await axios.post(`https://localhost:7057/api/Annonces/${annonceId}/upload-photo`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
+    const res = await api.post(`/Annonces/${annonceId}/upload-photo`, formData, {
+      headers: { 
+        'Content-Type': 'multipart/form-data'
+      }
     })
     photos.value.push(res.data)
   } catch (error) {
@@ -268,7 +272,7 @@ async function uploadFile(file) {
 async function deletePhoto(photoId) {
   if (!confirm("Voulez-vous supprimer cette photo ?")) return
   try {
-    await axios.delete(`https://localhost:7057/api/Annonces/photos/${photoId}`)
+    await api.delete(`/Annonces/photos/${photoId}`)
     photos.value = photos.value.filter(p => p.idphoto !== photoId)
   } catch (error) {
     alert("Erreur suppression photo")
@@ -286,14 +290,12 @@ onMounted(() => {
 
 <template>
   <div class="bg-[#f8f9fb] min-h-screen pb-12 font-sans">
-    <!-- Loader -->
     <div v-if="loading" class="flex justify-center items-center h-64">
       <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600"></div>
     </div>
     
     <main v-else class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       
-      <!-- HEADER matching Laravel Dashboard -->
       <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
           <router-link to="/my-annonces" class="text-sm font-medium text-gray-500 hover:text-gray-900 mb-2 inline-flex items-center gap-1">
@@ -319,7 +321,6 @@ onMounted(() => {
 
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
         
-        <!-- Informations Generales -->
         <div class="lg:col-span-7 space-y-6">
           <form @submit.prevent="saveAnnonce" class="bg-white border border-gray-200 rounded-xl shadow-sm p-6 space-y-6">
             <h2 class="text-lg font-bold text-gray-900 border-b border-gray-100 pb-3">Informations Générales</h2>
@@ -374,7 +375,6 @@ onMounted(() => {
 
         <div class="lg:col-span-5 space-y-6">
           
-          <!-- PHOTOS ZONE -->
           <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-6">
             <h2 class="text-lg font-bold text-gray-900 border-b border-gray-100 pb-3 mb-4">Photos de l'annonce</h2>
             
@@ -409,7 +409,6 @@ onMounted(() => {
             <p v-else class="text-xs text-gray-400 text-center">Aucune photo enregistrée.</p>
           </div>
 
-          <!-- CALENDAR ZONE EXACT LY LIKE FLATPICKR -->
           <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-6 flex flex-col items-center">
             <h2 class="text-lg font-bold text-gray-900 border-b border-gray-100 pb-3 mb-4 w-full text-left">Gérer les Indisponibilités</h2>
             
@@ -467,7 +466,6 @@ onMounted(() => {
 </template>
 
 <style scoped>
-/* Exact replication of Laravel's flatpickr CSS */
 .flatpickr-calendar {
     background: white;
     border: 1px solid #e5e7eb;
@@ -563,7 +561,6 @@ onMounted(() => {
     font-weight: 600;
 }
 
-/* Custom visual for unavailable blocked days (line-through disabled look) */
 .flatpickr-day.disabled {
     background-color: white;
     color: #9ca3af !important;
@@ -575,7 +572,6 @@ onMounted(() => {
     background-color: #fee2e2 !important;
 }
 
-/* Active range coloring to match flatpickr's style */
 .flatpickr-day.selected {
     background-color: #222 !important;
 }

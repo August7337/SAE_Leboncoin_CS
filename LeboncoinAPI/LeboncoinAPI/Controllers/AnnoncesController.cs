@@ -197,10 +197,10 @@ public class AnnoncesController : ControllerBase
         {
             foreach (var base64Data in dto.Liensphoto)
             {
-             
+
                 if (string.IsNullOrEmpty(base64Data)) continue;
 
-          
+
                 var uploadParams = new ImageUploadParams()
                 {
                     File = new FileDescription(Guid.NewGuid().ToString(), base64Data),
@@ -212,7 +212,7 @@ public class AnnoncesController : ControllerBase
 
                 if (uploadResult.Error == null)
                 {
-              
+
                     nouvelleAnnonce.Photos.Add(new Photo
                     {
                         Lienphoto = uploadResult.SecureUrl.ToString()

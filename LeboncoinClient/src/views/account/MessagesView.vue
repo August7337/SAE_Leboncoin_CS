@@ -86,7 +86,7 @@ onMounted(fetchConversations)
           Dès que vous contacterez un vendeur, vos échanges s'afficheront ici.
         </p>
         <router-link
-          to="/search"
+          to="/"
           class="bg-[#ea580c] text-white px-8 py-4 rounded-2xl font-black shadow-lg shadow-orange-100 hover:bg-[#c2410c] transition-all"
         >
           Parcourir les annonces

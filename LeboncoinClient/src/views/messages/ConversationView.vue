@@ -2,7 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { authState } from '@/auth.js'
-import axios from 'axios'
+import api from '@/api/axios'
 
 const route = useRoute()
 const messages = ref([])
@@ -11,9 +11,8 @@ const interlocuteur = ref({ pseudonyme: 'Chargement...' })
 
 async function fetchChat() {
   try {
-    // On récupère l'historique avec l'ID de l'interlocuteur présent dans l'URL
-    const response = await axios.get(
-      `https://localhost:7057/api/Messages/chat/${authState.user.idutilisateur}/${route.params.id}`,
+    const response = await api.get(
+      `/Messages/chat/${authState.user.idutilisateur}/${route.params.id}`
     )
     messages.value = response.data.messages
     interlocuteur.value = response.data.interlocuteur
@@ -26,15 +25,15 @@ async function sendMessage() {
   if (!newMessage.value.trim()) return
 
   const text = newMessage.value
-  newMessage.value = '' // Vider l'input tout de suite pour la fluidité
+  newMessage.value = ''
 
   try {
-    await axios.post(`https://localhost:7057/api/Messages`, {
+    await api.post(`/Messages`, {
       expediteurId: authState.user.idutilisateur,
       destinataireId: route.params.id,
       contenu: text,
     })
-    fetchChat() // Recharger pour voir le message envoyé
+    fetchChat()
   } catch (error) {
     alert('Message non envoyé')
   }
@@ -67,7 +66,6 @@ onMounted(fetchChat)
       </div>
       <div>
         <h2 class="font-black text-gray-900 leading-none">{{ interlocuteur.pseudonyme }}</h2>
-        <span class="text-[10px] text-green-500 font-bold uppercase tracking-wider">En ligne</span>
       </div>
     </div>
 

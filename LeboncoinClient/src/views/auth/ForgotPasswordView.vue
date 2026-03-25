@@ -1,6 +1,6 @@
 <script setup>
 import { reactive, ref } from 'vue'
-import axios from 'axios'
+import api from '@/api/axios'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
@@ -27,7 +27,7 @@ async function handleForgot() {
 
   isSending.value = true
   try {
-    await axios.post(`https://localhost:7057/api/Utilisateurs/forgot-password`, {
+    await api.post(`/Utilisateurs/forgot-password`, {
       email: form.email,
     })
 

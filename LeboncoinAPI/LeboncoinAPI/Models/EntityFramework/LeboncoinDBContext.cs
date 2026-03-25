@@ -21,8 +21,6 @@ public partial class LeboncoinDBContext : DbContext
 
     public virtual DbSet<Avi> Avis { get; set; }
 
-    public virtual DbSet<Cartebancaire> Cartebancaires { get; set; }
-
     public virtual DbSet<Categorie> Categories { get; set; }
 
     public virtual DbSet<Commodite> Commodites { get; set; }
@@ -30,6 +28,8 @@ public partial class LeboncoinDBContext : DbContext
     public virtual DbSet<Compensation> Compensations { get; set; }
 
     public virtual DbSet<Date> Dates { get; set; }
+
+    public virtual DbSet<DemandeSuppressionCompte> DemandesSuppressionCompte { get; set; }
 
     public virtual DbSet<Departement> Departements { get; set; }
 
@@ -167,15 +167,6 @@ public partial class LeboncoinDBContext : DbContext
             entity.HasOne(d => d.IdutilisateurNavigation).WithMany(p => p.Avis)
                 .OnDelete(DeleteBehavior.Restrict)
                 .HasConstraintName("fk_avis_commenter_utilisateur");
-        });
-
-        modelBuilder.Entity<Cartebancaire>(entity =>
-        {
-            entity.HasKey(e => e.Idcartebancaire).HasName("pk_cartebancaire");
-
-            entity.HasOne(d => d.IdutilisateurNavigation).WithMany(p => p.Cartebancaires)
-                .OnDelete(DeleteBehavior.Restrict)
-                .HasConstraintName("fk_carteban_enregistr_utilisat");
         });
 
         modelBuilder.Entity<Categorie>(entity =>
@@ -477,9 +468,9 @@ public partial class LeboncoinDBContext : DbContext
         {
             entity.HasKey(e => e.Idtransaction).HasName("pk_transaction");
 
-            entity.HasOne(d => d.IdcartebancaireNavigation).WithMany(p => p.Transactions)
+            entity.HasOne(d => d.IdutilisateurNavigation).WithMany(p => p.Transactions)
                 .OnDelete(DeleteBehavior.Restrict)
-                .HasConstraintName("fk_transact_faire_carteban");
+                .HasConstraintName("fk_transact_faire_utilisat");
 
             entity.HasOne(d => d.IddateNavigation).WithMany(p => p.Transactions)
                 .OnDelete(DeleteBehavior.Restrict)
@@ -535,10 +526,6 @@ public partial class LeboncoinDBContext : DbContext
             entity.HasOne(d => d.IdadresseNavigation).WithMany(p => p.Utilisateurs)
                 .OnDelete(DeleteBehavior.Restrict)
                 .HasConstraintName("fk_utilisat_resider_adresse");
-
-            entity.HasOne(d => d.IdcartebancaireNavigation).WithMany(p => p.Utilisateurs)
-                .OnDelete(DeleteBehavior.Restrict)
-                .HasConstraintName("fk_utilisat_enregistr_carteban");
 
             entity.HasOne(d => d.IddateNavigation).WithMany(p => p.Utilisateurs)
                 .OnDelete(DeleteBehavior.Restrict)

@@ -165,27 +165,27 @@ const publishAnnonce = async () => {
 
   isPublishing.value = true
   try {
-const payload = {
-  ...form, 
-  idutilisateur: authState.user.idutilisateur,
-  liensphoto: photosLocal.value.map(p => p.base64),
-  acomptefixe: !form.isAcomptePercentage ? Number(form.acompte) : 0,
-  acomptepourcentage: form.isAcomptePercentage ? Number(form.acompte) : 0,
- 
-  minimumnuitee: Number(form.minimumnuitee), 
-  prixnuitee: Number(form.prixnuitee)
-};
+    const payload = {
+      ...form, 
+      idutilisateur: authState.user.idutilisateur,
+      liensphoto: [],
+      acomptefixe: !form.isAcomptePercentage ? Number(form.acompte) : 0,
+      acomptepourcentage: form.isAcomptePercentage ? Number(form.acompte) : 0,
+      minimumnuitee: Number(form.minimumnuitee), 
+      prixnuitee: Number(form.prixnuitee)
+    };
     
     await api.post(`/Annonces`, payload)
     showSuccess.value = true
-    setTimeout(() => router.push({ name: 'home' }), 1000)
+    setTimeout(() => router.push({ name: 'home' }), 1500)
+
   } catch (error) {
     if (error.response && error.response.data) {
-      apiError.value = "Le serveur a refusé l'annonce. Vérifiez les données."
+      apiError.value = "Le serveur a refusé l'annonce ou l'upload d'une photo."
     } else {
       apiError.value = "Impossible de contacter le serveur."
     }
-    console.error(error)
+    console.error("Détail de l'erreur :", error)
   } finally {
     isPublishing.value = false
   }

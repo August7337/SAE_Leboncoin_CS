@@ -8,6 +8,40 @@ const routes = [
     component: () => import('../views/HomeView.vue'),
   },
 
+  // --- Informations légales ---
+  {
+      path: '/cgv',
+      name: 'Cgv',
+      component: () => import('@/views/infos-legales/CgvView.vue'),
+      meta: { title: 'Conditions générales de vente - leboncoin' }
+  },
+  {
+      path: '/donnees-personnelles',
+      name: 'PrivacyPolicy',
+      component: () => import('@/views/infos-legales/PrivacyPolicyView.vue'),
+      meta: { title: 'Données personnelles - leboncoin' }
+  },
+  {
+    path: '/politique-cookies',
+    name: 'CookiesPolicy',
+    component: () => import('@/views/infos-legales/CookiesPolicyView.vue'),
+    meta: { title: 'Politique de cookies - leboncoin' }
+  },
+  {
+    path: '/mes-donnees-personnelles',
+    name: 'gdpr-data',
+    component: () => import('../views/account/GdprDataView.vue'),
+    meta: { requiresAuth: true },
+  },
+
+  // --- Réserver une annonce ---
+  {
+    path: '/reservation/create/:id',
+    name: 'ReservationCreate',
+    component: () => import('@/views/annonces/ReservationCreate.vue'),
+    props: true
+  },
+
   // --- Authentification & Inscription ---
   {
     path: '/login',
@@ -76,6 +110,12 @@ const routes = [
     meta: { requiresAuth: true },
   },
   {
+    path: '/conversation/:id',
+    name: 'conversation',
+    component: () => import('../views/messages/ConversationView.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
     path: '/favorites',
     name: 'favorites',
     component: () => import('../views/account/FavoritesView.vue'),
@@ -127,6 +167,14 @@ const routes = [
 const router = createRouter({
   history: createWebHistory(),
   routes,
+  
+  scrollBehavior(to, from, savedPosition) {
+    if (savedPosition) {
+      return savedPosition
+    } else {
+      return { top: 0, behavior: 'smooth' }
+    }
+  }
 })
 
 router.beforeEach((to, from) => {

@@ -1,9 +1,30 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { useRouter } from 'vue-router';
+import { ref, onMounted, computed, watch, nextTick, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
+import { authState } from '@/auth.js';
 import axios from 'axios'
 import { buildAssetUrl } from '../../services/api'
 import PhotoCarousel from '../../components/PhotoCarousel.vue'
+import flatpickr from 'flatpickr'
+import { French } from 'flatpickr/dist/l10n/fr.js'
+import rangePlugin from 'flatpickr/dist/plugins/rangePlugin.js'
+import 'flatpickr/dist/flatpickr.min.css'
+
+const router = useRouter();
+
+const reserverMaintenant = (annonceId, dateDebut, dateFin) => {
+  if (!authState.user) {
+    router.push('/login');
+    return;
+  }
+
+  router.push({
+    name: 'ReservationCreate',
+    params: { id: annonceId },
+    query: { start: dateDebut, end: dateFin }
+  });
+};
 
 const route = useRoute()
 const annonce = ref(null)
@@ -14,23 +35,23 @@ const dateArrivee = ref('')
 const dateDepart = ref('')
 const dateWarning = ref('* Veuillez sélectionner vos dates pour continuer')
 const canReserve = ref(false)
+const nombreNuits = ref(0)
+const totalPrix = ref(null)
+
+let rangePicker = null
 
 const googleApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY
-console.log('Ma clé API est :', googleApiKey)
 
 // --- Computed ---
 
 const fullAddress = computed(() => {
   const addr = annonce.value?.idadresseNavigation
   if (!addr) return null
-
   const num = addr.numerorue || ''
   const rue = addr.nomrue || ''
   const ville = addr.idvilleNavigation?.nomville || ''
   const cp = addr.idvilleNavigation?.codepostal || ''
-
   const adresseTexte = `${num} ${rue}, ${cp} ${ville}, France`.trim()
-
   return encodeURIComponent(adresseTexte)
 })
 
@@ -53,18 +74,6 @@ const reservedDates = computed(() => {
   return dates
 })
 
-const nombreNuits = computed(() => {
-  if (!dateArrivee.value || !dateDepart.value) return 0
-  const a = new Date(dateArrivee.value)
-  const d = new Date(dateDepart.value)
-  return Math.max(0, Math.round((d - a) / (1000 * 60 * 60 * 24)))
-})
-
-const totalPrix = computed(() => {
-  if (!nombreNuits.value || !annonce.value?.prixnuitee) return null
-  return Math.round(nombreNuits.value * annonce.value.prixnuitee)
-})
-
 const commoditesGroupees = computed(() => {
   if (!annonce.value?.idcommodites?.length) return {}
   return annonce.value.idcommodites.reduce((groups, c) => {
@@ -75,7 +84,155 @@ const commoditesGroupees = computed(() => {
   }, {})
 })
 
-// --- Fonctions ---
+// --- Flatpickr ---
+
+function isDateReserved(date) {
+  const dateStr = date.toISOString().split('T')[0]
+  return reservedDates.value.includes(dateStr)
+}
+
+function hasReservedDatesInRange(startDate, endDate) {
+  const current = new Date(startDate)
+  while (current < endDate) {
+    if (isDateReserved(current)) return true
+    current.setDate(current.getDate() + 1)
+  }
+  return false
+}
+
+function computeSummary(start, end) {
+  if (!start || !end) {
+    nombreNuits.value = 0
+    totalPrix.value = null
+    return
+  }
+  const nights = Math.max(0, Math.round((end - start) / (1000 * 60 * 60 * 24)))
+  nombreNuits.value = nights
+  totalPrix.value = nights > 0 && annonce.value?.prixnuitee
+    ? Math.round(nights * annonce.value.prixnuitee)
+    : null
+}
+
+function attachMinimumHeader(instance) {
+  const minimumNights = annonce.value?.minimumnuitee ?? 1
+  const existing = instance.calendarContainer?.querySelector('.fp-minimum-header')
+  if (existing) existing.remove()
+  if (instance?.calendarContainer) {
+    const header = document.createElement('div')
+    header.className = 'fp-minimum-header'
+    header.style.cssText = `
+      padding: 14px 16px;
+      background: #EA580C;
+      text-align: center;
+      font-size: 13px;
+      font-weight: 600;
+      color: white;
+      border-radius: 12px 12px 0 0;
+      letter-spacing: 0.3px;
+    `
+    header.innerHTML = `Minimum requis&nbsp;: <strong>${minimumNights} nuit${minimumNights > 1 ? 's' : ''}</strong>`
+    instance.calendarContainer.insertBefore(header, instance.calendarContainer.firstChild)
+  }
+}
+
+function destroyFlatpickr() {
+  if (rangePicker) {
+    try {
+      rangePicker.destroy()
+    } catch (e) {
+      console.warn('Erreur lors de la destruction de Flatpickr:', e)
+    }
+    rangePicker = null
+  }
+}
+
+function initFlatpickr() {
+
+  const inputArrivee = document.querySelector('#dateArriveeInput')
+  const inputDepart = document.querySelector('#dateDepartInput')
+
+  if (!inputArrivee || !inputDepart) {
+    console.warn('Les inputs Flatpickr ne sont pas encore dans le DOM')
+    return false
+  }
+
+  destroyFlatpickr()
+
+  try {
+    rangePicker = flatpickr('#dateArriveeInput', {
+      minDate: 'today',
+      dateFormat: 'd/m/Y',
+      locale: French,
+      showMonths: 2,
+      mode: 'range',
+      monthSelectorType: 'dropdown',
+      closeOnSelect: false,
+      disable: [
+        (date) => isDateReserved(date),
+      ],
+      plugins: [rangePlugin({ input: '#dateDepartInput' })],
+      onChange(selectedDates) {
+        if (selectedDates.length === 1) {
+          dateArrivee.value = selectedDates[0].toISOString().split('T')[0]
+          dateDepart.value = ''
+          canReserve.value = false
+          computeSummary(null, null)
+          dateWarning.value = ''
+        }
+        if (selectedDates.length === 2) {
+          const [start, end] = selectedDates
+          const minimumNights = annonce.value?.minimumnuitee ?? 1
+          const nights = Math.max(0, Math.round((end - start) / (1000 * 60 * 60 * 24)))
+
+          if (hasReservedDatesInRange(start, end)) {
+            rangePicker.clear()
+            dateArrivee.value = ''
+            dateDepart.value = ''
+            canReserve.value = false
+            computeSummary(null, null)
+            dateWarning.value = '⚠️ Cette plage contient des dates réservées. Veuillez en choisir une autre.'
+            return
+          }
+
+          if (nights < minimumNights) {
+            rangePicker.clear()
+            dateArrivee.value = ''
+            dateDepart.value = ''
+            canReserve.value = false
+            computeSummary(null, null)
+            dateWarning.value = `⚠️ Minimum de ${minimumNights} nuit${minimumNights > 1 ? 's' : ''} requises. Vous avez sélectionné ${nights} nuit${nights > 1 ? 's' : ''}.`
+            return
+          }
+
+          dateArrivee.value = start.toISOString().split('T')[0]
+          dateDepart.value = end.toISOString().split('T')[0]
+          canReserve.value = true
+          computeSummary(start, end)
+          dateWarning.value = ''
+        }
+      },
+      onOpen(selectedDates, dateStr, instance) {
+        attachMinimumHeader(instance)
+      },
+    })
+
+    return true
+  } catch (error) {
+    console.error('Erreur initFlatpickr:', error)
+    return false
+  }
+}
+
+watch(annonce, async (newVal) => {
+  if (newVal) {
+    await nextTick()
+    setTimeout(() => {
+      initFlatpickr()
+    }, 50)
+  }
+})
+
+// --- Autres fonctions ---
 
 function share(network) {
   const url = encodeURIComponent(currentUrl.value)
@@ -92,57 +249,6 @@ function share(network) {
 function copyLink() {
   navigator.clipboard.writeText(currentUrl.value).then(() => alert('Lien copié !'))
   shareMenuOpen.value = false
-}
-
-function isDateReserved(dateStr) {
-  return reservedDates.value.includes(dateStr)
-}
-
-function hasReservedInRange(start, end) {
-  const current = new Date(start)
-  const endDate = new Date(end)
-  while (current < endDate) {
-    if (isDateReserved(current.toISOString().split('T')[0])) return true
-    current.setDate(current.getDate() + 1)
-  }
-  return false
-}
-
-function updateDates() {
-  canReserve.value = false
-  dateWarning.value = ''
-
-  if (!dateArrivee.value || !dateDepart.value) {
-    dateWarning.value = '* Veuillez sélectionner vos dates pour continuer'
-    return
-  }
-
-  const start = new Date(dateArrivee.value)
-  const end = new Date(dateDepart.value)
-
-  if (end <= start) {
-    dateWarning.value = "⚠️ La date de départ doit être après la date d'arrivée."
-    return
-  }
-
-  if (hasReservedInRange(start, end)) {
-    dateWarning.value = '⚠️ Cette plage contient des dates déjà réservées.'
-    dateArrivee.value = ''
-    dateDepart.value = ''
-    return
-  }
-
-  const minimum = annonce.value?.minimumnuitee ?? 1
-  if (nombreNuits.value < minimum) {
-    dateWarning.value = `⚠️ Minimum de ${minimum} nuit${minimum > 1 ? 's' : ''} requises. Vous avez sélectionné ${nombreNuits.value} nuit${nombreNuits.value > 1 ? 's' : ''}.`
-    return
-  }
-
-  canReserve.value = true
-}
-
-function getTodayStr() {
-  return new Date().toISOString().split('T')[0]
 }
 
 function formatDate(dateStr) {
@@ -169,12 +275,17 @@ async function fetchAnnonce() {
     }
     annonce.value = data
     similaires.value = similairesRes.data || []
+
   } catch (error) {
     console.error('Erreur chargement annonce', error)
   } finally {
     loading.value = false
   }
 }
+
+onUnmounted(() => {
+  destroyFlatpickr()
+})
 
 onMounted(fetchAnnonce)
 </script>
@@ -737,21 +848,21 @@ onMounted(fetchAnnonce)
                 <div class="flex-1">
                   <label class="block text-xs font-bold text-slate-500 mb-1 ml-1">Arrivée</label>
                   <input
-                    type="date"
-                    v-model="dateArrivee"
-                    @change="updateDates"
-                    :min="getTodayStr()"
-                    class="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-orange-500 outline-none"
+                    id="dateArriveeInput"
+                    type="text"
+                    placeholder="Sélectionnez"
+                    readonly
+                    class="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-orange-500 outline-none cursor-pointer bg-white"
                   />
                 </div>
                 <div class="flex-1">
                   <label class="block text-xs font-bold text-slate-500 mb-1 ml-1">Départ</label>
                   <input
-                    type="date"
-                    v-model="dateDepart"
-                    @change="updateDates"
-                    :min="dateArrivee || getTodayStr()"
-                    class="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-orange-500 outline-none"
+                    id="dateDepartInput"
+                    type="text"
+                    placeholder="Sélectionnez"
+                    readonly
+                    class="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-orange-500 outline-none cursor-pointer bg-white"
                   />
                 </div>
               </div>
@@ -784,6 +895,7 @@ onMounted(fetchAnnonce)
 
             <!-- Bouton réserver -->
             <button
+              @click="reserverMaintenant(annonce.idannonce, dateArrivee, dateDepart)"
               :disabled="!canReserve"
               :class="
                 canReserve
@@ -869,5 +981,213 @@ onMounted(fetchAnnonce)
 .scrollbar-hide {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+</style>
+
+<style>
+/* ===== Flatpickr — style calendrier ===== */
+.flatpickr-calendar {
+  background: white;
+  border: 1px solid #dddddd;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  width: auto !important;
+  overflow: hidden;
+  z-index: 9999 !important;
+}
+
+.flatpickr-months {
+  padding: 24px 16px 16px;
+  display: flex;
+  gap: 60px;
+  background: white;
+  position: relative;
+}
+
+.flatpickr-months .flatpickr-month {
+  flex: 1;
+  width: 100%;
+  position: relative;
+}
+
+.flatpickr-month {
+  font-weight: 600;
+  font-size: 16px;
+  color: #222;
+  text-align: center;
+  padding-bottom: 20px;
+}
+
+.flatpickr-prev-month,
+.flatpickr-next-month {
+  color: #ea580c;
+  fill: #ea580c;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  top: 18px !important;
+  height: 32px;
+  width: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.flatpickr-prev-month:hover,
+.flatpickr-next-month:hover {
+  opacity: 0.7;
+}
+
+.flatpickr-prev-month {
+  left: 8px !important;
+  right: auto !important;
+}
+
+.flatpickr-next-month {
+  right: 8px !important;
+  left: auto !important;
+}
+
+.flatpickr-weekdays {
+  background: white;
+  padding: 12px 0;
+  font-weight: 500;
+  font-size: 12px;
+  color: #999;
+  text-transform: lowercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.flatpickr-weekday {
+  width: 42px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 400;
+}
+
+.flatpickr-days {
+  padding: 12px 8px;
+  width: 100%;
+  background: white;
+}
+
+.flatpickr-day {
+  width: 42px;
+  height: 42px;
+  max-width: none;
+  font-size: 13px;
+  color: #222;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  line-height: 1;
+  position: relative;
+  margin: 2px;
+  font-weight: 400;
+}
+
+.flatpickr-day.today {
+  background-color: white;
+  color: #222;
+  font-weight: 600;
+  border: 1px solid #e0e0e0;
+}
+
+.flatpickr-day.today:hover {
+  background-color: #fafafa;
+}
+
+.flatpickr-day.selected,
+.flatpickr-day.startRange,
+.flatpickr-day.endRange {
+  background-color: #222 !important;
+  color: white !important;
+  font-weight: 600;
+  border-radius: 4px;
+}
+
+.flatpickr-day.inRange {
+  background-color: #f0f0f0 !important;
+  color: #222 !important;
+  border-radius: 0;
+  box-shadow: none !important;
+}
+
+.flatpickr-day.startRange {
+  border-radius: 4px;
+}
+
+.flatpickr-day.endRange {
+  border-radius: 4px;
+}
+
+.flatpickr-day.disabled,
+.flatpickr-day.flatpickr-disabled {
+  background-color: white !important;
+  color: #ccc !important;
+  cursor: not-allowed !important;
+  opacity: 1 !important;
+  text-decoration: line-through;
+  text-decoration-color: #ccc;
+  text-decoration-thickness: 1px;
+}
+
+.flatpickr-day.prevMonthDay,
+.flatpickr-day.nextMonthDay {
+  color: #e0e0e0;
+  background-color: transparent;
+}
+
+.flatpickr-day:hover:not(.disabled):not(.prevMonthDay):not(.nextMonthDay):not(.flatpickr-disabled) {
+  background-color: #f0f0f0;
+  cursor: pointer;
+}
+
+.flatpickr-day.selected:hover {
+  background-color: #222 !important;
+}
+
+.flatpickr-time {
+  display: none !important;
+}
+
+.flatpickr-innerContainer {
+  display: flex;
+  gap: 20px;
+  padding: 0;
+}
+
+.flatpickr-monthContainer {
+  flex: 1;
+}
+
+.flatpickr-monthDropdown-months {
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  padding: 4px;
+  font-size: 13px;
+  color: #1f2937;
+}
+
+.flatpickr-monthDropdown-months:hover {
+  border-color: #ea580c;
+}
+
+.fp-minimum-header {
+  padding: 14px 16px;
+  background: #ea580c;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: white;
+  border-radius: 12px 12px 0 0;
+  letter-spacing: 0.3px;
 }
 </style>

@@ -49,7 +49,9 @@ const updateAccount = async () => {
         ? `https://localhost:7057/api/Professionnels/${userId}`
         : `https://localhost:7057/api/Utilisateurs/${userId}`
 
-    const response = await axios.put(endpoint, payload)
+    const response = await axios.put(endpoint, payload, {
+      headers: { Authorization: `Bearer ${authState.token}` }
+    })
 
     const updatedUser = { ...authState.user, ...response.data }
     authState.setUser(updatedUser)

@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 namespace LeboncoinAPI.Models.EntityFramework;
 
 [Table("transaction")]
-[Index("Idcartebancaire", Name = "idx_transaction_idcartebancaire")]
+[Index("Idutilisateur", Name = "idx_transaction_idutilisateur")]
 [Index("Iddate", Name = "idx_transaction_iddate")]
 [Index("Idreservation", Name = "idx_transaction_idreservation")]
 public partial class Transaction
@@ -22,16 +22,16 @@ public partial class Transaction
     [Column("idreservation")]
     public int Idreservation { get; set; }
 
-    [Column("idcartebancaire")]
-    public int Idcartebancaire { get; set; }
+    [Column("idutilisateur")]
+    public int Idutilisateur { get; set; }
 
     [Column("montanttransaction")]
     [Precision(10, 2)]
     public decimal Montanttransaction { get; set; }
 
-    [ForeignKey("Idcartebancaire")]
+    [ForeignKey("Idutilisateur")]
     [InverseProperty("Transactions")]
-    public virtual Cartebancaire IdcartebancaireNavigation { get; set; } = null!;
+    public virtual Utilisateur IdutilisateurNavigation { get; set; } = null!;
 
     [ForeignKey("Iddate")]
     [InverseProperty("Transactions")]

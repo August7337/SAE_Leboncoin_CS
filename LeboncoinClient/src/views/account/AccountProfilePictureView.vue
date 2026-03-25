@@ -52,7 +52,6 @@
   import { ref } from 'vue';
   import { Cropper, CircleStencil } from 'vue-advanced-cropper';
   
-
   import api from '@/api/axios';
   import { authState } from '@/auth';
   const loginSuccess = ref(false)
@@ -85,7 +84,9 @@
       formData.append('file', blob);
   
       try {
-        const response = await api.post(`/Utilisateurs/${authState.user.idutilisateur}/upload-pfp`, formData);
+        const response = await api.post(`/Utilisateurs/${authState.user.idutilisateur}/upload-pfp`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
   
  
   const timestampedUrl = `${response.data.newUrl}?t=${new Date().getTime()}`;

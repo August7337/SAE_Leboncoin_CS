@@ -8,7 +8,7 @@ namespace LeboncoinAPI.Models.EntityFramework;
 
 [Table("utilisateur")]
 [Index("Idadresse", Name = "idx_utilisateur_idadresse")]
-[Index("Idcartebancaire", Name = "idx_utilisateur_idcartebancaire")]
+[Index("Idtransaction", Name = "idx_utilisateur_idtransaction")]
 [Index("Iddate", Name = "idx_utilisateur_iddate")]
 [Index("Email", Name = "utilisateur_email_key", IsUnique = true)]
 [Index("Telephoneutilisateur", Name = "utilisateur_telephoneutilisateur_key", IsUnique = true)]
@@ -21,8 +21,8 @@ public partial class Utilisateur
     [Column("idadresse")]
     public int Idadresse { get; set; }
 
-    [Column("idcartebancaire")]
-    public int? Idcartebancaire { get; set; }
+    [Column("idtransaction")]
+    public int? Idtransaction { get; set; }
 
     [Column("iddate")]
     public int Iddate { get; set; }
@@ -79,16 +79,12 @@ public partial class Utilisateur
     [InverseProperty("IdutilisateurNavigation")]
     public virtual ICollection<Avi> Avis { get; set; } = new List<Avi>();
 
-    [InverseProperty("IdutilisateurNavigation")]
-    public virtual ICollection<Cartebancaire> Cartebancaires { get; set; } = new List<Cartebancaire>();
-
     [ForeignKey("Idadresse")]
     [InverseProperty("Utilisateurs")]
     public virtual Adresse IdadresseNavigation { get; set; } = null!;
 
-    [ForeignKey("Idcartebancaire")]
-    [InverseProperty("Utilisateurs")]
-    public virtual Cartebancaire? IdcartebancaireNavigation { get; set; }
+    [InverseProperty("IdutilisateurNavigation")]
+    public virtual ICollection<Transaction> Transactions { get; set; } = new List<Transaction>();
 
     [ForeignKey("Iddate")]
     [InverseProperty("Utilisateurs")]

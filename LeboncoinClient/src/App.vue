@@ -1,6 +1,9 @@
 <script setup>
 import Header from './components/Header.vue'
 import Footer from './components/Footer.vue'
+import SuccessNotification from './components/SuccessNotification.vue'
+import CookieBanner from './components/CookieBanner.vue'
+import CookieSettings from './components/CookieSettings.vue'
 </script>
 
 <template>
@@ -12,5 +15,10 @@ import Footer from './components/Footer.vue'
     </main>
 
     <Footer />
+    
+    <SuccessNotification />
+    
+    <CookieBanner />
+    <CookieSettings />
   </div>
 </template>
