@@ -23,6 +23,24 @@ const telephoneClient = ref('')
 const updating = ref(false)
 const updateError = ref(null)
 
+const showSoldeModal = ref(false)
+let resolveModal = null
+
+function openSoldeModal() {
+  showSoldeModal.value = true;
+  return new Promise((resolve) => { resolveModal = resolve; });
+}
+
+function onModalConfirm() {
+  showSoldeModal.value = false;
+  if (resolveModal) resolveModal(true);
+}
+
+function onModalCancel() {
+  showSoldeModal.value = false;
+  if (resolveModal) resolveModal(false);
+}
+
 const fetchReservation = async () => {
     loading.value = true
     error.value = null
@@ -56,6 +74,7 @@ onMounted(() => {
         return
     }
     fetchReservation()
+    authState.refreshUser?.()
 })
 
 const totalTravelers = computed(() => (adultes.value || 0) + (enfants.value || 0))
@@ -64,68 +83,98 @@ const maxCapacite = computed(() => {
     return cap ? parseInt(cap) : 10
 })
 
-const supplementAmount = computed(() => {
-    if (!reservation.value || !modifDates.value.start || !modifDates.value.end) return 0
-    
-    const oldStart = new Date(reservation.value.iddatedebutreservationNavigation?.date1)
-    const oldEnd = new Date(reservation.value.iddatefinreservationNavigation?.date1)
-    const newStart = new Date(modifDates.value.start)
-    const newEnd = new Date(modifDates.value.end)
-    
-    const oldNights = Math.ceil((oldEnd - oldStart) / (1000 * 60 * 60 * 24))
-    const newNights = Math.ceil((newEnd - newStart) / (1000 * 60 * 60 * 24))
-    
-    if (newNights > oldNights) {
-        const pricePerNight = reservation.value.idannonceNavigation?.prixnuitee || 0
-        return (newNights - oldNights) * pricePerNight
-    }
-    return 0
+const nbNuits = computed(() => {
+    if (!modifDates.value.start || !modifDates.value.end) return 0
+    const start = new Date(modifDates.value.start)
+    const end = new Date(modifDates.value.end)
+    const diffTime = end - start
+    return diffTime > 0 ? Math.ceil(diffTime / (1000 * 60 * 60 * 24)) : 0
 })
+
+const pricePerNight = computed(() => reservation.value?.idannonceNavigation?.prixnuitee || 0)
+const totalRent = computed(() => pricePerNight.value * nbNuits.value)
+const serviceFee = computed(() => totalRent.value * 0.14)
+const touristTax = computed(() => 4.00 * nbNuits.value * adultes.value)
+const currentDepositAmount = computed(() => serviceFee.value + (totalRent.value * 0.35) + touristTax.value)
+
+const alreadyPaid = computed(() => {
+    let paid = 0
+    if (reservation.value?.transactions?.length > 0) {
+        paid = reservation.value.transactions.reduce((sum, t) => sum + (t.montanttransaction || 0), 0)
+    }
+    
+    // Fallback pour les anciennes réservations (sans historique de transactions)
+    if (paid <= 0 && reservation.value) {
+        const adults = reservation.value.inclures?.find(i => i.idtypevoyageur === 1)?.nombrevoyageur || 1
+        const startStr = reservation.value.iddatedebutreservationNavigation?.date1
+        const endStr = reservation.value.iddatefinreservationNavigation?.date1
+        
+        if (startStr && endStr) {
+            const start = new Date(startStr)
+            const end = new Date(endStr)
+            const diff = end - start
+            const oldNights = diff > 0 ? Math.ceil(diff / (1000 * 60 * 60 * 24)) : 1
+            
+            const oldPrice = reservation.value.idannonceNavigation?.prixnuitee || 0
+            const oldTotalRent = oldPrice * oldNights
+            const oldServiceFee = oldTotalRent * 0.14
+            const oldTouristTax = 4.00 * oldNights * adults
+            paid = oldServiceFee + (oldTotalRent * 0.35) + oldTouristTax
+        }
+    }
+    return paid
+})
+
+const supplementAmount = computed(() => currentDepositAmount.value - alreadyPaid.value)
+
+const modalSoldeUsed = computed(() => Math.min(authState.user?.solde || 0, Math.max(0, supplementAmount.value)))
+const modalRemainder = computed(() => Math.max(0, supplementAmount.value - (authState.user?.solde || 0)))
 
 const handleUpdate = async () => {
     updating.value = true
     updateError.value = null
     try {
-        const payload = {
+        if (supplementAmount.value > 0) {
+            const confirmed = await openSoldeModal()
+            if (!confirmed) {
+                updating.value = false
+                return
+            }
+        }
+
+        const dto = {
             idreservation: parseInt(reservationId),
             idannonce: reservation.value.idannonce,
-            iddatedebutreservation: reservation.value.iddatedebutreservation,
-            iddatefinreservation: reservation.value.iddatefinreservation,
-            idutilisateur: reservation.value.idutilisateur,
-            nomclient: nomClient.value || '',
-            prenomclient: prenomClient.value || '',
-            telephoneclient: telephoneClient.value || '',
-            iddatedebutreservationNavigation: { 
-                iddate: reservation.value.iddatedebutreservation,
-                date1: modifDates.value.start 
-            },
-            iddatefinreservationNavigation: { 
-                iddate: reservation.value.iddatefinreservation,
-                date1: modifDates.value.end 
-            },
+            idutilisateur: authState.user.idutilisateur,
+            dateDebut: modifDates.value.start,
+            dateFin: modifDates.value.end,
+            nomclient: nomClient.value,
+            prenomclient: prenomClient.value,
+            telephoneclient: telephoneClient.value,
             inclures: [
                 { idtypevoyageur: 1, nombrevoyageur: adultes.value },
                 { idtypevoyageur: 2, nombrevoyageur: enfants.value },
                 { idtypevoyageur: 3, nombrevoyageur: bebes.value }
-            ].filter(i => i.nombrevoyageur > 0).map(i => ({
-                idreservation: parseInt(reservationId),
-                idtypevoyageur: i.idtypevoyageur,
-                nombrevoyageur: i.nombrevoyageur
-            }))
+            ]
         }
+
+        const res = await reservationsService.createUpdateSession(dto)
         
-        await reservationsService.update(reservationId, payload)
-        if (supplementAmount.value > 0) {
-            authState.user.solde -= supplementAmount.value
+        if (res.url) {
+            window.location.href = res.url
+        } else {
+            // Cas Solde ou Remboursement : redirection immédiate
+            router.push({ name: 'my-reservations', query: { payment: 'success' } })
         }
-        router.push('/my-reservations')
     } catch (err) {
         console.error('Error updating reservation:', err)
         updateError.value = err.response?.data || 'Erreur lors de la mise à jour.'
-    } finally {
         updating.value = false
     }
 }
+
+const formatPrice = (value) =>
+  value.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '\u202f');
 
 const formatDate = (dateStr) => {
     if (!dateStr) return 'N/A'
@@ -291,36 +340,133 @@ const formatDate = (dateStr) => {
                 </div>
             </div>
 
-            <!-- Footer Section -->
             <div class="p-6 md:p-8 bg-gray-50 border-t border-gray-100">
-                <div v-if="supplementAmount > 0" class="mb-6 flex items-center justify-between bg-orange-100/50 p-4 rounded-xl border border-orange-200">
-                    <div>
-                        <p class="text-orange-900 font-bold">Supplément à payer</p>
-                        <p class="text-xs text-orange-700">Votre solde : {{ authState.user.solde }}€</p>
+                <div v-if="supplementAmount !== 0" class="mb-6 space-y-3">
+                    <div class="flex items-center justify-between text-sm text-gray-500 font-medium px-1">
+                        <span>Acompte déjà réglé</span>
+                        <span>{{ formatPrice(alreadyPaid) }}€</span>
                     </div>
-                    <p class="text-2xl font-black text-orange-600">{{ supplementAmount }}€</p>
+                    <div class="flex items-center justify-between text-sm text-gray-500 font-medium px-1">
+                        <span>Nouvel acompte (estimé)</span>
+                        <span>{{ formatPrice(currentDepositAmount) }}€</span>
+                    </div>
+                    
+                    <!-- Supplément -->
+                    <div v-if="supplementAmount > 0" class="flex items-center justify-between bg-orange-100/50 p-4 rounded-xl border border-orange-200">
+                        <div>
+                            <p class="text-orange-900 font-bold">Supplément à régler</p>
+                            <p class="text-xs text-orange-700">Votre solde : {{ formatPrice(authState.user?.solde || 0) }}€</p>
+                        </div>
+                        <p class="text-2xl font-black text-orange-600">{{ formatPrice(supplementAmount) }}€</p>
+                    </div>
+
+                    <!-- Remboursement -->
+                    <div v-else class="flex items-center justify-between bg-green-100/50 p-4 rounded-xl border border-green-200">
+                        <div>
+                            <p class="text-green-900 font-bold">Remboursement vers solde</p>
+                            <p class="text-xs text-green-700">Différence créditée immédiatement</p>
+                        </div>
+                        <p class="text-2xl font-black text-green-600">{{ formatPrice(Math.abs(supplementAmount)) }}€</p>
+                    </div>
                 </div>
                 
                 <div class="flex flex-col sm:flex-row gap-3">
                     <button 
                         @click="handleUpdate" 
-                        :disabled="updating || (supplementAmount > authState.user.solde)"
+                        :disabled="updating"
                         class="flex-1 py-4 bg-orange-600 text-white font-bold rounded-xl hover:bg-orange-700 transition active:scale-95 disabled:opacity-50 disabled:scale-100 flex items-center justify-center gap-2"
                     >
                         <span v-if="updating" class="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin"></span>
-                        {{ supplementAmount > 0 ? 'Payer et confirmer' : 'Enregistrer' }}
+                        <template v-else>
+                            {{ supplementAmount > 0 ? 'Payer et confirmer' : (supplementAmount < 0 ? 'Confirmer le remboursement' : 'Enregistrer les modifications') }}
+                        </template>
                     </button>
                     <button @click="router.back()" class="flex-1 py-4 bg-white text-gray-700 font-bold rounded-xl border border-gray-300 hover:bg-gray-50 transition active:scale-95">
                         Annuler
                     </button>
                 </div>
-                <p v-if="supplementAmount > authState.user.solde" class="text-center mt-3 text-xs text-red-600 font-bold">
-                    Solde insuffisant pour confirmer ces modifications.
-                </p>
             </div>
         </div>
       </div>
     </main>
+
+    <!-- Modale de confirmation paiement par solde -->
+    <Transition name="modal">
+      <div v-if="showSoldeModal" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" @click="onModalCancel"></div>
+
+        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+
+          <div class="bg-orange-500 px-6 pt-6 pb-8">
+            <div class="flex items-center gap-3 mb-1">
+              <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
+                <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                </svg>
+              </div>
+              <h3 class="text-white font-bold text-lg leading-tight">Confirmation du paiement</h3>
+            </div>
+            <p class="text-orange-100 text-sm mt-2 leading-relaxed">
+              Votre solde leboncoin peut être utilisé pour régler ce supplément.
+            </p>
+          </div>
+
+          <div class="-mt-4 mx-4 bg-white rounded-xl border border-gray-100 shadow-sm p-4 space-y-3">
+            <div class="flex justify-between items-center text-sm">
+              <span class="text-slate-500">Supplément à régler</span>
+              <span class="font-bold text-slate-900">{{ formatPrice(supplementAmount) }} €</span>
+            </div>
+            <div class="flex justify-between items-center text-sm">
+              <span class="text-slate-500">Votre solde disponible</span>
+              <span class="font-semibold text-orange-600">{{ formatPrice(authState.user?.solde || 0) }} €</span>
+            </div>
+            <div class="border-t border-dashed border-gray-200 pt-3 flex justify-between items-center text-sm">
+              <span class="text-slate-500">Débité de votre solde</span>
+              <span class="font-bold text-slate-900">{{ formatPrice(modalSoldeUsed) }} €</span>
+            </div>
+            <div v-if="modalRemainder > 0" class="flex justify-between items-center text-sm">
+              <span class="text-slate-500">Reste à payer par carte</span>
+              <span class="font-bold text-slate-900">{{ formatPrice(modalRemainder) }} €</span>
+            </div>
+          </div>
+
+          <div class="px-4 pt-3 pb-2">
+            <div v-if="modalRemainder === 0" class="flex items-center gap-2 bg-green-50 border border-green-100 rounded-lg px-3 py-2">
+              <svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              </svg>
+              <p class="text-xs text-green-800">Votre solde couvre la totalité du supplément.</p>
+            </div>
+            <div v-else class="flex items-center gap-2 bg-blue-50 border border-blue-100 rounded-lg px-3 py-2">
+              <svg class="w-4 h-4 text-blue-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <p class="text-xs text-blue-800">Votre solde est insuffisant. Paiement par carte pour le reste.</p>
+            </div>
+          </div>
+
+          <div class="flex gap-3 px-4 pt-2 pb-5">
+            <button
+              type="button"
+              @click="onModalCancel"
+              class="flex-1 py-3 rounded-xl border border-gray-200 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
+            >
+              Annuler
+            </button>
+            <button
+              type="button"
+              @click="onModalConfirm"
+              class="flex-1 py-3 rounded-xl bg-orange-500 hover:bg-orange-600 text-white text-sm font-bold transition-colors shadow-md shadow-orange-200"
+            >
+              Confirmer le paiement
+            </button>
+          </div>
+
+        </div>
+      </div>
+    </Transition>
   </div>
 </template>
 
@@ -328,5 +474,26 @@ const formatDate = (dateStr) => {
 input[type="date"]::-webkit-calendar-picker-indicator {
     cursor: pointer;
     filter: invert(48%) sepia(79%) saturate(2476%) hue-rotate(352deg) brightness(96%) contrast(92%);
+}
+
+.modal-enter-active,
+.modal-leave-active {
+  transition: opacity 0.2s ease;
+}
+.modal-enter-active .relative,
+.modal-leave-active .relative {
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+.modal-enter-from,
+.modal-leave-to {
+  opacity: 0;
+}
+.modal-enter-from .relative {
+  transform: scale(0.95) translateY(8px);
+  opacity: 0;
+}
+.modal-leave-to .relative {
+  transform: scale(0.95) translateY(8px);
+  opacity: 0;
 }
 </style>

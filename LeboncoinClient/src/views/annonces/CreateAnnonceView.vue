@@ -180,15 +180,28 @@ const onFileChange = (event) => {
 
 const addPhotoToList = () => {
   const { canvas } = cropperRef.value.getResult();
-  if (canvas) {
-    const base64 = canvas.toDataURL("image/jpeg");
-    photosLocal.value.push({
-      previewUrl: base64,
-      base64: base64 
-    });
-    imageSource.value = null;
-    if (fileInput.value) fileInput.value.value = ""; 
+  if (!canvas) return;
+
+  // Redimensionner à 1280px max pour éviter la saturation RAM
+  const MAX_SIZE = 1280;
+  let w = canvas.width;
+  let h = canvas.height;
+  if (w > MAX_SIZE || h > MAX_SIZE) {
+    if (w > h) { h = Math.round(h * MAX_SIZE / w); w = MAX_SIZE; }
+    else { w = Math.round(w * MAX_SIZE / h); h = MAX_SIZE; }
   }
+
+  const scaled = document.createElement('canvas');
+  scaled.width = w;
+  scaled.height = h;
+  scaled.getContext('2d').drawImage(canvas, 0, 0, w, h);
+
+  // toBlob est bien plus léger que toDataURL (pas de chaîne Base64 en RAM)
+  scaled.toBlob((blob) => {
+    const previewUrl = URL.createObjectURL(blob);
+    photosLocal.value.push({ blob, previewUrl });
+    imageSource.value = null;
+  }, 'image/jpeg', 0.80);
 };
 
 const publishAnnonce = async () => {
@@ -214,7 +227,22 @@ const publishAnnonce = async () => {
       prixnuitee: Number(form.prixnuitee)
     };
 
-    await api.post(`/Annonces`, payload)
+    const response = await api.post(`/Annonces`, payload);
+
+    const nouvelleAnnonceId = response.data.idannonce || response.data.annonceId || response.data.id;
+
+    if (nouvelleAnnonceId && photosLocal.value.length > 0) {
+      for (let i = 0; i < photosLocal.value.length; i++) {
+        const photo = photosLocal.value[i];
+
+        const formData = new FormData();
+        formData.append('file', photo.blob, `photo_${i}.jpg`);
+
+        await api.post(`/Annonces/${nouvelleAnnonceId}/upload-photo`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+      }
+    }
     showSuccess.value = true
     setTimeout(() => router.push({ name: 'home' }), 1500)
 

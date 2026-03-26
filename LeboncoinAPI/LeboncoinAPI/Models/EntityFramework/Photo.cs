@@ -6,6 +6,12 @@ using Microsoft.EntityFrameworkCore;
 
 namespace LeboncoinAPI.Models.EntityFramework;
 
+public enum OriginePhoto
+{
+    Locataire = 1,
+    Proprietaire = 2
+}
+
 [Table("photo")]
 public partial class Photo
 {
@@ -22,6 +28,9 @@ public partial class Photo
     [Column("lienphoto")]
     [StringLength(200)]
     public string? Lienphoto { get; set; }
+
+    [Column("originephoto")]
+    public int? Originephoto { get; set; } = (int)OriginePhoto.Locataire;
 
     [ForeignKey("Idannonce")]
     [InverseProperty("Photos")]

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using LeboncoinAPI.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace LeboncoinAPI.Models.EntityFramework;
@@ -36,6 +37,10 @@ public partial class LeboncoinDBContext : DbContext
     public virtual DbSet<Heure> Heures { get; set; }
 
     public virtual DbSet<Incident> Incidents { get; set; }
+
+    public virtual DbSet<StatutIncident> StatutsIncident { get; set; }
+
+    public virtual DbSet<IncidentHistorique> IncidentHistoriques { get; set; }
 
     public virtual DbSet<Inclure> Inclures { get; set; }
 
@@ -228,14 +233,34 @@ public partial class LeboncoinDBContext : DbContext
             entity.HasKey(e => e.Idheure).HasName("pk_heure");
         });
 
+        modelBuilder.Entity<StatutIncident>(entity =>
+        {
+            entity.HasKey(e => e.Idstatutincident).HasName("pk_statut_incident");
+
+            entity.HasIndex(e => e.Code)
+                .IsUnique()
+                .HasDatabaseName("uq_statut_incident_code");
+
+            entity.HasData(
+                new StatutIncident { Idstatutincident = 1, Code = "SIGNALE", Libelle = "Signale", Ordre = 1, Estfinal = false },
+                new StatutIncident { Idstatutincident = 2, Code = "EN_ANALYSE_SERVICE_LOCATION", Libelle = "En cours d'analyse par le service location", Ordre = 2, Estfinal = false },
+                new StatutIncident { Idstatutincident = 3, Code = "CLASSE_SANS_SUITE", Libelle = "Classe sans suite", Ordre = 3, Estfinal = true },
+                new StatutIncident { Idstatutincident = 4, Code = "EN_ATTENTE_EXPLICATION_PROPRIETAIRE", Libelle = "En attente de l'explication du proprietaire", Ordre = 4, Estfinal = false },
+                new StatutIncident { Idstatutincident = 5, Code = "EXPLICATION_PROPRIETAIRE_RECUE", Libelle = "Explication du proprietaire recue", Ordre = 5, Estfinal = false },
+                new StatutIncident { Idstatutincident = 6, Code = "REMBOURSEMENT_ACCEPTE", Libelle = "Remboursement accepte", Ordre = 6, Estfinal = false },
+                new StatutIncident { Idstatutincident = 7, Code = "REFUS_REMBOURSEMENT", Libelle = "Remboursement refuse", Ordre = 7, Estfinal = false },
+                new StatutIncident { Idstatutincident = 9, Code = "TRANSFERE_CONTENTIEUX", Libelle = "Transfere au contentieux", Ordre = 8, Estfinal = false },
+                new StatutIncident { Idstatutincident = 10, Code = "CLOTURE_SANS_REMBOURSEMENT", Libelle = "Cloture sans remboursement", Ordre = 9, Estfinal = true },
+                new StatutIncident { Idstatutincident = 11, Code = "PROCEDURE_JURIDIQUE_ENGAGEE", Libelle = "Procedure juridique engagee", Ordre = 10, Estfinal = true },
+                new StatutIncident { Idstatutincident = 12, Code = "REMBOURSEMENT_EFFECTUE", Libelle = "Remboursement effectue", Ordre = 11, Estfinal = true }
+            );
+        });
+
         modelBuilder.Entity<Incident>(entity =>
         {
             entity.HasKey(e => e.Idincident).HasName("pk_incident");
 
-            entity.Property(e => e.Estclasse).HasDefaultValue(false);
-            entity.Property(e => e.Estrembourse).HasDefaultValue(false);
-            entity.Property(e => e.Estremisaucontentieux).HasDefaultValue(false);
-            entity.Property(e => e.Etape).HasDefaultValue(1);
+            entity.Property(e => e.Idstatutincident).HasDefaultValue(1);
 
             entity.HasOne(d => d.IddateNavigation).WithMany(p => p.Incidents)
                 .OnDelete(DeleteBehavior.Restrict)
@@ -248,6 +273,15 @@ public partial class LeboncoinDBContext : DbContext
             entity.HasOne(d => d.IdutilisateurNavigation).WithMany(p => p.Incidents)
                 .OnDelete(DeleteBehavior.Restrict)
                 .HasConstraintName("fk_incident_associati_utilisat");
+
+            entity.HasOne(d => d.StatutIncidentNavigation).WithMany(p => p.Incidents)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("fk_incident_statut_incident");
+
+            entity.HasOne(d => d.IdagentAssigneNavigation).WithMany(p => p.IncidentsAssignes)
+                .HasForeignKey(d => d.IdagentAssigne)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("fk_incident_agent_assigne");
 
             entity.HasMany(d => d.Idcompensations).WithMany(p => p.Idincidents)
                 .UsingEntity<Dictionary<string, object>>(
@@ -268,6 +302,23 @@ public partial class LeboncoinDBContext : DbContext
                         j.IndexerProperty<int>("Idincident").HasColumnName("idincident");
                         j.IndexerProperty<int>("Idcompensation").HasColumnName("idcompensation");
                     });
+        });
+
+        modelBuilder.Entity<IncidentHistorique>(entity =>
+        {
+            entity.HasKey(e => e.Idincidentshistorique).HasName("pk_incident_historique");
+
+            entity.HasOne(d => d.IdincidentNavigation).WithMany(p => p.Historiques)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("fk_incident_historique_incident");
+
+            entity.HasOne(d => d.IdstatutincidentNavigation).WithMany(p => p.HistoriquesStatut)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("fk_incident_historique_statut");
+
+            entity.HasOne(d => d.IdutilisateurmodificateurNavigation).WithMany(p => p.HistoriquesModifies)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("fk_incident_historique_utilisateur");
         });
 
         modelBuilder.Entity<Inclure>(entity =>
@@ -320,6 +371,31 @@ public partial class LeboncoinDBContext : DbContext
         modelBuilder.Entity<Permission>(entity =>
         {
             entity.HasKey(e => e.Idpermission).HasName("pk_permission");
+
+            entity.HasIndex(e => e.Nompermission)
+                .IsUnique()
+                .HasDatabaseName("uq_permission_nompermission");
+
+            entity.HasData(
+                new Permission { Idpermission = 4, Nompermission = AppPermissions.IncidentReadAll },
+                new Permission { Idpermission = 5, Nompermission = AppPermissions.IncidentTakeInCharge },
+                new Permission { Idpermission = 6, Nompermission = AppPermissions.IncidentClassWithoutFollowUp },
+                new Permission { Idpermission = 7, Nompermission = AppPermissions.IncidentRequestOwnerExplanation },
+                new Permission { Idpermission = 9, Nompermission = AppPermissions.IncidentDecideRefund },
+                new Permission { Idpermission = 10, Nompermission = AppPermissions.IncidentProcessRefund },
+                new Permission { Idpermission = 13, Nompermission = AppPermissions.IncidentContentieuxClose },
+                new Permission { Idpermission = 14, Nompermission = AppPermissions.IncidentContentieuxLegal },
+                new Permission { Idpermission = 15, Nompermission = AppPermissions.AppViewHome },
+                new Permission { Idpermission = 16, Nompermission = AppPermissions.AppViewFavorites },
+                new Permission { Idpermission = 17, Nompermission = AppPermissions.AppViewMessages },
+                new Permission { Idpermission = 18, Nompermission = AppPermissions.AppViewMyAnnonces },
+                new Permission { Idpermission = 19, Nompermission = AppPermissions.AppViewMyReservations },
+                new Permission { Idpermission = 20, Nompermission = AppPermissions.DashboardSettings },
+                new Permission { Idpermission = 21, Nompermission = AppPermissions.DashboardIncidentsLocation },
+                new Permission { Idpermission = 22, Nompermission = AppPermissions.DashboardIncidentsComptabilite },
+                new Permission { Idpermission = 23, Nompermission = AppPermissions.DashboardIncidentsContentieux },
+                new Permission { Idpermission = 24, Nompermission = AppPermissions.AppViewGdprData }
+            );
         });
 
         modelBuilder.Entity<Photo>(entity =>
@@ -444,6 +520,17 @@ public partial class LeboncoinDBContext : DbContext
         {
             entity.HasKey(e => e.Idrole).HasName("pk_role");
 
+            entity.HasIndex(e => e.Nomrole)
+                .IsUnique()
+                .HasDatabaseName("uq_role_nomrole");
+
+            entity.HasData(
+                new Role { Idrole = 2, Nomrole = AppRoles.Client },
+                new Role { Idrole = 3, Nomrole = AppRoles.ServiceLocation },
+                new Role { Idrole = 4, Nomrole = AppRoles.ServiceComptabilite },
+                new Role { Idrole = 5, Nomrole = AppRoles.ServiceContentieux }
+            );
+
             entity.HasMany(d => d.Idpermissions).WithMany(p => p.Idroles)
                 .UsingEntity<Dictionary<string, object>>(
                     "Permettre",
@@ -461,6 +548,31 @@ public partial class LeboncoinDBContext : DbContext
                         j.ToTable("permettre");
                         j.IndexerProperty<int>("Idrole").HasColumnName("idrole");
                         j.IndexerProperty<int>("Idpermission").HasColumnName("idpermission");
+                        j.HasData(
+                            new { Idrole = 2, Idpermission = 15 },
+                            new { Idrole = 2, Idpermission = 16 },
+                            new { Idrole = 2, Idpermission = 17 },
+                            new { Idrole = 2, Idpermission = 18 },
+                            new { Idrole = 2, Idpermission = 19 },
+                            new { Idrole = 2, Idpermission = 20 },
+                            new { Idrole = 2, Idpermission = 24 },
+                            new { Idrole = 3, Idpermission = 4 },
+                            new { Idrole = 3, Idpermission = 5 },
+                            new { Idrole = 3, Idpermission = 6 },
+                            new { Idrole = 3, Idpermission = 7 },
+                            new { Idrole = 3, Idpermission = 9 },
+                            new { Idrole = 3, Idpermission = 20 },
+                            new { Idrole = 3, Idpermission = 21 },
+                            new { Idrole = 4, Idpermission = 4 },
+                            new { Idrole = 4, Idpermission = 10 },
+                            new { Idrole = 4, Idpermission = 20 },
+                            new { Idrole = 4, Idpermission = 22 },
+                            new { Idrole = 5, Idpermission = 4 },
+                            new { Idrole = 5, Idpermission = 13 },
+                            new { Idrole = 5, Idpermission = 14 },
+                            new { Idrole = 5, Idpermission = 20 },
+                            new { Idrole = 5, Idpermission = 23 }
+                        );
                     });
         });
 

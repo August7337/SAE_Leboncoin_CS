@@ -1,46 +1,94 @@
 <script setup>
 import { reactive, ref, onMounted } from 'vue'
 import { authState } from '@/auth.js'
-import axios from 'axios'
 import api from '@/api/axios'
+
 const isSaving = ref(false)
 const message = ref({ text: '', type: '' })
+const errors = reactive({}) // Track validation errors
 
 const userType = ref(authState.user?.typeUtilisateur || 'particulier')
+
+const form = reactive({
+  pseudonyme: '',
+  email: '',
+  telephoneutilisateur: '',
+  civilite: 'M.',
+  nomutilisateur: '',
+  prenomutilisateur: '',
+  nomEntreprise: '',
+  siret: '',
+  secteuractivite: '',
+})
+
 onMounted(() => {
   const user = authState.user
   if (user) {
     form.pseudonyme = user.pseudonyme || ''
     form.email = user.email || ''
-    form.telephone = user.telephone || ''
+    form.telephoneutilisateur = user.telephone || ''
     userType.value = user.typeUtilisateur || 'particulier'
 
     if (userType.value === 'particulier') {
       form.civilite = user.civilite || 'M.'
       form.nomutilisateur = user.nomutilisateur || ''
       form.prenomutilisateur = user.prenomutilisateur || ''
-    } else {
-      form.nomEntreprise = user.nomEntreprise || ''
-      form.siret = user.siret || ''
-      form.siteWeb = user.secteuractivite || ''
-    }
+} else {
+  form.nomEntreprise = user.nomEntreprise || '';
+  form.siret = String(user.siret || ''); 
+  form.secteuractivite = user.secteuractivite || '';
+}
   }
 })
-const form = reactive({
-  pseudonyme: authState.user?.pseudonyme || '',
-  email: authState.user?.email || '',
-  telephone: authState.user?.telephoneutilisateur || '',
-  // Particulier specific fields
-  civilite: authState.user?.civilite || 'M.',
-  nomutilisateur: authState.user?.nomutilisateur || '',
-  prenomutilisateur: authState.user?.prenomutilisateur || '',
-  // Professional specific fields
-  nomEntreprise: authState.user?.nomEntreprise || '',
-  siret: authState.user?.siret || '',
-  siteWeb: authState.user?.siteWeb || '',
-})
+
+const validate = () => {
+Object.keys(errors).forEach(key => delete errors[key]); 
+  let isValid = true;
+  if (form.pseudonyme.length < 3) {
+    errors.pseudonyme = "Le pseudonyme doit faire au moins 3 caractères."
+    isValid = false
+  }
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  if (!emailRegex.test(form.email)) {
+    errors.email = "Veuillez entrer une adresse email valide."
+    isValid = false
+  }
+  const phoneRegex = /^(?:(?:\+|00)33|0)\s*[1-9](?:[\s.-]*\d{2}){4}$/
+  if (!phoneRegex.test(form.telephoneutilisateur)) {
+    errors.telephoneutilisateur = "Format de téléphone invalide (ex: 0612345678)."
+    isValid = false
+  }
+if (userType.value === 'professionnel') {
+    if (!form.nomEntreprise) {
+      errors.nomEntreprise = "Le nom de l'entreprise est requis.";
+      isValid = false;
+    }
+
+  
+    const siretValue = String(form.siret || ''); 
+    const cleanSiret = siretValue.replace(/\s/g, '');
+
+    if (!/^\d{14}$/.test(cleanSiret)) {
+      errors.siret = "Le SIRET doit contenir exactement 14 chiffres.";
+      isValid = false;
+    }
+
+    if (!form.secteuractivite) {
+      errors.secteuractivite = "Veuillez sélectionner un secteur.";
+      isValid = false;
+    }
+  }
+
+  return isValid
+}
 
 const updateAccount = async () => {
+  if (!validate()) {
+    message.value = { text: 'Veuillez corriger les erreurs ci-dessous.', type: 'error' }
+    return
+  }
+
   const userId = authState.user?.idutilisateur
   if (!userId) return
 
@@ -51,33 +99,21 @@ const updateAccount = async () => {
     idutilisateur: userId,
     pseudonyme: form.pseudonyme,
     email: form.email,
-    telephoneutilisateur: form.telephone,
-  }
-
-  if (userType.value === 'particulier') {
-    payload.civilite = form.civilite
-    payload.nomutilisateur = form.nomutilisateur
-    payload.prenomutilisateur = form.prenomutilisateur
-  }
-  if (userType.value === 'professionnel') {
-    payload.nomEntreprise = form.nomEntreprise;
-    payload.siret = form.siret;
-    payload.siteWeb = form.siteWeb;
+    telephoneutilisateur: form.telephoneutilisateur,
+    nomEntreprise: userType.value === 'professionnel' ? form.nomEntreprise : null,
+    siret: userType.value === 'professionnel' ? form.siret : null,
+    secteuractivite: userType.value === 'professionnel' ? form.secteuractivite : null,
+    civilite: userType.value === 'particulier' ? form.civilite : null,
+    nomutilisateur: userType.value === 'particulier' ? form.nomutilisateur : null,
+    prenomutilisateur: userType.value === 'particulier' ? form.prenomutilisateur : null,
   }
 
   try {
     await api.put(`/Utilisateurs/${userId}`, payload)
-
-    const updatedUser = { ...authState.user, ...payload }
-    authState.setUser(updatedUser)
-
+    authState.setUser({ ...authState.user, ...payload, telephone: payload.telephoneutilisateur })
     message.value = { text: 'Modifications enregistrées !', type: 'success' }
   } catch (error) {
-    console.error('Save error:', error.response?.data)
-    message.value = {
-      text: error.response?.data?.title || 'Erreur lors de la sauvegarde.',
-      type: 'error',
-    }
+    message.value = { text: error.response?.data?.title || 'Erreur lors de la sauvegarde.', type: 'error' }
   } finally {
     isSaving.value = false
   }
@@ -87,13 +123,6 @@ const updateAccount = async () => {
 <template>
   <div class="account-settings-page">
     <div class="content-wrapper">
-      <div class="header-section">
-        <h1 class="page-title">Paramètres du compte</h1>
-        <div class="badge-container">
-          <span class="type-badge">{{ userType }}</span>
-        </div>
-      </div>
-
       <div class="form-card">
         <div v-if="message.text" :class="['status-message', message.type]">
           {{ message.text }}
@@ -102,23 +131,17 @@ const updateAccount = async () => {
         <div class="form-grid">
           <div class="input-group">
             <label>Pseudonyme</label>
-            <input v-model="form.pseudonyme" type="text" class="input-field" />
+            <input v-model="form.pseudonyme" type="text" :class="['input-field', { 'error-border': errors.pseudonyme }]" />
+            <span v-if="errors.pseudonyme" class="error-text">{{ errors.pseudonyme }}</span>
           </div>
           <div class="input-group">
             <label>Téléphone</label>
-            <input v-model="form.telephone" type="text" class="input-field" />
+            <input v-model="form.telephoneutilisateur" type="text" :class="['input-field', { 'error-border': errors.telephoneutilisateur }]" />
+            <span v-if="errors.telephoneutilisateur" class="error-text">{{ errors.telephoneutilisateur }}</span>
           </div>
         </div>
-        <div v-if="userType === 'particulier'" class="particulier-section">
-          <div class="input-group">
-            <label>Civilité</label>
-            <select v-model="form.civilite" class="input-field">
-              <option value="M.">Monsieur</option>
-              <option value="Mme">Madame</option>
-              <option value="Autre">Autre</option>
-            </select>
-          </div>
 
+        <div v-if="userType === 'particulier'" class="particulier-section">
           <div class="form-grid">
             <div class="input-group">
               <label>Nom</label>
@@ -133,30 +156,53 @@ const updateAccount = async () => {
 
         <div class="input-group">
           <label>Adresse email</label>
-          <input v-model="form.email" type="email" class="input-field" />
+          <input v-model="form.email" type="email" :class="['input-field', { 'error-border': errors.email }]" />
+          <span v-if="errors.email" class="error-text">{{ errors.email }}</span>
         </div>
 
         <div v-if="userType === 'professionnel'" class="pro-section">
           <h3 class="section-divider">Informations Professionnelles</h3>
-
           <div class="input-group">
             <label>Nom de l'entreprise</label>
-            <input v-model="form.nomEntreprise" type="text" class="input-field" />
+            <input v-model="form.nomEntreprise" type="text" :class="['input-field', { 'error-border': errors.nomEntreprise }]" />
+            <span v-if="errors.nomEntreprise" class="error-text">{{ errors.nomEntreprise }}</span>
           </div>
 
           <div class="form-grid">
             <div class="input-group">
               <label>SIRET</label>
-              <input v-model="form.siret" type="text" class="input-field" />
+              <input 
+  v-model="form.siret" 
+  type="text" 
+  maxlength="14"
+  placeholder="14 chiffres"
+  :class="['input-field', { 'error-border': errors.siret }]" 
+/>
+              <span v-if="errors.siret" class="error-text">{{ errors.siret }}</span>
             </div>
+
             <div class="input-group">
-              <label>Site Web</label>
-              <input
-                v-model="form.siteWeb"
-                type="text"
-                class="input-field"
-                placeholder="https://..."
-              />
+              <label>Secteur d'activité</label>
+<select 
+        v-model="form.secteuractivite" 
+        :class="['input-field', { 'error-border': errors.secteuractivite }]"
+      >
+        <option disabled value="">Sélectionnez un secteur</option>
+        <option value="Agriculture">Agriculture</option>
+        <option value="Artisanat">Artisanat</option>
+        <option value="Automobile">Automobile</option>
+        <option value="BTP">BTP / Construction</option>
+        <option value="Commerce">Commerce / Retail</option>
+        <option value="Hôtellerie">Hôtellerie</option>
+        <option value="Immobilier">Immobilier</option>
+        <option value="Informatique">Informatique / Tech</option>
+        <option value="Restauration">Restauration</option>
+        <option value="Sante">Santé / Bien-être</option>
+        <option value="Services">Services aux entreprises</option>
+        <option value="Transport">Transport / Logistique</option>
+        <option value="Autre">Autre</option>
+      </select>
+              <span v-if="errors.secteuractivite" class="error-text">{{ errors.secteuractivite }}</span>
             </div>
           </div>
         </div>
@@ -177,7 +223,22 @@ const updateAccount = async () => {
   padding: 40px 16px;
   font-family: sans-serif;
 }
+.error-text {
+  color: #b91c1c;
+  font-size: 12px;
+  font-weight: 600;
+  margin-top: 4px;
+  display: block;
+}
 
+.error-border {
+  border-color: #f87171 !important;
+}
+
+.error-border:focus {
+  border-color: #b91c1c !important;
+  box-shadow: 0 0 0 1px #b91c1c;
+}
 .content-wrapper {
   max-width: 650px;
   margin: 0 auto;

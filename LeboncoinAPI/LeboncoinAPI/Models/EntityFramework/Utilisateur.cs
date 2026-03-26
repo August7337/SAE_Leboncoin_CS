@@ -118,4 +118,10 @@ public partial class Utilisateur
     [ForeignKey("Idutilisateur")]
     [InverseProperty("Idutilisateurs")]
     public virtual ICollection<Role> Idroles { get; set; } = new List<Role>();
+
+    [InverseProperty("IdagentAssigneNavigation")]
+    public virtual ICollection<Incident> IncidentsAssignes { get; set; } = new List<Incident>();
+
+    [InverseProperty("IdutilisateurmodificateurNavigation")]
+    public virtual ICollection<IncidentHistorique> HistoriquesModifies { get; set; } = new List<IncidentHistorique>();
 }

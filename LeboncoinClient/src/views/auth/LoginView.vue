@@ -45,7 +45,11 @@ async function login() {
       authState.login(response.data)
 
       setTimeout(() => {
-        router.push({ name: 'home' })
+        if (authState.hasPermission('app.view.home')) {
+          router.push({ name: 'home' })
+        } else {
+          router.push({ name: 'service-dashboard' })
+        }
       }, 800)
     } catch (error) {
       if (error.response) {

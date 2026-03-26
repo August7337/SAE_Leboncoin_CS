@@ -20,6 +20,7 @@ drop table if exists disposer CASCADE;
 drop table if exists favoriser CASCADE;
 drop table if exists filtrer CASCADE;
 drop table if exists heure CASCADE;
+drop table if exists statut_incident CASCADE;
 drop table if exists incident CASCADE;
 drop table if exists inclure CASCADE;
 drop table if exists message CASCADE;

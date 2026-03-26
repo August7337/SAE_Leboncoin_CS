@@ -6,6 +6,7 @@ const routes = [
     path: '/',
     name: 'home',
     component: () => import('../views/HomeView.vue'),
+    meta: { requiresPermission: 'app.view.home' },
   },
 
   // --- Informations légales ---
@@ -31,7 +32,7 @@ const routes = [
     path: '/mes-donnees-personnelles',
     name: 'gdpr-data',
     component: () => import('../views/account/GdprDataView.vue'),
-    meta: { requiresAuth: true },
+    meta: { requiresAuth: true, requiresPermission: 'app.view.gdpr_data' },
   },
 
   // --- Réserver une annonce ---
@@ -88,20 +89,26 @@ const routes = [
     path: '/my-annonces',
     name: 'my-annonces',
     component: () => import('../views/account/MyAnnoncesView.vue'),
-    meta: { requiresAuth: true },
+    meta: { requiresAuth: true, requiresPermission: 'app.view.my_annonces' },
   },
   {
     path: '/my-reservations',
     name: 'my-reservations',
     component: () => import('../views/account/MyReservationsView.vue'),
-    meta: { requiresAuth: true },
+    meta: { requiresAuth: true, requiresPermission: 'app.view.my_reservations' },
   },
   {
     path: '/my-reservations/:id/edit',
     name: 'edit-reservation',
     component: () => import('../views/account/EditReservationView.vue'),
-    meta: { requiresAuth: true },
+    meta: { requiresAuth: true, requiresPermission: 'app.view.my_reservations' },
     props: true
+  },
+  {
+    path: '/my-incidents',
+    name: 'my-incidents',
+    component: () => import('../views/account/MyIncidentsView.vue'),
+    meta: { requiresAuth: true, requiresPermission: 'app.view.my_incidents' },
   },
   {
     path: '/messages',
@@ -125,7 +132,7 @@ const routes = [
     path: '/mes-recherches',
     name: 'saved-searches',
     component: () => import('../views/account/SavedSearchesView.vue'),
-    // No requiresAuth since both visitors & users can use it
+    meta: { requiresPermission: 'app.view.home' },
   },
   {
     path: '/account-settings',
@@ -161,6 +168,64 @@ const routes = [
     name: 'profile-picture',
     component: () => import('../views/account/AccountProfilePictureView.vue'),
     meta: { requiresAuth: true }
+  },
+  {
+    path: '/incidents/creer',
+    name: 'incident-create',
+    component: () => import('../views/incidents/CreateIncidentView.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/incidents/:id',
+    name: 'incident-detail',
+    component: () => import('../views/incidents/IncidentDetailView.vue'),
+    meta: { requiresAuth: true },
+    props: true,
+  },
+  {
+    path: '/incidents/:id/timeline',
+    name: 'incident-timeline',
+    component: () => import('../views/incidents/TimelineView.vue'),
+    meta: { requiresAuth: true },
+    props: true,
+  },
+  {
+    path: '/incidents/:id/decision-locataire',
+    name: 'locataire-decision',
+    component: () => import('../views/incidents/LocataireDecisionView.vue'),
+    meta: { requiresAuth: true },
+    props: true,
+  },
+  {
+    path: '/services/location',
+    name: 'location-dashboard',
+    component: () => import('../views/services/LocationDashboardView.vue'),
+    meta: { requiresAuth: true, role: 'Service_Location' },
+  },
+  {
+    path: '/services/comptabilite',
+    name: 'comptabilite-dashboard',
+    component: () => import('../views/services/ComptabiliteDashboardView.vue'),
+    meta: { requiresAuth: true, role: 'Service_Comptabilite' },
+  },
+  {
+    path: '/services/contentieux',
+    name: 'contentieux-dashboard',
+    component: () => import('../views/services/ContentieuxDashboardView.vue'),
+    meta: { requiresAuth: true, role: 'Service_Contentieux' },
+  },
+  {
+    path: '/incidents/:id/reponse-proprietaire',
+    name: 'proprietaire-response',
+    component: () => import('../views/services/ProprietaireResponseView.vue'),
+    meta: { requiresAuth: true },
+    props: true,
+  },
+  {
+    path: '/dashboard-service',
+    name: 'service-dashboard',
+    component: () => import('../views/ServiceDashboardView.vue'),
+    meta: { requiresAuth: true },
   }
 ]
 
@@ -179,9 +244,14 @@ const router = createRouter({
 
 router.beforeEach((to, from) => {
   const requiresAuth = to.matched.some((record) => record.meta.requiresAuth)
+  const requiredPermission = to.matched.find((record) => record.meta.requiresPermission)?.meta.requiresPermission
 
   if (requiresAuth && !authState.isLoggedIn()) {
     return { name: 'login' }
+  }
+
+  if (requiredPermission && authState.isLoggedIn() && !authState.hasPermission(requiredPermission)) {
+    return { name: 'service-dashboard' }
   }
 })
 

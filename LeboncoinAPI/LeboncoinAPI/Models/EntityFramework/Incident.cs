@@ -9,6 +9,7 @@ namespace LeboncoinAPI.Models.EntityFramework;
 [Table("incident")]
 [Index("Idreservation", Name = "idx_incident_idreservation")]
 [Index("Idutilisateur", Name = "idx_incident_idutilisateur")]
+[Index("Idstatutincident", Name = "idx_incident_idstatutincident")]
 public partial class Incident
 {
     [Key]
@@ -24,6 +25,12 @@ public partial class Incident
     [Column("iddate")]
     public int Iddate { get; set; }
 
+    [Column("idstatutincident")]
+    public int Idstatutincident { get; set; }
+
+    [Column("idagentassigne")]
+    public int? IdagentAssigne { get; set; }
+
     [Column("motifincident")]
     [StringLength(100)]
     public string? Motifincident { get; set; }
@@ -31,18 +38,6 @@ public partial class Incident
     [Column("descriptionincident")]
     [StringLength(2000)]
     public string? Descriptionincident { get; set; }
-
-    [Column("etape")]
-    public int Etape { get; set; }
-
-    [Column("estclasse")]
-    public bool Estclasse { get; set; }
-
-    [Column("estrembourse")]
-    public bool Estrembourse { get; set; }
-
-    [Column("estremisaucontentieux")]
-    public bool Estremisaucontentieux { get; set; }
 
     [Column("explicationproprietaire")]
     [StringLength(2000)]
@@ -60,10 +55,21 @@ public partial class Incident
     [InverseProperty("Incidents")]
     public virtual Utilisateur IdutilisateurNavigation { get; set; } = null!;
 
+    [ForeignKey("Idstatutincident")]
+    [InverseProperty("Incidents")]
+    public virtual StatutIncident StatutIncidentNavigation { get; set; } = null!;
+
+    [ForeignKey("IdagentAssigne")]
+    [InverseProperty("IncidentsAssignes")]
+    public virtual Utilisateur? IdagentAssigneNavigation { get; set; }
+
     [InverseProperty("IdincidentNavigation")]
     public virtual ICollection<Photo> Photos { get; set; } = new List<Photo>();
 
     [ForeignKey("Idincident")]
     [InverseProperty("Idincidents")]
     public virtual ICollection<Compensation> Idcompensations { get; set; } = new List<Compensation>();
+
+    [InverseProperty("IdincidentNavigation")]
+    public virtual ICollection<IncidentHistorique> Historiques { get; set; } = new List<IncidentHistorique>();
 }
