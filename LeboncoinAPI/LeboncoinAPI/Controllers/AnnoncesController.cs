@@ -46,6 +46,7 @@ public class AnnoncesController : ControllerBase
             Prixnuitee = a.Prixnuitee,
             Capacite = a.Capacite,
             Nombreetoilesleboncoin = a.Nombreetoilesleboncoin,
+            Estverifie = a.Estverifie,
             Photos = a.Photos.Select(p => new Photo
             {
                 Idphoto = p.Idphoto,
@@ -108,6 +109,11 @@ public class AnnoncesController : ControllerBase
         var annonce = await _annonceRepository.GetByIdAsync(id);
         if (annonce == null) return NotFound("Annonce introuvable.");
 
+        // COUNT séparé pour éviter de charger toutes les annonces du propriétaire en mémoire
+        var nombreAnnonces = annonce.IdutilisateurNavigation != null
+            ? await _dbContext.Annonces.CountAsync(a => a.Idutilisateur == annonce.Idutilisateur)
+            : 0;
+
         var result = new
         {
             annonce.Idannonce,
@@ -140,7 +146,7 @@ public class AnnoncesController : ControllerBase
                 annonce.IdutilisateurNavigation.Pseudonyme,
                 annonce.IdutilisateurNavigation.ProfilePhotoPath,
                 DateInscription = annonce.IdutilisateurNavigation.IddateNavigation?.Date1,
-                NombreAnnonces = annonce.IdutilisateurNavigation.Annonces.Count,
+                NombreAnnonces = nombreAnnonces,
                 annonce.IdutilisateurNavigation.IdentityVerified,
                 annonce.IdutilisateurNavigation.PhoneVerified,
                 NoteMoyenne = annonce.IdutilisateurNavigation.Avis.Any() ? (decimal?)annonce.IdutilisateurNavigation.Avis.Average(a => a.Nombreetoiles) : null,
@@ -197,26 +203,37 @@ public class AnnoncesController : ControllerBase
         {
             foreach (var base64Data in dto.Liensphoto)
             {
-
-                if (string.IsNullOrEmpty(base64Data)) continue;
-
-
-                var uploadParams = new ImageUploadParams()
-                {
-                    File = new FileDescription(Guid.NewGuid().ToString(), base64Data),
-                    Folder = "annonces",
-                    Transformation = new Transformation().Quality("auto").FetchFormat("auto")
-                };
-
-                var uploadResult = await _cloudinary.UploadAsync(uploadParams);
-
-                if (uploadResult.Error == null)
+                string base64Image;
+                if (base64Data.Contains(","))
                 {
 
-                    nouvelleAnnonce.Photos.Add(new Photo
+                    base64Image = base64Data.Split(',')[1]; 
+                }
+                else
+                {
+                    base64Image = base64Data;
+                }
+
+                byte[] imageBytes = Convert.FromBase64String(base64Image);
+
+                
+                using (var ms = new MemoryStream(imageBytes))
+                {
+                    var uploadParams = new ImageUploadParams()
                     {
-                        Lienphoto = uploadResult.SecureUrl.ToString()
-                    });
+                        File = new FileDescription(Guid.NewGuid().ToString(), ms),
+                        Folder = "annonces"
+                    };
+
+                    var uploadResult = await _cloudinary.UploadAsync(uploadParams);
+
+                    if (uploadResult.StatusCode == System.Net.HttpStatusCode.OK)
+                    {
+                        nouvelleAnnonce.Photos.Add(new Photo
+                        {
+                            Lienphoto = uploadResult.SecureUrl.ToString()
+                        });
+                    }
                 }
             }
         }

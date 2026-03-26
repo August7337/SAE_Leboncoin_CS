@@ -25,6 +25,9 @@ public class ReservationManager : IReservationRepository
     {
         return await _dbContext.Reservations
             .Include(r => r.IdannonceNavigation)
+                .ThenInclude(a => a.IdadresseNavigation)
+                    .ThenInclude(ad => ad.IdvilleNavigation)
+            .Include(r => r.IdannonceNavigation)
                 .ThenInclude(a => a.Photos)
             .Include(r => r.IdannonceNavigation)
                 .ThenInclude(a => a.IdadresseNavigation)
@@ -33,6 +36,7 @@ public class ReservationManager : IReservationRepository
             .Include(r => r.IddatefinreservationNavigation)
             .Include(r => r.Inclures)
                 .ThenInclude(i => i.IdtypevoyageurNavigation)
+            .Include(r => r.Transactions)
             .FirstOrDefaultAsync(r => r.Idreservation == id);
     }
 
@@ -41,6 +45,9 @@ public class ReservationManager : IReservationRepository
         return await _dbContext.Reservations
             .Where(r => r.Idutilisateur == userId)
             .Include(r => r.IdannonceNavigation)
+                .ThenInclude(a => a.IdadresseNavigation)
+                    .ThenInclude(ad => ad.IdvilleNavigation)
+            .Include(r => r.IdannonceNavigation)
                 .ThenInclude(a => a.Photos)
             .Include(r => r.IdannonceNavigation)
                 .ThenInclude(a => a.IdadresseNavigation)
@@ -49,6 +56,7 @@ public class ReservationManager : IReservationRepository
             .Include(r => r.IddatefinreservationNavigation)
             .Include(r => r.Inclures)
                 .ThenInclude(i => i.IdtypevoyageurNavigation)
+            .Include(r => r.Transactions)
             .ToListAsync();
     }
 

@@ -5,7 +5,9 @@ using LeboncoinAPI.Models.DTOs;
 using LeboncoinAPI.Models.DTOs.LeboncoinAPI.Models.DTOs;
 using LeboncoinAPI.Models.EntityFramework;
 using LeboncoinAPI.Models.Repository;
+using LeboncoinAPI.Services;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -193,6 +195,27 @@ public class UtilisateursController : ControllerBase
         return NoContent();
     }
 
+    // GET: api/Utilisateurs/{id}/auth-profile
+    [HttpGet("{id:int}/auth-profile")]
+    [Authorize]
+    public async Task<IActionResult> GetAuthProfile(int id)
+    {
+        var currentUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (currentUserId == null || currentUserId != id.ToString())
+            return Forbid();
+
+        var user = await ((UtilisateurManager)_dataRepository).GetByEmailAsync(
+            User.FindFirst(ClaimTypes.Email)!.Value);
+
+        if (user == null) return NotFound("Utilisateur introuvable.");
+
+        return Ok(new
+        {
+            roles = GetRoleNames(user),
+            permissions = GetPermissionNames(user)
+        });
+    }
+
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequest loginRequest)
     {
@@ -205,12 +228,12 @@ public class UtilisateursController : ControllerBase
 
         string userType = user.Professionnel != null ? "professionnel" : "particulier";
 
-        var token = GenerateJwtToken(user);
+        var jwtToken = GenerateJwtToken(user);
 
         return Ok(new
         {
-            Token = token,
-            User = new
+            token = jwtToken,
+            user = new
             {
                 idutilisateur = user.Idutilisateur,
                 pseudonyme = user.Pseudonyme,
@@ -226,7 +249,9 @@ public class UtilisateursController : ControllerBase
 
                 nomEntreprise = user.Professionnel?.Nomsociete,
                 siret = user.Professionnel?.Numsiret,
-                secteuractivite = user.Professionnel?.Secteuractivite
+                secteuractivite = user.Professionnel?.Secteuractivite,
+                roles = GetRoleNames(user),
+                permissions = GetPermissionNames(user)
             }
         });
     }
@@ -327,6 +352,12 @@ public class UtilisateursController : ControllerBase
         var currentUserId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
         if (currentUserId != id) return Forbid();
 
+        var hasGdprPermission = User.Claims.Any(claim =>
+            claim.Type == AuthorizationClaimTypes.Permission
+            && string.Equals(claim.Value, AppPermissions.AppViewGdprData, StringComparison.OrdinalIgnoreCase));
+
+        if (!hasGdprPermission) return Forbid();
+
 
         try
         {
@@ -369,6 +400,46 @@ public class UtilisateursController : ControllerBase
         }
     }
 
+    // DEV ONLY — génère un token JWT pour n'importe quel utilisateur sans mot de passe (Development uniquement)
+    [HttpPost("dev/impersonate/{id:int}")]
+    public async Task<IActionResult> DevImpersonate(int id, [FromServices] IWebHostEnvironment env)
+    {
+        if (!env.IsDevelopment())
+            return NotFound();
+
+        var basicUser = await _dataRepository.GetByIdAsync(id);
+        if (basicUser == null) return NotFound("Utilisateur introuvable.");
+
+        var user = await ((UtilisateurManager)_dataRepository).GetByEmailAsync(basicUser.Email);
+        if (user == null) return NotFound("Utilisateur introuvable.");
+
+        string userType = user.Professionnel != null ? "professionnel" : "particulier";
+        var jwtToken = GenerateJwtToken(user);
+
+        return Ok(new
+        {
+            token = jwtToken,
+            user = new
+            {
+                idutilisateur = user.Idutilisateur,
+                pseudonyme = user.Pseudonyme,
+                email = user.Email,
+                telephone = user.Telephoneutilisateur,
+                typeUtilisateur = userType,
+                profilePhotoPath = user.ProfilePhotoPath,
+                solde = user.Solde,
+                civilite = user.Particulier?.Civilite,
+                nomutilisateur = user.Particulier?.Nomutilisateur,
+                prenomutilisateur = user.Particulier?.Prenomutilisateur,
+                nomEntreprise = user.Professionnel?.Nomsociete,
+                siret = user.Professionnel?.Numsiret,
+                secteuractivite = user.Professionnel?.Secteuractivite,
+                roles = GetRoleNames(user),
+                permissions = GetPermissionNames(user)
+            }
+        });
+    }
+
     private string GenerateJwtToken(Utilisateur user)
     {
         var jwtSettings = HttpContext.RequestServices.GetService<IConfiguration>()!.GetSection("JwtSettings");
@@ -382,6 +453,16 @@ public class UtilisateursController : ControllerBase
         new Claim(ClaimTypes.Name, user.Pseudonyme)
     };
 
+        foreach (var role in GetRoleNames(user))
+        {
+            claims.Add(new Claim(ClaimTypes.Role, role));
+        }
+
+        foreach (var permission in GetPermissionNames(user))
+        {
+            claims.Add(new Claim(AuthorizationClaimTypes.Permission, permission));
+        }
+
         var token = new JwtSecurityToken(
             issuer: jwtSettings["Issuer"],
             audience: jwtSettings["Audience"],
@@ -391,6 +472,25 @@ public class UtilisateursController : ControllerBase
         );
 
         return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+
+    private static IReadOnlyCollection<string> GetRoleNames(Utilisateur user)
+    {
+        return user.Idroles
+            .Where(role => !string.IsNullOrWhiteSpace(role.Nomrole))
+            .Select(role => role.Nomrole!)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+    }
+
+    private static IReadOnlyCollection<string> GetPermissionNames(Utilisateur user)
+    {
+        return user.Idroles
+            .SelectMany(role => role.Idpermissions)
+            .Where(permission => !string.IsNullOrWhiteSpace(permission.Nompermission))
+            .Select(permission => permission.Nompermission!)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
     }
 
 

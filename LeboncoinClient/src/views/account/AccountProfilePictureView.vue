@@ -77,9 +77,21 @@
     if (!canvas) return;
   
     isUploading.value = true;
-  
-    
-    canvas.toBlob(async (blob) => {
+
+    // Redimensionner à 400px max (le backend réduit de toute façon à 200x200)
+    const MAX_SIZE = 400;
+    let w = canvas.width;
+    let h = canvas.height;
+    if (w > MAX_SIZE || h > MAX_SIZE) {
+      if (w > h) { h = Math.round(h * MAX_SIZE / w); w = MAX_SIZE; }
+      else { w = Math.round(w * MAX_SIZE / h); h = MAX_SIZE; }
+    }
+    const scaled = document.createElement('canvas');
+    scaled.width = w;
+    scaled.height = h;
+    scaled.getContext('2d').drawImage(canvas, 0, 0, w, h);
+
+    scaled.toBlob(async (blob) => {
       const formData = new FormData();
       formData.append('file', blob);
   

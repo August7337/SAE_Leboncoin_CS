@@ -11,7 +11,15 @@ const getProfileLink = computed(() => {
 })
 const logout = () => {
   authState.clearUser()
-  router.push('/login')
+  router.push('/')
+}
+
+const goHome = () => {
+  if (!authState.isLoggedIn() || authState.hasPermission('app.view.home')) {
+    router.push('/')
+  } else {
+    router.push({ name: 'service-dashboard' })
+  }
 }
 </script>
 
@@ -24,16 +32,17 @@ const logout = () => {
       class="mx-auto h-16 flex items-center justify-between gap-4 max-w-6xl px-6 md:px-12 xl:px-6"
     >
       <div class="flex items-center gap-4">
-        <router-link to="/" class="flex-shrink-0">
+        <button @click="goHome()" class="flex-shrink-0 cursor-pointer hover:opacity-80 transition-opacity">
           <img
             src="/assets/Leboncoin_logo.svg"
             alt="Logo leboncoin"
             class="h-8 w-auto object-contain"
           />
-        </router-link>
+        </button>
       </div>
 
       <router-link
+        v-if="!authState.isLoggedIn() || authState.hasPermission('app.view.home')"
         to="/create-annonce"
         class="hidden md:flex items-center gap-2 bg-[#ea580c] hover:bg-[#c2410c] text-white transition-colors font-bold py-2.5 px-5 rounded-xl shadow-sm"
       >
@@ -57,6 +66,7 @@ const logout = () => {
       <nav class="flex items-center gap-6 text-gray-700 shrink-0">
 
         <router-link
+          v-if="!authState.isLoggedIn() || authState.hasPermission('app.view.home')"
           to="/mes-recherches"
           class="relative hidden md:flex flex-col items-center gap-1 group w-20"
         >
@@ -68,6 +78,7 @@ const logout = () => {
         </router-link>
 
         <router-link
+          v-if="!authState.isLoggedIn() || authState.hasPermission('app.view.favorites')"
           to="/favorites"
           class="relative hidden md:flex flex-col items-center gap-1 group w-16"
         >
@@ -92,6 +103,7 @@ const logout = () => {
         </router-link>
 
         <router-link
+          v-if="!authState.isLoggedIn() || authState.hasPermission('app.view.messages')"
           to="/messages"
           class="relative hidden md:flex flex-col items-center gap-1 group w-16"
         >

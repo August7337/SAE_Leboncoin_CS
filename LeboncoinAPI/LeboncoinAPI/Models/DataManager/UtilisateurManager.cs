@@ -3,6 +3,7 @@ using LeboncoinAPI.Models.DTOs;
 using LeboncoinAPI.Models.DTOs.LeboncoinAPI.Models.DTOs;
 using LeboncoinAPI.Models.EntityFramework;
 using LeboncoinAPI.Models.Repository;
+using LeboncoinAPI.Services;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Formats.Asn1;
@@ -114,6 +115,8 @@ public class UtilisateurManager : IDataUtilisateurRepository<Utilisateur>
         return await _dbContext.Utilisateurs
             .Include(u => u.Particulier)
             .Include(u => u.Professionnel)
+            .Include(u => u.Idroles)
+                .ThenInclude(r => r.Idpermissions)
             .FirstOrDefaultAsync(u => u.Email.ToLower() == email.ToLower());
     }
 
@@ -158,6 +161,13 @@ public class UtilisateurManager : IDataUtilisateurRepository<Utilisateur>
 
             _dbContext.Particuliers.Add(particulier);
             await _dbContext.SaveChangesAsync();
+
+            var clientRole = await _dbContext.Roles.FirstOrDefaultAsync(r => r.Nomrole == AppRoles.Client);
+            if (clientRole != null)
+            {
+                nouvelUtilisateur.Idroles.Add(clientRole);
+                await _dbContext.SaveChangesAsync();
+            }
 
             await transaction.CommitAsync();
             return true;
@@ -280,6 +290,7 @@ public class UtilisateurManager : IDataUtilisateurRepository<Utilisateur>
             throw;
         }
     }
+
     public class RegistrationConflictException : Exception
     {
         public string TargetField { get; }
@@ -303,7 +314,8 @@ public class UtilisateurManager : IDataUtilisateurRepository<Utilisateur>
             .Include(u => u.Reservations)
             .Include(u => u.Transactions)
             .Include(u => u.Avis)
-            .Include(u => u.Incidents)
+            .Include(u => u.Incidents).ThenInclude(i => i.StatutIncidentNavigation)
+            .Include(u => u.Incidents).ThenInclude(i => i.IddateNavigation)
             .Include(u => u.MessageIdutilisateurexpediteurNavigations)
             .Include(u => u.MessageIdutilisateurreceveurNavigations)
             .FirstOrDefaultAsync(u => u.Idutilisateur == idUtilisateur);
@@ -342,7 +354,18 @@ public class UtilisateurManager : IDataUtilisateurRepository<Utilisateur>
             ReservationsEffectuees = user.Reservations.Select(r => (dynamic)new { r.Idreservation, r.Idannonce, r.Nomclient, r.Prenomclient }).ToList(),
             Transactions = user.Transactions.Select(t => (dynamic)new { t.Idtransaction, t.Montanttransaction }).ToList(),
             AvisPublies = user.Avis.Select(a => (dynamic)new { a.Idavis, a.Nombreetoiles, a.Texteavis }).ToList(),
-            IncidentsSignales = user.Incidents.Select(i => (dynamic)new { i.Idincident, i.Descriptionincident }).ToList(),
+            IncidentsSignales = user.Incidents.Select(i => (dynamic)new
+            {
+                i.Idincident,
+                i.Idreservation,
+                i.Descriptionincident,
+                i.Motifincident,
+                DateSignalement = i.IddateNavigation?.Date1.HasValue == true
+                    ? i.IddateNavigation.Date1.Value.ToString("yyyy-MM-dd")
+                    : null,
+                StatutCode = i.StatutIncidentNavigation != null ? i.StatutIncidentNavigation.Code : null,
+                StatutLibelle = i.StatutIncidentNavigation != null ? i.StatutIncidentNavigation.Libelle : null,
+            }).ToList(),
 
             MessagesEnvoyes = user.MessageIdutilisateurexpediteurNavigations.Select(m => (dynamic)new { m.Idmessage, m.Contenumessage }).ToList(),
             MessagesRecus = user.MessageIdutilisateurreceveurNavigations.Select(m => (dynamic)new { m.Idmessage, m.Contenumessage }).ToList()
