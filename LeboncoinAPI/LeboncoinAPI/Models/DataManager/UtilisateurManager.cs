@@ -170,23 +170,31 @@ public class UtilisateurManager : IDataUtilisateurRepository<Utilisateur>
     }
     public async Task UpdateProfileAsync(Utilisateur existingUser, UtilisateurUpdateDTO dto)
     {
-
-        if (existingUser.Particulier == null)
-        {
-            await _dbContext.Entry(existingUser).Reference(u => u.Particulier).LoadAsync();
-        }
-
-
+        // Update Base User
         existingUser.Pseudonyme = dto.Pseudonyme;
         existingUser.Email = dto.Email;
         existingUser.Telephoneutilisateur = dto.Telephoneutilisateur;
 
-
+        // Update Particulier if it exists
         if (existingUser.Particulier != null)
         {
-            existingUser.Particulier.Civilite = dto.Civilite;
             existingUser.Particulier.Nomutilisateur = dto.Nomutilisateur;
             existingUser.Particulier.Prenomutilisateur = dto.Prenomutilisateur;
+            existingUser.Particulier.Civilite = dto.Civilite;
+        }
+
+        // Update Professionnel if it exists
+        // Explicitly load it if EF hasn't already (important!)
+        if (existingUser.Professionnel == null)
+        {
+            await _dbContext.Entry(existingUser).Reference(u => u.Professionnel).LoadAsync();
+        }
+
+        if (existingUser.Professionnel != null)
+        {
+            existingUser.Professionnel.Nomsociete = dto.NomEntreprise;
+            existingUser.Professionnel.Numsiret = dto.Siret;
+            existingUser.Professionnel.Secteuractivite = dto.Secteuractivite;
         }
 
         await _dbContext.SaveChangesAsync();
