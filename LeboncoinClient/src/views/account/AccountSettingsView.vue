@@ -2,7 +2,7 @@
 import { reactive, ref, onMounted } from 'vue'
 import { authState } from '@/auth.js'
 import axios from 'axios'
-
+import api from '@/api/axios'
 const isSaving = ref(false)
 const message = ref({ text: '', type: '' })
 
@@ -66,7 +66,7 @@ const updateAccount = async () => {
   }
 
   try {
-    await axios.put(`https://localhost:7057/api/Utilisateurs/${userId}`, payload)
+    await api.put(`/Utilisateurs/${userId}`, payload)
 
     const updatedUser = { ...authState.user, ...payload }
     authState.setUser(updatedUser)

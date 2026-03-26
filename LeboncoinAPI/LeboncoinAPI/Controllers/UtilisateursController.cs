@@ -278,22 +278,28 @@ public class UtilisateursController : ControllerBase
             var existingEmail = await _dataRepository.GetByEmailAsync(dto.Email);
             if (existingEmail != null)
                 return Conflict(new { target = "email", message = "Cet email est déjà utilisé." });
+
             var success = await _dataRepository.RegisterFullParticulierAsync(dto);
 
             if (success)
             {
                 var user = await _dataRepository.GetByEmailAsync(dto.Email);
 
+            
+                var token = GenerateJwtToken(user);
+
                 return Ok(new
                 {
                     message = "Inscription réussie !",
+                    Token = token,
                     user = new
                     {
                         idutilisateur = user.Idutilisateur,
                         pseudonyme = user.Pseudonyme,
                         email = user.Email,
                         telephone = user.Telephoneutilisateur,
-                        solde = user.Solde
+                        solde = user.Solde,
+                        typeUtilisateur = "particulier" 
                     }
                 });
             }
@@ -313,15 +319,19 @@ public class UtilisateursController : ControllerBase
         {
             await ((UtilisateurManager)_dataRepository).RegisterFullProfessionnelAsync(dto);
             var user = await _dataRepository.GetByEmailAsync(dto.Email);
+            var token = GenerateJwtToken(user);
+
             return Ok(new
             {
                 message = "Success",
+                Token = token,
                 user = new
                 {
                     idutilisateur = user.Idutilisateur,
                     pseudonyme = user.Pseudonyme,
                     email = user.Email,
-                    telephone = user.Telephoneutilisateur
+                    telephone = user.Telephoneutilisateur,
+                    typeUtilisateur = "professionnel"
                 }
             });
         }

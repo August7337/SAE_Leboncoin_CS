@@ -4,13 +4,26 @@ import api from '@/api/axios'
 export const authState = reactive({
   user: JSON.parse(localStorage.getItem('user')) || null,
   token: localStorage.getItem('token') || null,
+login(data) {
+    const userToSave = data.user || (data.idutilisateur ? data : null);
+    const tokenToSave = data.token || data.Token || localStorage.getItem('token');
 
-  login(data) {
-    this.token = data.token
-    this.user = data.user
-    localStorage.setItem('token', data.token)
-    localStorage.setItem('user', JSON.stringify(data.user))
-  },
+    if (userToSave) {
+        this.user = userToSave;
+        localStorage.setItem('user', JSON.stringify(userToSave));
+    }
+
+    if (tokenToSave) {
+        this.token = tokenToSave;
+        localStorage.setItem('token', tokenToSave);
+    }
+
+    console.log("Auth System Check:", { 
+        hasUser: !!this.user, 
+        hasToken: !!this.token,
+        fullUser: this.user 
+    });
+},
 
   setUser(userData) {
     this.user = userData

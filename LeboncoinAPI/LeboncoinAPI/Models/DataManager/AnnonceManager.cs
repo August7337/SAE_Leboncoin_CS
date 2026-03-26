@@ -1,6 +1,7 @@
 using LeboncoinAPI.Models.DTOs;
 using LeboncoinAPI.Models.EntityFramework;
 using LeboncoinAPI.Models.Repository;
+using LeboncoinAPI.Models.DTOs;
 using Microsoft.EntityFrameworkCore;
 
 namespace LeboncoinAPI.Models.DataManager;
@@ -67,6 +68,7 @@ public class AnnonceManager : IAnnonceRepository
                 Nomville = a.IdadresseNavigation.IdvilleNavigation.Nomville,
                 Codepostal = a.IdadresseNavigation.IdvilleNavigation.Codepostal,
                 Prixnuitee = a.Prixnuitee,
+                Estverifie = a.Estverifie,
                 Photos = a.Photos
                     .Select(p => new Photo { Idphoto = p.Idphoto, Idannonce = p.Idannonce, Lienphoto = p.Lienphoto })
                     .ToList(),
@@ -159,6 +161,7 @@ public class AnnonceManager : IAnnonceRepository
                 Prixnuitee = a.Prixnuitee,
                 Capacite = a.Capacite,
                 Nombreetoilesleboncoin = a.Nombreetoilesleboncoin,
+                Estverifie = a.Estverifie,
                 Photos = a.Photos
                     .Select(p => new Photo { Idphoto = p.Idphoto, Idannonce = p.Idannonce, Lienphoto = p.Lienphoto })
                     .ToList(),
@@ -182,6 +185,7 @@ public class AnnonceManager : IAnnonceRepository
                 Prixnuitee = a.Prixnuitee,
                 Capacite = a.Capacite,
                 Nombreetoilesleboncoin = a.Nombreetoilesleboncoin,
+                Estverifie = a.Estverifie,
                 Photos = a.Photos
                     .Select(p => new Photo { Idphoto = p.Idphoto, Idannonce = p.Idannonce, Lienphoto = p.Lienphoto })
                     .ToList(),
@@ -286,6 +290,7 @@ public class AnnonceManager : IAnnonceRepository
                 Prixnuitee = a.Prixnuitee,
                 Capacite = a.Capacite,
                 Nombreetoilesleboncoin = a.Nombreetoilesleboncoin,
+                Estverifie = a.Estverifie,
                 Photos = a.Photos
                     .Select(p => new Photo { Idphoto = p.Idphoto, Idannonce = p.Idannonce, Lienphoto = p.Lienphoto })
                     .ToList(),

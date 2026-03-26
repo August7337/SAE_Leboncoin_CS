@@ -60,6 +60,7 @@ builder.Services.AddDbContext<LeboncoinDBContext>(options =>
 LogBoot("Services.AddDbContext:done");
 
 LogBoot("Services.RegisterRepositories:start");
+builder.Services.AddScoped<ICommoditeRepository, CommoditeManager>();
 builder.Services.AddScoped<IDataUtilisateurRepository<Utilisateur>, UtilisateurManager>();
 builder.Services.AddScoped<IAnnonceRepository, AnnonceManager>();
 builder.Services.AddScoped<IReservationRepository, ReservationManager>();

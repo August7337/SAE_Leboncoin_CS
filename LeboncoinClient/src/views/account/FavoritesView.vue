@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted } from 'vue'
-import axios from 'axios'
+import api from '@/api/axios'
 import { authState } from '@/auth.js'
 import AnnonceList from '@/components/AnnonceList.vue'
 import annoncesService from '@/services/annoncesService'

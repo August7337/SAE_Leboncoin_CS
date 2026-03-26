@@ -29,10 +29,14 @@ public class ReservationManager : IReservationRepository
                     .ThenInclude(ad => ad.IdvilleNavigation)
             .Include(r => r.IdannonceNavigation)
                 .ThenInclude(a => a.Photos)
+            .Include(r => r.IdannonceNavigation)
+                .ThenInclude(a => a.IdadresseNavigation)
+                    .ThenInclude(adr => adr.IdvilleNavigation)
             .Include(r => r.IddatedebutreservationNavigation)
             .Include(r => r.IddatefinreservationNavigation)
             .Include(r => r.Inclures)
                 .ThenInclude(i => i.IdtypevoyageurNavigation)
+            .Include(r => r.Transactions)
             .FirstOrDefaultAsync(r => r.Idreservation == id);
     }
 
@@ -45,10 +49,14 @@ public class ReservationManager : IReservationRepository
                     .ThenInclude(ad => ad.IdvilleNavigation)
             .Include(r => r.IdannonceNavigation)
                 .ThenInclude(a => a.Photos)
+            .Include(r => r.IdannonceNavigation)
+                .ThenInclude(a => a.IdadresseNavigation)
+                    .ThenInclude(adr => adr.IdvilleNavigation)
             .Include(r => r.IddatedebutreservationNavigation)
             .Include(r => r.IddatefinreservationNavigation)
             .Include(r => r.Inclures)
                 .ThenInclude(i => i.IdtypevoyageurNavigation)
+            .Include(r => r.Transactions)
             .ToListAsync();
     }
 

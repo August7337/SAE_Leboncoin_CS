@@ -1,22 +1,51 @@
-<script setup>
-import { reactive, ref } from 'vue'
+
+
+<script  setup>
+import { reactive, ref, onMounted, watch, computed } from 'vue'
+import axios from 'axios'
 import api from '@/api/axios'
 import { useRouter } from 'vue-router'
 import { authState } from '@/auth.js'
 import { Cropper, CircleStencil } from 'vue-advanced-cropper';
 import 'vue-advanced-cropper/dist/style.css';
 
+
+
+const allCommodites = ref([]);
+const selectedCommodites = ref([]);
 const router = useRouter()
 const isPublishing = ref(false)
 const showSuccess = ref(false)
 const apiError = ref('')
 const cropperRef = ref(null)
-
+const suggestions = ref([]);
+const showSuggestions = ref(false);
 const imageSource = ref(null); 
 const photosList = ref([]); 
 const isUploading = ref(false);
-
 const photosLocal = ref([]);
+const activeTab = ref('');  
+
+
+
+
+const groupedCommodites = computed(() => {
+  const groups = {}; 
+  allCommodites.value.forEach(item => {
+    const catName = item.idcategorieNavigation?.nomcategorie || 'Autres';
+    if (!groups[catName]) {
+      groups[catName] = [];
+    }
+    groups[catName].push(item);
+  });
+  return groups;
+});
+watch(groupedCommodites, (newVal) => {
+  if (Object.keys(newVal).length > 0 && !activeTab.value) {
+    activeTab.value = Object.keys(newVal);
+  }
+}, { immediate: true });
+
 const typesHebergement = [
   { id: 1, nom: "Appartement" },
   { id: 2, nom: "Maison" },
@@ -28,7 +57,51 @@ const typesHebergement = [
   { id: 8, nom: "Maison d'hôtes" },
   { id: 9, nom: "Bungalow" }
 ]
+const fetchCommodites = async () => {
+  try {
+    const response = await api.get('/Commodites');
+    allCommodites.value = response.data;
+  } catch (error) {
+    console.error("Erreur lors du chargement des commodités:", error);
+  }
+};
 
+onMounted(() => {
+  fetchCommodites();
+});
+
+const fetchAutocomplete = async () => {
+  if (form.rue.length < 3) {
+    suggestions.value = [];
+    return;
+  }
+
+  try {
+    const apiKey = 'd1f65bc8100b4c868d082eb1f125364e';
+    const response = await axios.get(`https://api.geoapify.com/v1/geocode/autocomplete`, {
+      params: {
+        text: form.rue,
+        apiKey: apiKey,
+        lang: 'fr',
+        filter: 'countrycode:fr' 
+      }
+    });
+    suggestions.value = response.data.features;
+    showSuggestions.value = true;
+  } catch (error) {
+    console.error("Error fetching autocomplete:", error);
+  }
+};
+
+const selectSuggestion = (suggestion) => {
+  const props = suggestion.properties;
+  form.rue = props.housenumber ? `${props.housenumber} ${props.street}` : props.street || props.name;
+  form.ville = props.city || props.town || '';
+  form.codePostal = props.postcode || '';
+  
+  showSuggestions.value = false;
+  suggestions.value = [];
+};
 const form = reactive({
   titreannonce: '',
   descriptionannonce: '',
@@ -87,8 +160,9 @@ const removePhoto = (index) => {
   URL.revokeObjectURL(photosLocal.value[index].previewUrl);
   photosLocal.value.splice(index, 1);
 };
-
-
+var requestOptions = {
+  method: 'GET',
+};
 const onFileChange = (event) => {
   const files = event.target.files;
   if (!files || files.length === 0) return;
@@ -143,17 +217,18 @@ const publishAnnonce = async () => {
   isPublishing.value = true
   try {
     const payload = {
-      ...form, 
+      ...form,
       idutilisateur: authState.user.idutilisateur,
-      liensphoto: [],
+      liensphoto: photosLocal.value.map(p => p.base64), 
       acomptefixe: !form.isAcomptePercentage ? Number(form.acompte) : 0,
+      idcommodites: selectedCommodites.value,
       acomptepourcentage: form.isAcomptePercentage ? Number(form.acompte) : 0,
-      minimumnuitee: Number(form.minimumnuitee), 
+      minimumnuitee: Number(form.minimumnuitee),
       prixnuitee: Number(form.prixnuitee)
     };
-    
+
     const response = await api.post(`/Annonces`, payload);
-    
+
     const nouvelleAnnonceId = response.data.idannonce || response.data.annonceId || response.data.id;
 
     if (nouvelleAnnonceId && photosLocal.value.length > 0) {
@@ -168,7 +243,6 @@ const publishAnnonce = async () => {
         });
       }
     }
-
     showSuccess.value = true
     setTimeout(() => router.push({ name: 'home' }), 1500)
 
@@ -238,12 +312,13 @@ const publishAnnonce = async () => {
     <div v-if="photosLocal.length > 0" class="grid grid-cols-3 gap-4 mb-6">
   <div v-for="(photo, index) in photosLocal" :key="index" class="relative group">
     <img :src="photo.previewUrl" class="w-full h-24 object-cover rounded-xl border" />
-    <button 
-      type="button"
-      @click="removePhoto(index)"
-      class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-lg hover:bg-red-600"
-    >
-      </button>
+<button 
+  type="button"
+  @click="removePhoto(index)"
+  class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center shadow-lg hover:bg-red-600 text-xs font-bold"
+>
+  ✕
+</button>
   </div>
 </div>
 </div>
@@ -284,10 +359,26 @@ const publishAnnonce = async () => {
 </div>
 <div class="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 space-y-4">
   <h2 class="font-bold text-lg mb-2">Localisation du bien</h2>
-  
-  <div>
+  <div class="relative">
     <label class="block text-sm font-bold mb-2">Rue et numéro</label>
-    <input v-model="form.rue" type="text" placeholder="Ex: 12 rue de la Paix" class="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none" />
+    <input 
+      v-model="form.rue" 
+      @input="fetchAutocomplete"
+      type="text" 
+      placeholder="Commencez à taper votre adresse..." 
+      class="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:border-[#ea580c]" 
+    />
+
+    <ul v-if="showSuggestions && suggestions.length" class="absolute z-50 w-full bg-white border border-gray-200 rounded-xl mt-1 shadow-xl max-h-60 overflow-auto">
+      <li 
+        v-for="(s, index) in suggestions" 
+        :key="index"
+        @click="selectSuggestion(s)"
+        class="px-4 py-3 hover:bg-orange-50 cursor-pointer border-b last:border-b-0 text-sm"
+      >
+        <span class="font-bold">{{ s.properties.formatted }}</span>
+      </li>
+    </ul>
   </div>
 
   <div class="grid grid-cols-2 gap-4">
@@ -384,7 +475,7 @@ const publishAnnonce = async () => {
   </div>
 
   <div>
-    <label class="block text-sm font-bold mb-2">Heure de départ (avant)</label>
+    <label class="max-w-5xl mx-auto px-4">Heure de départ (avant)</label>
 <select 
   v-model="form.idheuredepart"
   class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#ea580c] outline-none bg-white transition-all"
@@ -393,6 +484,54 @@ const publishAnnonce = async () => {
     {{ Math.floor((h - 1) / 2).toString().padStart(2, '0') }}:{{ (h % 2 === 0) ? '30' : '00' }}
   </option>
 </select>
+  </div>
+</div>
+<div class="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
+  <div class="flex items-center justify-between mb-6">
+    <h2 class="font-bold text-lg text-gray-900">Équipements et services</h2>
+    <span class="text-xs font-bold text-orange-600 bg-orange-50 px-2 py-1 rounded-lg">
+      {{ selectedCommodites.length }} sélectionné(s)
+    </span>
+  </div>
+
+  <div class="flex flex-wrap gap-2 border-b border-gray-100 pb-4 mb-6">
+    <button 
+      v-for="(items, catName) in groupedCommodites" 
+      :key="catName"
+      type="button"
+      @click="activeTab = catName"
+      :class="[
+        'px-4 py-2 rounded-xl text-xs font-black transition-all',
+        activeTab === catName 
+          ? 'bg-[#ea580c] text-white shadow-md' 
+          : 'bg-gray-50 text-gray-500 hover:bg-gray-100'
+      ]"
+    >
+      {{ catName }}
+    </button>
+  </div>
+
+  <div v-if="activeTab" class="grid grid-cols-2 md:grid-cols-4 gap-3">
+    <label 
+      v-for="item in groupedCommodites[activeTab]" 
+      :key="item.idcommodite" 
+      :class="[
+        'flex items-center p-3 rounded-2xl border transition-all cursor-pointer group',
+        selectedCommodites.includes(item.idcommodite) 
+          ? 'border-orange-200 bg-orange-50 ring-1 ring-orange-200' 
+          : 'border-gray-50 hover:border-gray-100 hover:bg-gray-100'
+      ]"
+    >
+      <input 
+        type="checkbox" 
+        :value="item.idcommodite" 
+        v-model="selectedCommodites"
+        class="h-4 w-4 accent-[#ea580c] rounded"
+      />
+      <span class="ml-3 text-xs font-bold text-gray-700 truncate group-hover:text-gray-900">
+        {{ item.nomcommodite }}
+      </span>
+    </label>
   </div>
 </div>
         <div class="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
