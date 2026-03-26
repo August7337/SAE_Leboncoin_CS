@@ -67,15 +67,26 @@
         <span v-if="errors.numsiret" class="error-text">{{ errors.numsiret }}</span>
       </div>
 
-      <div class="field">
-        <label>Secteur d'activité</label>
-        <select v-model="proForm.secteuractivite">
-          <option value="Immobilier">Immobilier</option>
-          <option value="Automobile">Automobile</option>
-          <option value="Services">Services</option>
-          <option value="Autre">Autre</option>
-        </select>
-      </div>
+<div class="field">
+  <label>Secteur d'activité</label>
+  <select v-model="proForm.secteuractivite">
+    <option disabled value="">Sélectionnez un secteur</option>
+    <option value="Automobile">Automobile</option>
+    <option value="Immobilier">Immobilier</option>
+    <option value="Services">Services aux entreprises</option>
+    
+    <option value="BTP">BTP / Construction</option>
+    <option value="Commerce">Commerce / Retail</option>
+    <option value="Informatique">Informatique / Tech</option>
+    <option value="Sante">Santé / Bien-être</option>
+    <option value="Restauration">Hôtellerie / Restauration</option>
+    <option value="Transport">Transport / Logistique</option>
+    <option value="Artisanat">Artisanat</option>
+    <option value="Agriculture">Agriculture</option>
+    
+    <option value="Autre">Autre</option>
+  </select>
+</div>
 
       <button type="submit">Créer mon compte professionnel</button>
     </form>

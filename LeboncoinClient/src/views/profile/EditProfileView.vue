@@ -118,15 +118,6 @@ const updateAccount = async () => {
               <label class="block text-sm font-bold mb-2">SIRET</label>
               <input v-model="form.siret" type="text" class="input-style" />
             </div>
-            <div>
-              <label class="block text-sm font-bold mb-2">Site Web</label>
-              <input
-                v-model="form.siteWeb"
-                type="text"
-                class="input-style"
-                placeholder="https://..."
-              />
-            </div>
           </div>
         </div>
 
