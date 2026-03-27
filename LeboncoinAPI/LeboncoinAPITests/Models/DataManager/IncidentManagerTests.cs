@@ -24,20 +24,41 @@ public class IncidentManagerTests
     public async Task GetByUtilisateurAsync_ReturnsOnlyUserIncidents()
     {
         // Arrange
-        var user1 = new Utilisateur { Idutilisateur = 1, Pseudonyme = "U1" };
-        var user2 = new Utilisateur { Idutilisateur = 2, Pseudonyme = "U2" };
+        var options = new DbContextOptionsBuilder<LeboncoinDBContext>()
+            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+            .Options;
 
-        _context.Incidents.AddRange(new List<Incident> {
-            new Incident { Idincident = 1, Idutilisateur = 1, Descriptionincident = "Fuite" },
-            new Incident { Idincident = 2, Idutilisateur = 2, Descriptionincident = "Bruit" }
-        });
-        await _context.SaveChangesAsync();
+        using var context = new LeboncoinDBContext(options);
 
-        // Act
-        var results = await _manager.GetByUtilisateurAsync(1);
+        // 1. On crée d'abord l'utilisateur pour qu'il existe en base
+        var monUser = new Utilisateur
+        {
+            Idutilisateur = 42,
+            Pseudonyme = "Jean",
+            Email = "jean@test.com",
+            Password = "hash",
+            Telephoneutilisateur = "0600000000"
+        };
+        context.Utilisateurs.Add(monUser);
 
-        // Assert
-        Assert.AreEqual(1, results.Count());
-        Assert.AreEqual("Fuite", results.First().Descriptionincident);
+        // 2. On crée l'incident en utilisant l'OBJET utilisateur (pas juste l'ID)
+        var incident = new Incident
+        {
+            Idincident = 1,
+            Idutilisateur = 42,
+            Descriptionincident = "Fuite",
+            Motifincident = "Plomberie",
+            IdutilisateurNavigation = monUser // On force la liaison
+        };
+        context.Incidents.Add(incident);
+
+        await context.SaveChangesAsync();
+
+        // 3. Act
+        var manager = new IncidentManager(context);
+        var results = await manager.GetByUtilisateurAsync(42);
+
+        // 4. Assert
+        Assert.AreEqual(1, results.Count(), "L'incident devrait être trouvé pour l'ID 42");
     }
 }
