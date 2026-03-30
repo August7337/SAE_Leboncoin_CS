@@ -51,15 +51,6 @@ public class ReservationsController : ControllerBase
             return NotFound();
         }
 
-<<<<<<< HEAD
-        return Ok(MapReservation(reservation));
-    }
-
-    [HttpGet("user/{userId}")]
-    public async Task<ActionResult<IEnumerable<ReservationResponseDto>>> GetByUserId(int userId)
-    {
-        return Ok((await _dataRepository.GetByUserIdAsync(userId)).Select(MapReservation));
-=======
         return Ok(MapToReadDto(reservation));
     }
 
@@ -110,9 +101,7 @@ public class ReservationsController : ControllerBase
             }).ToList(),
             Transactions = r.Transactions.Select(t => new TransactionReadDto { Montanttransaction = t.Montanttransaction }).ToList()
         };
->>>>>>> 1c5c4e08850941806f3d0b25f104ef5cd1ee9b8f
     }
-
 
     // =========================================================================
     // 2. MÉTHODES DE PAIEMENT ET CRÉATION (Stripe & Solde)
@@ -351,7 +340,7 @@ public class ReservationsController : ControllerBase
         var dateFinRecord = await GetOrCreateDate(dateFin);
         var dateAujourdhui = await GetOrCreateDate(DateOnly.FromDateTime(DateTime.Now));
 
-        Reservation reservation;
+        Reservation? reservation;
         if (meta.ContainsKey("type") && meta["type"] == "update")
         {
             int idRes = int.Parse(meta["idreservation"]);
@@ -566,5 +555,5 @@ public class ReservationsController : ControllerBase
 
 public class PaymentConfirmDto
 {
-    public string SessionId { get; set; }
+    public string SessionId { get; set; } = null!;
 }
