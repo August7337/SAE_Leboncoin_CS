@@ -296,8 +296,13 @@ public class ReservationsController : ControllerBase
         existingRes.Iddatedebutreservation = dDebut.Iddate;
         existingRes.Iddatefinreservation = dFin.Iddate;
 
+        // 1. Vider proprement les voyageurs existants et synchroniser avec la DB
         _dbContext.Inclures.RemoveRange(existingRes.Inclures);
-        foreach (var incDto in dto.Inclures)
+        await _dbContext.SaveChangesAsync(); 
+
+        // 2. Ajouter les nouveaux voyageurs
+        var voyageurs = dto.Inclures ?? new List<InclureCreateDto>();
+        foreach (var incDto in voyageurs)
         {
             _dbContext.Inclures.Add(new Inclure
             {
@@ -435,12 +440,16 @@ public class ReservationsController : ControllerBase
         }
 
         // 3. Mise à jour des voyageurs (Inclures)
-        // On supprime les anciens et on ajoute les nouveaux
         _dbContext.Inclures.RemoveRange(existingReservation.Inclures);
-        foreach (var inc in reservation.Inclures)
+        await _dbContext.SaveChangesAsync(); // Évite les conflits de clés composites
+
+        if (reservation.Inclures != null)
         {
-            inc.Idreservation = id; // Sécurité
-            _dbContext.Inclures.Add(inc);
+            foreach (var inc in reservation.Inclures)
+            {
+                inc.Idreservation = id; 
+                _dbContext.Inclures.Add(inc);
+            }
         }
 
         try
