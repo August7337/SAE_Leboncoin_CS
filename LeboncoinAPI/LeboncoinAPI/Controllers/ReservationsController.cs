@@ -475,10 +475,48 @@ public class ReservationsController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteReservation(int id)
     {
-        var reservation = await _dataRepository.GetByIdAsync(id);
+        var reservation = await _dbContext.Reservations
+            .Include(r => r.Inclures)
+            .Include(r => r.Transactions)
+            .Include(r => r.Incidents)
+            .FirstOrDefaultAsync(r => r.Idreservation == id);
+
         if (reservation == null) return NotFound();
 
-        await _dataRepository.DeleteAsync(reservation);
+        if (reservation.Incidents != null && reservation.Incidents.Any())
+        {
+            return BadRequest(new { message = "Impossible d'annuler une réservation associée à un incident." });
+        }
+
+        // 1. Calcul du montant à rembourser
+        decimal refundAmount = reservation.Transactions.Sum(t => t.Montanttransaction);
+
+        if (refundAmount > 0)
+        {
+            var utilisateur = await _dbContext.Utilisateurs.FindAsync(reservation.Idutilisateur);
+            if (utilisateur != null)
+            {
+                utilisateur.Solde += refundAmount;
+                _dbContext.Utilisateurs.Update(utilisateur);
+
+                Console.WriteLine($"[DEBUG] Réservation annulée: Remboursement de {refundAmount} versé au solde de l'utilisateur {utilisateur.Idutilisateur}");
+            }
+        }
+
+        // 2. Clear FK dependencies manuellement (DeleteBehavior.Restrict)
+        if (reservation.Inclures != null && reservation.Inclures.Any())
+        {
+            _dbContext.Inclures.RemoveRange(reservation.Inclures);
+        }
+
+        if (reservation.Transactions != null && reservation.Transactions.Any())
+        {
+            _dbContext.Transactions.RemoveRange(reservation.Transactions);
+        }
+
+        // 3. Suppression
+        _dbContext.Reservations.Remove(reservation);
+        await _dbContext.SaveChangesAsync();
 
         return NoContent();
     }

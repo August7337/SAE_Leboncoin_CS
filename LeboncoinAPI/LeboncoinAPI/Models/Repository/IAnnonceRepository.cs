@@ -8,6 +8,7 @@ public interface IAnnonceRepository : IDataRepository<Annonce>
 {
     Task<IEnumerable<Annonce>> GetAllAsync();
     Task<IEnumerable<AnnonceSearchResultDto>> GetSimilairesAsync(int id);
+    Task UpdateFromDtoAsync(Annonce entityToUpdate, UpdateAnnonceRequestDTO dto);
     Task<IEnumerable<AnnonceSearchResultDto>> GetByLocalisationAsync(
         string query,
         decimal? minPrice = null,

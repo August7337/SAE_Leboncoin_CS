@@ -25,11 +25,19 @@ namespace LeboncoinAPI.Controllers;
 public class UtilisateursController : ControllerBase
 {
     private readonly IDataUtilisateurRepository<Utilisateur> _dataRepository;
+    private readonly LeboncoinDBContext _context;
+    private readonly IEmailService _emailService;
     private readonly Cloudinary _cloudinary;
 
-    public UtilisateursController(IDataUtilisateurRepository<Utilisateur> dataRepository, IConfiguration config)
+    public UtilisateursController(
+        IDataUtilisateurRepository<Utilisateur> dataRepository,
+        LeboncoinDBContext context,           
+        IEmailService emailService,           
+        IConfiguration config)
     {
         _dataRepository = dataRepository;
+        _context = context;             
+        _emailService = emailService;  
 
         var acc = new Account(
             config["CloudinarySettings:CloudName"],
@@ -37,6 +45,57 @@ public class UtilisateursController : ControllerBase
             config["CloudinarySettings:ApiSecret"]
         );
         _cloudinary = new Cloudinary(acc);
+    }
+
+    [HttpPost("forgot-password")]
+    [AllowAnonymous]
+    public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
+    {
+        var user = await _context.Utilisateurs.FirstOrDefaultAsync(u => u.Email == request.Email);
+
+        if (user == null)
+            return Ok(new { message = "Si cet e-mail est associé à un compte, un lien de réinitialisation a été envoyé." });
+
+        user.ResetPasswordToken = Guid.NewGuid().ToString();
+        user.ResetPasswordExpiry = DateTime.UtcNow.AddHours(2);
+
+        await _context.SaveChangesAsync();
+
+        var resetLink = $"http://localhost:5173/reset-password?token={user.ResetPasswordToken}";
+
+        var htmlBody = $@"
+            <div style='font-family: Arial, sans-serif; padding: 20px; border: 1px solid #eee;'>
+                <h2 style='color: #ff6e14;'>Mot de passe oublié ?</h2>
+                <p>Bonjour {user.Pseudonyme},</p>
+                <p>Cliquez sur le bouton ci-dessous pour choisir un nouveau mot de passe :</p>
+                <a href='{resetLink}' style='display:inline-block; background:#ff6e14; color:white; padding:10px 20px; text-decoration:none; border-radius:5px;'>Réinitialiser mon mot de passe</a>
+                <p>Ce lien expirera dans 2 heures.</p>
+                <p>Si vous n'êtes pas à l'origine de cette demande, ignorez ce message.</p>
+            </div>";
+
+        await _emailService.SendEmailAsync(user.Email, "Réinitialisation de votre mot de passe", htmlBody);
+
+        return Ok(new { message = "E-mail de récupération envoyé." });
+    }
+
+    [HttpPost("reset-password")]
+    [AllowAnonymous]
+    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
+    {
+        var user = await _context.Utilisateurs.FirstOrDefaultAsync(u =>
+            u.ResetPasswordToken == request.Token &&
+            u.ResetPasswordExpiry > DateTime.UtcNow);
+
+        if (user == null)
+            return BadRequest(new { message = "Le lien est invalide ou a expiré." });
+
+        user.Password = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
+        user.ResetPasswordToken = null;
+        user.ResetPasswordExpiry = null;
+
+        await _context.SaveChangesAsync();
+
+        return Ok(new { message = "Votre mot de passe a été modifié avec succès." });
     }
 
     [HttpPost("{id}/upload-pfp")]
