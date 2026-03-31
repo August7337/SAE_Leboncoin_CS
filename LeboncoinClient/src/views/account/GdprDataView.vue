@@ -8,16 +8,30 @@
             Conformément à la réglementation, voici l'intégralité des données rattachées à votre compte.
           </p>
         </div>
+
+        <!-- Bouton suppression -->
         <button
-          @click="demanderSuppression"
+          v-if="!deletionRequested"
+          @click="showConfirmModal = true"
           :disabled="isDeleting"
-          class="bg-red-100 text-red-700 hover:bg-red-200 font-bold py-2.5 px-5 rounded-xl transition-colors flex items-center gap-2"
+          class="bg-red-100 text-red-700 hover:bg-red-200 font-bold py-2.5 px-5 rounded-xl transition-colors flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
         >
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
             <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
           </svg>
-          {{ isDeleting ? 'Demande en cours...' : 'Demander la suppression' }}
+          Demander la suppression
         </button>
+
+        <!-- Bouton désactivé après soumission -->
+        <div
+          v-else
+          class="flex items-center gap-2 bg-gray-100 text-gray-400 font-bold py-2.5 px-5 rounded-xl cursor-not-allowed select-none"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          Demande en cours de traitement
+        </div>
       </div>
 
       <div
@@ -27,6 +41,51 @@
       >
         {{ message.text }}
       </div>
+
+      <!-- Modal de confirmation -->
+      <Teleport to="body">
+        <Transition name="modal">
+          <div
+            v-if="showConfirmModal"
+            class="fixed inset-0 z-50 flex items-center justify-center p-4"
+            @click.self="showConfirmModal = false"
+          >
+            <div class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
+            <div class="relative bg-white rounded-3xl shadow-2xl w-full max-w-md p-8 text-center">
+              <!-- Icône -->
+              <div class="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-5">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8 text-red-600">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                </svg>
+              </div>
+              <h2 class="text-xl font-black text-gray-900 mb-2">Supprimer vos données ?</h2>
+              <p class="text-gray-500 text-sm mb-8 leading-relaxed">
+                Cette action enverra une demande à notre DPO pour supprimer toutes vos données personnelles.
+                Votre compte sera clôturé sous 30 jours.
+              </p>
+              <div class="flex gap-3">
+                <button
+                  @click="showConfirmModal = false"
+                  class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-3 rounded-xl transition-colors"
+                >
+                  Annuler
+                </button>
+                <button
+                  @click="confirmerSuppression"
+                  :disabled="isDeleting"
+                  class="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-xl transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  <svg v-if="isDeleting" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
+                  </svg>
+                  {{ isDeleting ? 'Envoi...' : 'Oui, confirmer' }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </Transition>
+      </Teleport>
 
       <div v-if="isLoading" class="text-center py-12 text-gray-500 font-medium">
         Collecte de vos données en cours...
@@ -129,6 +188,8 @@ import { authState } from '@/auth.js'
 const gdprData = ref(null)
 const isLoading = ref(true)
 const isDeleting = ref(false)
+const deletionRequested = ref(false)
+const showConfirmModal = ref(false)
 const message = ref({ text: '', type: '' })
 
 onMounted(async () => {
@@ -146,21 +207,22 @@ onMounted(async () => {
   }
 })
 
-const demanderSuppression = async () => {
-  if (!confirm('Etes-vous sur de vouloir demander la suppression de toutes vos donnees ? Cette action enverra une demande a notre DPO.')) return
-
+const confirmerSuppression = async () => {
   isDeleting.value = true
   message.value = { text: '', type: '' }
 
   try {
     const userId = authState.user?.idutilisateur
     const response = await api.post(`/Utilisateurs/${userId}/demande-suppression`, {})
-    message.value = { text: response.data.message || 'Votre demande a bien ete envoyee.', type: 'success' }
+    message.value = { text: response.data.message || 'Votre demande a bien été envoyée.', type: 'success' }
+    deletionRequested.value = true
+    showConfirmModal.value = false
   } catch (error) {
     message.value = {
-      text: error.response?.data?.message || 'Une erreur est survenue, ou une demande est deja en cours.',
+      text: error.response?.data?.message || 'Une erreur est survenue, ou une demande est déjà en cours.',
       type: 'error',
     }
+    showConfirmModal.value = false
   } finally {
     isDeleting.value = false
   }
@@ -174,5 +236,13 @@ const demanderSuppression = async () => {
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+.modal-enter-active,
+.modal-leave-active {
+  transition: opacity 0.2s ease;
+}
+.modal-enter-from,
+.modal-leave-to {
+  opacity: 0;
 }
 </style>
