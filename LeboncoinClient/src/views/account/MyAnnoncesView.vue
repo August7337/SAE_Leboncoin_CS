@@ -1,4 +1,4 @@
-﻿<script setup>
+<script setup>
 import { ref, onMounted, computed } from 'vue'
 import api from '@/api/axios'
 import { authState } from '@/auth.js'
@@ -27,7 +27,7 @@ async function fetchMyAnnonces() {
           : null,
       reservations: annonce.reservations || [] 
     }))
-    console.log('Mes annonces rÃ©cupÃ©rÃ©es:', JSON.parse(JSON.stringify(myAnnonces.value)))
+    console.log('Mes annonces récupérées:', JSON.parse(JSON.stringify(myAnnonces.value)))
   } catch (error) {
     console.error('Erreur lors du chargement des annonces', error)
   } finally {
@@ -93,7 +93,7 @@ onMounted(fetchMyAnnonces)
           to="/create-annonce"
           class="bg-orange-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-orange-700 transition"
         >
-          DÃ©poser une annonce
+          Déposer une annonce
         </router-link>
       </div>
 
@@ -136,7 +136,7 @@ onMounted(fetchMyAnnonces)
             <h3 class="text-xl font-bold text-gray-900">Vous n'avez aucune annonce en ligne</h3>
             <p class="text-gray-500 mt-2 mb-6">C'est le moment de faire du tri !</p>
             <router-link to="/create-annonce" class="bg-orange-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-orange-700 transition">
-              DÃ©poser une annonce
+              Déposer une annonce
             </router-link>
           </div>
 
@@ -160,24 +160,24 @@ onMounted(fetchMyAnnonces)
                 <div>
                   <div class="flex justify-between items-start">
                     <h3 class="font-bold text-lg text-gray-900 line-clamp-1 capitalize">{{ annonce.titreannonce }}</h3>
-                    <span class="font-bold text-gray-900 text-lg">{{ annonce.prixnuitee }} â‚¬</span>
+                    <span class="font-bold text-gray-900 text-lg">{{ annonce.prixnuitee }} €</span>
                   </div>
                   <p class="text-gray-500 text-sm mt-1 flex items-center gap-1">
                     <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/></svg>
                     {{ annonce.nomville || 'Lieu inconnu' }}
-                    <span class="mx-1">â€¢</span>
+                    <span class="mx-1">•</span>
                     {{ annonce.typeHebergement || 'Logement' }}
                   </p>
                 </div>
 
                 <div class="mt-4 border-t border-gray-100 pt-3">
                   <div class="flex items-center justify-between text-sm font-semibold text-gray-800">
-                    <span>RÃ©servations ({{ annonce.reservations?.length || 0 }})</span>
-                    <span v-if="annonce.reservations?.length > 2" class="text-xs text-gray-500">DÃ©filez pour voir tout</span>
+                    <span>Réservations ({{ annonce.reservations?.length || 0 }})</span>
+                    <span v-if="annonce.reservations?.length > 2" class="text-xs text-gray-500">Défilez pour voir tout</span>
                   </div>
                   
                   <div v-if="!annonce.reservations || annonce.reservations.length === 0" class="text-sm text-gray-500 mt-2">
-                    Aucune rÃ©servation pour cette annonce.
+                    Aucune réservation pour cette annonce.
                   </div>
                   
                   <div v-else class="mt-2 space-y-2 max-h-32 overflow-y-auto pr-1 custom-scrollbar">
@@ -190,10 +190,10 @@ onMounted(fetchMyAnnonces)
                       <div class="flex items-center justify-between gap-2">
                         <div class="flex items-center gap-2 text-sm font-semibold text-gray-900">
                           <span>{{ res.prenomclient }} {{ res.nomclient }}</span>
-                          <span v-if="isPast(res.datefinreservation)" class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-gray-200 text-gray-700">PassÃ©e</span>
+                          <span v-if="isPast(res.datefinreservation)" class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-gray-200 text-gray-700">Passée</span>
                           <span v-else class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-green-100 text-green-700">En cours</span>
                         </div>
-                        <span class="text-xs text-gray-500">{{ formatDate(res.datedebutreservation) }} â€“ {{ formatDate(res.datefinreservation) }}</span>
+                        <span class="text-xs text-gray-500">{{ formatDate(res.datedebutreservation) }} – {{ formatDate(res.datefinreservation) }}</span>
                       </div>
                       <!-- Incident alert buttons -->
                       <div v-if="getIncidentsAJustifier(res).length" class="flex gap-2 pt-1">
@@ -247,7 +247,7 @@ onMounted(fetchMyAnnonces)
                   class="w-full h-full object-cover grayscale"
                 />
                 <span class="absolute top-2 left-2 bg-gray-100 text-gray-800 text-[10px] font-bold px-2 py-0.5 rounded flex items-center gap-1 shadow-sm">
-                  <span class="w-1.5 h-1.5 rounded-full bg-gray-500"></span> Non vÃ©rifiÃ©e
+                  <span class="w-1.5 h-1.5 rounded-full bg-gray-500"></span> Non vérifiée
                 </span>
               </div>
 
@@ -255,9 +255,9 @@ onMounted(fetchMyAnnonces)
                 <div>
                   <div class="flex justify-between items-start">
                     <h3 class="font-bold text-lg text-gray-900 line-clamp-1 opacity-75 capitalize">{{ annonce.titreannonce }}</h3>
-                    <span class="font-bold text-gray-900 text-lg">{{ annonce.prixnuitee }} â‚¬</span>
+                    <span class="font-bold text-gray-900 text-lg">{{ annonce.prixnuitee }} €</span>
                   </div>
-                  <p class="text-gray-500 text-sm mt-1">En attente de vÃ©rification par notre Ã©quipe</p>
+                  <p class="text-gray-500 text-sm mt-1">En attente de vérification par notre équipe</p>
                 </div>
 
                 <div class="flex items-center gap-6 mt-4 pt-3 border-t border-gray-100 text-sm font-bold">
@@ -288,8 +288,8 @@ onMounted(fetchMyAnnonces)
         </div>
         
         <p class="text-sm text-gray-600 mb-6">
-          Vous Ãªtes sur le point de supprimer l'annonce <strong class="text-gray-900">Â« {{ annonceToDelete?.titreannonce }} Â»</strong>.
-          <span class="text-red-600 font-semibold block mt-2">Cette action est irrÃ©versible.</span>
+          Vous êtes sur le point de supprimer l'annonce <strong class="text-gray-900">« {{ annonceToDelete?.titreannonce }} »</strong>.
+          <span class="text-red-600 font-semibold block mt-2">Cette action est irréversible.</span>
         </p>
 
         <div class="flex gap-3">
