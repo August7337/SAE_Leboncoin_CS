@@ -60,7 +60,6 @@ login(data) {
         roles: authRes.data.roles,
         permissions: authRes.data.permissions,
       })
-      console.log('[refreshUser] permissions reçues :', authRes.data.permissions)
     } catch (e) {
       console.error('[refreshUser] Erreur lors du rafraîchissement :', e?.response?.status, e?.response?.data ?? e?.message)
       if (e.response && e.response.status === 401) {

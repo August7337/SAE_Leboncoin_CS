@@ -63,14 +63,14 @@ async function login() {
   }
 
   try {
-    await api.get(`/Utilisateurs/email/${form.email}`)
-    emailExists.value = true
-  } catch (error) {
-    if (error.response?.status === 404) {
-      router.push({ name: 'register', query: { email: form.email } })
+    const response = await api.get(`/Utilisateurs/check-email`, { params: { email: form.email } })
+    if (response.data.exists) {
+      emailExists.value = true
     } else {
-      apiError.value = 'Erreur serveur.'
+      router.push({ name: 'register', query: { email: form.email } })
     }
+  } catch (error) {
+    apiError.value = 'Erreur serveur.'
   }
 }
 </script>

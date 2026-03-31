@@ -3,6 +3,7 @@ import { ref, onMounted, reactive, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import api from '@/api/axios'
 import { authState } from '@/auth.js'
+import UnavailabilityCalendar from '@/components/UnavailabilityCalendar.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -28,134 +29,6 @@ const form = reactive({
 
 const photos = ref([])
 const unavailabilities = ref([])
-
-// Photos Drag & Drop
-const isUploading = ref(false)
-const dragOver = ref(false)
-const fileInput = ref(null)
-
-// Calendar variables
-const currentYear = ref(new Date().getFullYear())
-const currentMonth = ref(new Date().getMonth())
-const isAddingUnavail = ref(false)
-const selectionStart = ref(null)
-const hoveredDate = ref(null)
-
-const monthNames = ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"]
-const currentMonthName = computed(() => monthNames[currentMonth.value])
-
-const blankDays = computed(() => {
-  let firstDay = new Date(currentYear.value, currentMonth.value, 1).getDay()
-  return firstDay === 0 ? 6 : firstDay - 1
-})
-
-const daysInMonth = computed(() => {
-  let days = new Date(currentYear.value, currentMonth.value + 1, 0).getDate()
-  let arr = []
-  for(let i=1; i<=days; i++){
-    let y = currentYear.value
-    let m = String(currentMonth.value + 1).padStart(2, '0')
-    let d = String(i).padStart(2, '0')
-    arr.push({ dateNum: i, dateStr: `${y}-${m}-${d}` })
-  }
-  return arr
-})
-
-const today = new Date()
-const todayStr = computed(() => {
-  const y = today.getFullYear()
-  const m = String(today.getMonth() + 1).padStart(2, '0')
-  const day = String(today.getDate()).padStart(2, '0')
-  return `${y}-${m}-${day}`
-})
-
-const blockPastNav = computed(() => {
-  if (currentYear.value < today.getFullYear()) return true
-  if (currentYear.value === today.getFullYear() && currentMonth.value <= today.getMonth()) return true
-  return false
-})
-
-function isPastDate(dateStr) {
-  return dateStr < todayStr.value
-}
-
-function changeMonth(delta) {
-  if (delta === -1 && blockPastNav.value) return
-  
-  let newMonth = currentMonth.value + delta
-  if (newMonth > 11) {
-    newMonth = 0
-    currentYear.value++
-  } else if (newMonth < 0) {
-    newMonth = 11
-    currentYear.value--
-  }
-  currentMonth.value = newMonth
-}
-
-function isUnavailable(dateStr) {
-  return unavailabilities.value.includes(dateStr)
-}
-
-function isSelectedOrHovered(dateStr) {
-  if (!selectionStart.value) return false
-  if (selectionStart.value === dateStr) return true
-  if (hoveredDate.value) {
-    const d = new Date(dateStr)
-    const s = new Date(selectionStart.value)
-    const h = new Date(hoveredDate.value)
-    const min = new Date(Math.min(s, h))
-    const max = new Date(Math.max(s, h))
-    return d >= min && d <= max
-  }
-  return false
-}
-
-async function handleDayClick(dateStr) {
-  if (isAddingUnavail.value) return
-
-  if (!selectionStart.value) {
-    selectionStart.value = dateStr
-  } else {
-    const start = selectionStart.value
-    const end = dateStr
-    selectionStart.value = null
-    hoveredDate.value = null
-
-    isAddingUnavail.value = true
-    try {
-      const isUnblocking = isUnavailable(start)
-      const sDate = new Date(start)
-      const eDate = new Date(end)
-      const minStr = sDate <= eDate ? start : end
-      const maxStr = sDate <= eDate ? end : start
-
-      if (isUnblocking) {
-         let curr = new Date(minStr)
-         let endD = new Date(maxStr)
-         while(curr <= endD) {
-            let dStr = curr.toISOString().split('T')[0]
-            unavailabilities.value = unavailabilities.value.filter(d => d !== dStr)
-            try { 
-              await api.delete(`/Annonces/${annonceId}/indisponibilites/${dStr}`) 
-            } catch(e){}
-            curr.setDate(curr.getDate() + 1)
-         }
-      } else {
-         await api.post(`/Annonces/${annonceId}/indisponibilites`, {
-           startDate: minStr,
-           endDate: maxStr
-         })
-         await fetchUnavailabilities()
-      }
-    } catch(e) {
-      console.error(e)
-      alert("Erreur lors de la modification des disponibilités.")
-    } finally {
-      isAddingUnavail.value = false
-    }
-  }
-}
 
 async function fetchAnnonce() {
   try {
@@ -234,6 +107,10 @@ async function deleteAnnonce() {
 // ----------------------
 // PHOTOS - Drag & Drop Upload
 // ----------------------
+const isUploading = ref(false)
+const dragOver = ref(false)
+const fileInput = ref(null)
+
 function triggerFileInput() {
   fileInput.value.click()
 }
@@ -412,46 +289,10 @@ onMounted(() => {
           <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-6 flex flex-col items-center">
             <h2 class="text-lg font-bold text-gray-900 border-b border-gray-100 pb-3 mb-4 w-full text-left">Gérer les Indisponibilités</h2>
             
-            <div class="flatpickr-calendar w-full max-w-[320px]">
-              <div class="flatpickr-months">
-                <span class="flatpickr-prev-month" @click="changeMonth(-1)" :class="{'opacity-30 cursor-not-allowed hover:!bg-transparent': blockPastNav}">
-                  <svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14"><path d="M9.5 12L4.5 7l5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                </span>
-                <div class="flatpickr-month">{{ currentMonthName }} {{ currentYear }}</div>
-                <span class="flatpickr-next-month" @click="changeMonth(1)">
-                  <svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14"><path d="M4.5 12l5-5-5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                </span>
-              </div>
-              
-              <div class="flatpickr-innerContainer">
-                <div class="flatpickr-days">
-                  <div class="flatpickr-weekdays">
-                    <span class="flatpickr-weekday" v-for="day in ['lun','mar','mer','jeu','ven','sam','dim']" :key="day">{{day}}</span>
-                  </div>
-                  <div class="grid grid-cols-7 place-items-center">
-                    <span class="flatpickr-day prevMonthDay" v-for="blank in blankDays" :key="'blank-'+blank"></span>
-                    <span 
-                      v-for="d in daysInMonth" 
-                      :key="d.dateStr"
-                      @click="!isPastDate(d.dateStr) && handleDayClick(d.dateStr)"
-                      @mouseenter="!isPastDate(d.dateStr) && (hoveredDate = d.dateStr)"
-                      @mouseleave="hoveredDate = null"
-                      class="flatpickr-day relative"
-                      :class="{
-                        'opacity-30 cursor-not-allowed hover:!bg-transparent': isPastDate(d.dateStr),
-                        'disabled': isUnavailable(d.dateStr) && !isPastDate(d.dateStr),
-                        'selected': isSelectedOrHovered(d.dateStr) && !isPastDate(d.dateStr),
-                        '!bg-gray-200 !text-gray-400': isUnavailable(d.dateStr) && !isSelectedOrHovered(d.dateStr) && !isPastDate(d.dateStr),
-                        'startRange': selectionStart === d.dateStr && !isPastDate(d.dateStr)
-                      }"
-                    >
-                      {{ d.dateNum }}
-                      <span v-if="isAddingUnavail && (isSelectedOrHovered(d.dateStr) || selectionStart === d.dateStr) && !isPastDate(d.dateStr)" class="absolute inset-0 bg-white/30 rounded"></span>
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <UnavailabilityCalendar
+              :annonce-id="annonceId"
+              v-model="unavailabilities"
+            />
 
             <p class="text-xs text-gray-500 mt-4 text-center">
               Cliquez ou sélectionnez une plage de dates pour les bloquer / débloquer.
@@ -464,115 +305,3 @@ onMounted(() => {
     </main>
   </div>
 </template>
-
-<style scoped>
-.flatpickr-calendar {
-    background: white;
-    border: 1px solid #e5e7eb;
-    border-radius: 12px;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
-    padding: 10px;
-    width: 100%;
-}
-
-.flatpickr-months {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: white;
-    margin-bottom: 8px;
-    position: relative;
-}
-
-.flatpickr-month {
-    font-weight: 600;
-    font-size: 16px;
-    color: #222;
-    text-align: center;
-}
-
-.flatpickr-prev-month,
-.flatpickr-next-month {
-    color: #EA580C;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    height: 32px;
-    width: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.flatpickr-prev-month:hover,
-.flatpickr-next-month:hover {
-    opacity: 0.7;
-    background: #fff7ed;
-    border-radius: 50%;
-}
-
-.flatpickr-weekdays {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    background: white;
-    padding: 8px 0;
-    font-weight: 500;
-    font-size: 12px;
-    color: #999;
-    text-transform: lowercase;
-    border-bottom: 1px solid #f0f0f0;
-    margin-bottom: 8px;
-}
-
-.flatpickr-weekday {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 400;
-}
-
-.flatpickr-days {
-    width: 100%;
-}
-
-.flatpickr-day {
-    width: 36px;
-    height: 36px;
-    font-size: 14px;
-    color: #222;
-    border-radius: 6px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.15s ease;
-    cursor: pointer;
-    margin: 2px 0;
-    font-weight: 500;
-}
-
-.flatpickr-day:hover:not(.disabled):not(.prevMonthDay) {
-    background-color: #f3f4f6;
-}
-
-.flatpickr-day.selected,
-.flatpickr-day.startRange {
-    background-color: #222 !important;
-    color: white !important;
-    font-weight: 600;
-}
-
-.flatpickr-day.disabled {
-    background-color: white;
-    color: #9ca3af !important;
-    text-decoration: line-through;
-    text-decoration-color: #ef4444;
-    text-decoration-thickness: 2px;
-}
-.flatpickr-day.disabled:hover {
-    background-color: #fee2e2 !important;
-}
-
-.flatpickr-day.selected {
-    background-color: #222 !important;
-}
-</style>

@@ -13,7 +13,7 @@
 
        
         public string? NomEntreprise { get; set; }
-        public decimal Siret { get; set; }
+        public decimal? Siret { get; set; }
         public string? Secteuractivite { get; set; }
     }
 }

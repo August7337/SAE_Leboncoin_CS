@@ -1,6 +1,6 @@
 /* --- Structure Globale --- */
 .register-container {
-  width: 400px;
+  width: 500px;
   margin: 80px auto;
   padding: 30px;
   background: #f5f5f5;
@@ -112,6 +112,10 @@ input.error {
   border: 1px solid red;
 }
 
+input.valid {
+  border: 1px solid #16a34a;
+}
+
 /* --- Bouton Principal --- */
 button {
   width: 100%;
@@ -188,6 +192,33 @@ button:hover {
   text-decoration: underline;
 }
 
+/* --- Bouton ×  effacer adresse --- */
+.clear-address-btn {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none !important;
+  border: none !important;
+  color: #9ca3af;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  width: auto !important;
+  padding: 4px 6px;
+  border-radius: 50%;
+  transition: color 0.2s;
+}
+
+.clear-address-btn:hover {
+  background: none !important;
+  color: #6b7280;
+}
+
+.address-input-with-clear {
+  padding-right: 36px !important;
+}
+
 /* --- Flèche de Retour (Leboncoin Style) --- */
 .back-arrow-btn {
   width: auto !important;
@@ -225,6 +256,18 @@ span,
   text-align: left;
   width: 100%;
   margin-top: 5px;
+}
+
+.error-text {
+  color: red;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.success-text {
+  color: #16a34a;
+  font-size: 12px;
+  margin-top: 4px;
 }
 
 .success {

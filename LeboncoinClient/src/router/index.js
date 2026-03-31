@@ -6,7 +6,6 @@ const routes = [
     path: '/',
     name: 'home',
     component: () => import('../views/HomeView.vue'),
-    meta: { requiresPermission: 'app.view.home' },
   },
 
   // --- Informations légales ---

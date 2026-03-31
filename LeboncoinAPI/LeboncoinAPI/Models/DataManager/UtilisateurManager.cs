@@ -120,6 +120,20 @@ public class UtilisateurManager : IDataUtilisateurRepository<Utilisateur>
             .FirstOrDefaultAsync(u => u.Email.ToLower() == email.ToLower());
     }
 
+    public async Task<Utilisateur?> GetByIdWithRolesAsync(int id)
+    {
+        return await _dbContext.Utilisateurs
+            .Include(u => u.Idroles)
+                .ThenInclude(r => r.Idpermissions)
+            .FirstOrDefaultAsync(u => u.Idutilisateur == id);
+    }
+
+    public async Task<bool> PhoneExistsAsync(string phone)
+    {
+        return await _dbContext.Utilisateurs
+            .AnyAsync(u => u.Telephoneutilisateur == phone);
+    }
+
     public async Task<bool> RegisterFullParticulierAsync(RegisterParticulierDTO dto)
     {
         using var transaction = await _dbContext.Database.BeginTransactionAsync();
@@ -172,6 +186,22 @@ public class UtilisateurManager : IDataUtilisateurRepository<Utilisateur>
             await transaction.CommitAsync();
             return true;
         }
+        catch (DbUpdateException ex)
+        {
+            await transaction.RollbackAsync();
+            var inner = ex.InnerException?.Message ?? "";
+
+            if (inner.Contains("utilisateur_email_key"))
+                throw new RegistrationConflictException("email", "Cet email est déjà utilisé.");
+
+            if (inner.Contains("utilisateur_telephoneutilisateur_key"))
+                throw new RegistrationConflictException("telephoneUtilisateur", "Ce numéro de téléphone est déjà utilisé.");
+
+            if (inner.Contains("utilisateur_pseudonyme_key"))
+                throw new RegistrationConflictException("pseudonyme", "Ce pseudonyme est déjà utilisé.");
+
+            throw;
+        }
         catch (Exception)
         {
             await transaction.RollbackAsync();
@@ -203,7 +233,7 @@ public class UtilisateurManager : IDataUtilisateurRepository<Utilisateur>
         if (existingUser.Professionnel != null)
         {
             existingUser.Professionnel.Nomsociete = dto.NomEntreprise;
-            existingUser.Professionnel.Numsiret = dto.Siret;
+            existingUser.Professionnel.Numsiret = dto.Siret.GetValueOrDefault();
             existingUser.Professionnel.Secteuractivite = dto.Secteuractivite;
         }
 
@@ -232,7 +262,10 @@ public class UtilisateurManager : IDataUtilisateurRepository<Utilisateur>
                 IddepartementNavigation = new Departement
                 {
                     Numerodepartement = depCode,
-                    IdregionNavigation = new Region()
+                    IdregionNavigation = new Region
+                    {
+                        Nomregion = GeoData.TryGetValue(depCode, out var geo) ? geo.RegName : "Inconnue"
+                    }
                 }
             }
         };

@@ -69,10 +69,13 @@
 
       <div class="field">
         <label>Date de naissance</label>
-        <input
+        <SingleDatePicker
           v-model="particulierForm.dateNaissance"
-          type="date"
-          :class="{ error: errors.dateNaissance }"
+          :max-date="maxBirthDate"
+          :default-date="maxBirthDate"
+          placeholder="Sélectionnez votre date de naissance"
+          :has-error="!!errors.dateNaissance"
+          banner-text="Vous devez avoir au moins 18 ans"
         />
         <span v-if="errors.dateNaissance" class="error-text">{{ errors.dateNaissance }}</span>
       </div>
@@ -87,13 +90,21 @@
 </template>
 
 <script setup>
-import { onMounted, reactive, ref } from 'vue'
+import { onMounted, reactive, ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { authState } from '@/auth'
 import api from '@/api/axios'
+import SingleDatePicker from '@/components/SingleDatePicker.vue'
 const router = useRouter()
 const dataFromStep1 = ref(null)
 const loginSuccess = ref(false)
+
+// Max birth date = today minus 18 years (must be at least 18 years old)
+const maxBirthDate = computed(() => {
+  const date = new Date()
+  date.setFullYear(date.getFullYear() - 18)
+  return date.toISOString().split('T')[0]
+})
 
 const particulierForm = reactive({
   nom: '',

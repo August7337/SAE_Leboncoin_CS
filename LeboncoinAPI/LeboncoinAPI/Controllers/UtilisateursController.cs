@@ -127,8 +127,15 @@ public class UtilisateursController : ControllerBase
         return Ok(utilisateur);
     }
 
+    // GET: api/Utilisateurs/check-email?email=xxx
+    [HttpGet("check-email")]
+    public async Task<IActionResult> CheckEmail([FromQuery] string email)
+    {
+        if (string.IsNullOrWhiteSpace(email)) return BadRequest();
+        var exists = await _dataRepository.GetByEmailAsync(email) != null;
+        return Ok(new { exists });
+    }
 
-    // POST: api/Utilisateurs
     [HttpPost]
     public async Task<ActionResult<Utilisateur>> PostUtilisateur(Utilisateur utilisateur)
     {
@@ -204,8 +211,7 @@ public class UtilisateursController : ControllerBase
         if (currentUserId == null || currentUserId != id.ToString())
             return Forbid();
 
-        var user = await ((UtilisateurManager)_dataRepository).GetByEmailAsync(
-            User.FindFirst(ClaimTypes.Email)!.Value);
+        var user = await ((UtilisateurManager)_dataRepository).GetByIdWithRolesAsync(id);
 
         if (user == null) return NotFound("Utilisateur introuvable.");
 
@@ -268,6 +274,15 @@ public class UtilisateursController : ControllerBase
         if (result) return Ok(new { message = "Inscription réussie" });
         return StatusCode(500, "Erreur lors de l'inscription.");
     }
+
+    [HttpGet("check-phone")]
+    public async Task<IActionResult> CheckPhone([FromQuery] string phone)
+    {
+        if (string.IsNullOrWhiteSpace(phone)) return BadRequest();
+        var exists = await ((UtilisateurManager)_dataRepository).PhoneExistsAsync(phone);
+        return Ok(new { available = !exists });
+    }
+
     [HttpPost("register-particulier")]
     public async Task<IActionResult> RegisterParticulier([FromBody] RegisterParticulierDTO dto)
     {
@@ -304,6 +319,10 @@ public class UtilisateursController : ControllerBase
                 });
             }
             return StatusCode(500, "Erreur lors de l'inscription.");
+        }
+        catch (UtilisateurManager.RegistrationConflictException ex)
+        {
+            return Conflict(new { target = ex.TargetField, message = ex.Message });
         }
         catch (Exception ex)
         {
