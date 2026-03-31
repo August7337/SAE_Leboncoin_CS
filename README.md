@@ -47,3 +47,23 @@ dotnet ef migrations script --project "LeboncoinAPI"
 ```
 dotnet ef database update --project "LeboncoinAPI"
 ```
+
+## Démarrer le projet : 
+
+### 1. Client : 
+```
+dans :
+PS C:\SAE_Leboncoin_CS\LeboncoinClient> 
+```
+lancer la commande :
+npm run dev
+```
+
+### 2. API :
+```
+dans :
+PS C:\SAE_Leboncoin_CS\LeboncoinAPI\LeboncoinAPI>
+```
+lancer la commande :
+dotnet run --launch-profile "https"
+```

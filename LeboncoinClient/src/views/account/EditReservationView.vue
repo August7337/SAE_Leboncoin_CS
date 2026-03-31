@@ -3,6 +3,7 @@ import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { authState } from '@/auth'
 import reservationsService from '@/services/reservationsService'
+import DateRangePicker from '@/components/DateRangePicker.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -238,16 +239,14 @@ const formatDate = (dateStr) => {
                         </svg>
                         Dates du séjour
                     </h2>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div class="space-y-1.5">
-                            <label class="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Arrivée</label>
-                            <input v-model="modifDates.start" type="date" class="w-full border border-gray-300 rounded-xl py-3 px-4 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-600 outline-none transition-all font-medium" />
-                        </div>
-                        <div class="space-y-1.5">
-                            <label class="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Départ</label>
-                            <input v-model="modifDates.end" type="date" class="w-full border border-gray-300 rounded-xl py-3 px-4 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-600 outline-none transition-all font-medium" />
-                        </div>
-                    </div>
+                    <DateRangePicker
+                        v-model="modifDates"
+                        :min-date="null"
+                        :show-months="2"
+                        :show-minimum-banner="false"
+                        start-label="Arrivée"
+                        end-label="Départ"
+                    />
                 </div>
 
                 <!-- Travelers Section (Laravel Style) -->
@@ -471,11 +470,6 @@ const formatDate = (dateStr) => {
 </template>
 
 <style scoped>
-input[type="date"]::-webkit-calendar-picker-indicator {
-    cursor: pointer;
-    filter: invert(48%) sepia(79%) saturate(2476%) hue-rotate(352deg) brightness(96%) contrast(92%);
-}
-
 .modal-enter-active,
 .modal-leave-active {
   transition: opacity 0.2s ease;

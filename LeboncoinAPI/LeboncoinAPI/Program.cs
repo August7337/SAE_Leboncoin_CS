@@ -8,6 +8,8 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
+AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+
 void LogBoot(string step)
 {
     var managedMemoryMb = GC.GetTotalMemory(forceFullCollection: false) / (1024d * 1024d);
@@ -67,6 +69,8 @@ builder.Services.AddScoped<IReservationRepository, ReservationManager>();
 builder.Services.AddScoped<IMessageRepository, MessageManager>();
 builder.Services.AddScoped<IIncidentRepository, IncidentManager>();
 builder.Services.AddScoped<IncidentWorkflowService>();
+
+builder.Services.AddScoped<IEmailService, EmailService>();
 // Particulier creation is handled through UtilisateurManager (full registration)
 // Removed explicit ParticulierManager registration to prefer using UtilisateurManager flows
 LogBoot("Services.RegisterRepositories:done");

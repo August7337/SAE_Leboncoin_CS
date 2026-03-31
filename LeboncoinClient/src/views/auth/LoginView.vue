@@ -63,14 +63,14 @@ async function login() {
   }
 
   try {
-    await api.get(`/Utilisateurs/email/${form.email}`)
-    emailExists.value = true
-  } catch (error) {
-    if (error.response?.status === 404) {
-      router.push({ name: 'register', query: { email: form.email } })
+    const response = await api.get(`/Utilisateurs/check-email`, { params: { email: form.email } })
+    if (response.data.exists) {
+      emailExists.value = true
     } else {
-      apiError.value = 'Erreur serveur.'
+      router.push({ name: 'register', query: { email: form.email } })
     }
+  } catch (error) {
+    apiError.value = 'Erreur serveur.'
   }
 }
 </script>
@@ -124,11 +124,17 @@ async function login() {
       <div class="field" v-if="emailExists">
         <label>Mot de passe</label>
         <div class="password-wrapper">
-        <input v-model="form.password"  :type="showPasswordConfirm ? 'text' : 'password'" placeholder="Mot de passe" autofocus/>
-                  <button type="button" class="toggle-btn" @click="showPasswordConfirm = !showPasswordConfirm">
+          <input v-model="form.password" :type="showPasswordConfirm ? 'text' : 'password'" placeholder="Mot de passe" autofocus/>
+          <button type="button" class="toggle-btn" @click="showPasswordConfirm = !showPasswordConfirm">
             {{ showPasswordConfirm ? 'Masquer' : 'Afficher' }}
           </button>
-          </div>
+        </div>
+        
+        <div class="forgot-link-container">
+          <router-link to="/forgot-password" class="forgot-password-link">
+            Mot de passe oublié ?
+          </router-link>
+        </div>
       </div>
 
       <button type="submit" class="login-btn">Se connecter</button>

@@ -51,15 +51,6 @@ public class ReservationsController : ControllerBase
             return NotFound();
         }
 
-<<<<<<< HEAD
-        return Ok(MapReservation(reservation));
-    }
-
-    [HttpGet("user/{userId}")]
-    public async Task<ActionResult<IEnumerable<ReservationResponseDto>>> GetByUserId(int userId)
-    {
-        return Ok((await _dataRepository.GetByUserIdAsync(userId)).Select(MapReservation));
-=======
         return Ok(MapToReadDto(reservation));
     }
 
@@ -110,9 +101,7 @@ public class ReservationsController : ControllerBase
             }).ToList(),
             Transactions = r.Transactions.Select(t => new TransactionReadDto { Montanttransaction = t.Montanttransaction }).ToList()
         };
->>>>>>> 1c5c4e08850941806f3d0b25f104ef5cd1ee9b8f
     }
-
 
     // =========================================================================
     // 2. MÉTHODES DE PAIEMENT ET CRÉATION (Stripe & Solde)
@@ -307,8 +296,13 @@ public class ReservationsController : ControllerBase
         existingRes.Iddatedebutreservation = dDebut.Iddate;
         existingRes.Iddatefinreservation = dFin.Iddate;
 
+        // 1. Vider proprement les voyageurs existants et synchroniser avec la DB
         _dbContext.Inclures.RemoveRange(existingRes.Inclures);
-        foreach (var incDto in dto.Inclures)
+        await _dbContext.SaveChangesAsync(); 
+
+        // 2. Ajouter les nouveaux voyageurs
+        var voyageurs = dto.Inclures ?? new List<InclureCreateDto>();
+        foreach (var incDto in voyageurs)
         {
             _dbContext.Inclures.Add(new Inclure
             {
@@ -351,7 +345,7 @@ public class ReservationsController : ControllerBase
         var dateFinRecord = await GetOrCreateDate(dateFin);
         var dateAujourdhui = await GetOrCreateDate(DateOnly.FromDateTime(DateTime.Now));
 
-        Reservation reservation;
+        Reservation? reservation;
         if (meta.ContainsKey("type") && meta["type"] == "update")
         {
             int idRes = int.Parse(meta["idreservation"]);
@@ -446,12 +440,16 @@ public class ReservationsController : ControllerBase
         }
 
         // 3. Mise à jour des voyageurs (Inclures)
-        // On supprime les anciens et on ajoute les nouveaux
         _dbContext.Inclures.RemoveRange(existingReservation.Inclures);
-        foreach (var inc in reservation.Inclures)
+        await _dbContext.SaveChangesAsync(); // Évite les conflits de clés composites
+
+        if (reservation.Inclures != null)
         {
-            inc.Idreservation = id; // Sécurité
-            _dbContext.Inclures.Add(inc);
+            foreach (var inc in reservation.Inclures)
+            {
+                inc.Idreservation = id; 
+                _dbContext.Inclures.Add(inc);
+            }
         }
 
         try
@@ -477,10 +475,48 @@ public class ReservationsController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteReservation(int id)
     {
-        var reservation = await _dataRepository.GetByIdAsync(id);
+        var reservation = await _dbContext.Reservations
+            .Include(r => r.Inclures)
+            .Include(r => r.Transactions)
+            .Include(r => r.Incidents)
+            .FirstOrDefaultAsync(r => r.Idreservation == id);
+
         if (reservation == null) return NotFound();
 
-        await _dataRepository.DeleteAsync(reservation);
+        if (reservation.Incidents != null && reservation.Incidents.Any())
+        {
+            return BadRequest(new { message = "Impossible d'annuler une réservation associée à un incident." });
+        }
+
+        // 1. Calcul du montant à rembourser
+        decimal refundAmount = reservation.Transactions.Sum(t => t.Montanttransaction);
+
+        if (refundAmount > 0)
+        {
+            var utilisateur = await _dbContext.Utilisateurs.FindAsync(reservation.Idutilisateur);
+            if (utilisateur != null)
+            {
+                utilisateur.Solde += refundAmount;
+                _dbContext.Utilisateurs.Update(utilisateur);
+
+                Console.WriteLine($"[DEBUG] Réservation annulée: Remboursement de {refundAmount} versé au solde de l'utilisateur {utilisateur.Idutilisateur}");
+            }
+        }
+
+        // 2. Clear FK dependencies manuellement (DeleteBehavior.Restrict)
+        if (reservation.Inclures != null && reservation.Inclures.Any())
+        {
+            _dbContext.Inclures.RemoveRange(reservation.Inclures);
+        }
+
+        if (reservation.Transactions != null && reservation.Transactions.Any())
+        {
+            _dbContext.Transactions.RemoveRange(reservation.Transactions);
+        }
+
+        // 3. Suppression
+        _dbContext.Reservations.Remove(reservation);
+        await _dbContext.SaveChangesAsync();
 
         return NoContent();
     }
@@ -566,5 +602,5 @@ public class ReservationsController : ControllerBase
 
 public class PaymentConfirmDto
 {
-    public string SessionId { get; set; }
+    public string SessionId { get; set; } = null!;
 }

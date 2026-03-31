@@ -7,9 +7,13 @@
         public string Email { get; set; }
         public string Telephoneutilisateur { get; set; }
 
-        // Particulier fields
         public string? Civilite { get; set; }
         public string? Nomutilisateur { get; set; }
         public string? Prenomutilisateur { get; set; }
+
+       
+        public string? NomEntreprise { get; set; }
+        public decimal? Siret { get; set; }
+        public string? Secteuractivite { get; set; }
     }
 }

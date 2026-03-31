@@ -6,7 +6,6 @@ const routes = [
     path: '/',
     name: 'home',
     component: () => import('../views/HomeView.vue'),
-    meta: { requiresPermission: 'app.view.home' },
   },
 
   // --- Informations légales ---
@@ -48,6 +47,16 @@ const routes = [
     path: '/login',
     name: 'login',
     component: () => import('../views/auth/LoginView.vue'),
+  },
+  {
+    path: '/forgot-password',
+    name: 'forgot-password',
+    component: () => import('../views/auth/ForgotPasswordView.vue'),
+  },
+  {
+    path: '/reset-password',
+    name: 'reset-password',
+    component: () => import('../views/auth/ResetPasswordView.vue'),
   },
   {
     path: '/register',

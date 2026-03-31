@@ -219,7 +219,7 @@ const publishAnnonce = async () => {
     const payload = {
       ...form,
       idutilisateur: authState.user.idutilisateur,
-      liensphoto: photosLocal.value.map(p => p.base64), 
+      liensphoto: [], 
       acomptefixe: !form.isAcomptePercentage ? Number(form.acompte) : 0,
       idcommodites: selectedCommodites.value,
       acomptepourcentage: form.isAcomptePercentage ? Number(form.acompte) : 0,

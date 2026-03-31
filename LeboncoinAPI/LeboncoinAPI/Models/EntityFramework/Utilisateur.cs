@@ -73,6 +73,12 @@ public partial class Utilisateur
     [StringLength(2048)]
     public string? ProfilePhotoPath { get; set; }
 
+    [Column("reset_password_token")]
+    public string? ResetPasswordToken { get; set; }
+
+    [Column("reset_password_expiry", TypeName = "timestamp without time zone")]
+    public DateTime? ResetPasswordExpiry { get; set; }
+
     [InverseProperty("IdutilisateurNavigation")]
     public virtual ICollection<Annonce> Annonces { get; set; } = new List<Annonce>();
 
@@ -124,4 +130,6 @@ public partial class Utilisateur
 
     [InverseProperty("IdutilisateurmodificateurNavigation")]
     public virtual ICollection<IncidentHistorique> HistoriquesModifies { get; set; } = new List<IncidentHistorique>();
+
+
 }

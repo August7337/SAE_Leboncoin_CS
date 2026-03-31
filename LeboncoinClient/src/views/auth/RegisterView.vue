@@ -18,61 +18,71 @@
     <form @submit.prevent="register">
       <div class="field">
         <label>Pseudonyme</label>
-        <input v-model="form.pseudonyme" type="text" :class="{ 'error': errors.pseudonyme }" />
+        <input v-model="form.pseudonyme" type="text" :class="{ 'error': errors.pseudonyme, 'valid': !errors.pseudonyme && form.pseudonyme.trim() }" />
         <span v-if="errors.pseudonyme" class="error-text">{{ errors.pseudonyme }}</span>
       </div>
 
       <div class="field">
         <label>Email</label>
-        <input v-model="form.email" type="text" :class="{ 'error': errors.email }" placeholder="exemple@mail.com" />
+        <input v-model="form.email" type="text" :class="{ 'error': errors.email, 'valid': !errors.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email) }" placeholder="exemple@mail.com" />
         <span v-if="errors.email" class="error-text">{{ errors.email }}</span>
       </div>
 
       <div class="field">
         <label>Téléphone</label>
-        <input v-model="form.telephoneUtilisateur" type="text" :class="{ 'error': errors.telephoneUtilisateur }" placeholder="0612345678"/>
+        <input v-model="form.telephoneUtilisateur" type="text" inputmode="numeric" maxlength="14" @input="formatTelephone" @blur="checkPhoneAvailability" :class="{ 'error': errors.telephoneUtilisateur || phoneCheckError, 'valid': phoneAvailable }" placeholder="06 12 34 56 78"/>
         <span v-if="errors.telephoneUtilisateur" class="error-text">{{ errors.telephoneUtilisateur }}</span>
+        <span v-else-if="phoneCheckError" class="error-text">{{ phoneCheckError }}</span>
       </div>
 
-      <div class="field relative">
-        <label>Rue et numéro</label>
-        <input 
-          v-model="form.adresseUtilisateur.rue" 
-          @input="fetchAutocomplete"
-          @blur="closeSuggestions"
-          type="text" 
-          placeholder="Commencez à taper votre adresse..." 
-          class="w-full"
-          :class="{ 'error': errors.adresseUtilisateur }"
-        />
-
-        <ul v-if="showSuggestions && suggestions.length" class="absolute z-50 w-full bg-white border border-gray-200 rounded-xl mt-1 shadow-xl max-h-60 overflow-auto">
-      <li 
-        v-for="(s, index) in suggestions" 
-        :key="index"
-        @click="selectSuggestion(s)"
-        class="px-4 py-3 hover:bg-orange-50 cursor-pointer border-b last:border-b-0 text-sm"
-      >
-        <span class="font-bold">{{ s.properties.formatted }}</span>
-      </li>
-    </ul>
+      <div class="field">
+        <label>Numéro et rue</label>
+        <div class="relative" style="width:100%">
+          <input 
+            v-model="form.adresseUtilisateur.rue" 
+            @input="fetchAutocomplete"
+            @blur="closeSuggestions"
+            type="text" 
+            placeholder="Écrivez votre adresse et sélectionnez une suggestion"
+            :readonly="addressSelected"
+            :class="{ 'error': errors.adresseUtilisateur, 'valid': addressSelected && !errors.adresseUtilisateur, 'bg-gray-50 cursor-default': addressSelected, 'address-input-with-clear': addressSelected }"
+          />
+          <button
+            v-if="addressSelected"
+            type="button"
+            @click="clearAddress"
+            class="clear-address-btn"
+            title="Modifier l'adresse"
+          >&times;</button>
+          <ul v-if="showSuggestions && suggestions.length" class="absolute z-50 w-full bg-white border border-gray-200 rounded-xl mt-1 shadow-xl max-h-60 overflow-auto">
+            <li 
+              v-for="(s, index) in suggestions" 
+              :key="index"
+              @click="selectSuggestion(s)"
+              class="px-4 py-3 hover:bg-orange-50 cursor-pointer border-b last:border-b-0 text-sm"
+            >
+              <span class="font-bold">{{ s.properties.formatted }}</span>
+            </li>
+          </ul>
+        </div>
+        <span v-if="errors.adresseUtilisateur" class="error-text">{{ errors.adresseUtilisateur }}</span>
       </div>
 
       <div class="grid grid-cols-2 gap-4 mb-4">
         <div class="field">
           <label>Code Postal</label>
-          <input v-model="form.adresseUtilisateur.codePostal" type="text" placeholder="75001" />
+          <input v-model="form.adresseUtilisateur.codePostal" type="text" placeholder="75001" :readonly="addressSelected" :class="{ 'bg-gray-50 cursor-default': addressSelected, 'valid': addressSelected }" />
         </div>
         <div class="field">
           <label>Ville</label>
-          <input v-model="form.adresseUtilisateur.ville" type="text" placeholder="Paris" />
+          <input v-model="form.adresseUtilisateur.ville" type="text" placeholder="Paris" :readonly="addressSelected" :class="{ 'bg-gray-50 cursor-default': addressSelected, 'valid': addressSelected }" />
         </div>
       </div>
 
       <div class="field">
         <label>Mot de passe</label>
         <div class="password-wrapper">
-          <input v-model="form.password" :type="showPassword ? 'text' : 'password'" :class="{ 'error': errors.password }" />
+          <input v-model="form.password" :type="showPassword ? 'text' : 'password'" :class="{ 'error': errors.password, 'valid': !errors.password && form.password.length >= 6 }" />
           <button type="button" class="toggle-btn" @click="showPassword = !showPassword">
             {{ showPassword ? 'Masquer' : 'Afficher' }}
           </button>
@@ -83,7 +93,7 @@
       <div class="field">
         <label>Confirmer le mot de passe</label>
         <div class="password-wrapper">
-          <input v-model="form.passwordConfirm" :type="showPasswordConfirm ? 'text' : 'password'" :class="{ 'error': errors.passwordConfirm }" />
+          <input v-model="form.passwordConfirm" :type="showPasswordConfirm ? 'text' : 'password'" :class="{ 'error': errors.passwordConfirm, 'valid': !errors.passwordConfirm && form.passwordConfirm.length >= 6 && form.passwordConfirm === form.password }" />
           <button type="button" class="toggle-btn" @click="showPasswordConfirm = !showPasswordConfirm">
             {{ showPasswordConfirm ? 'Masquer' : 'Afficher' }}
           </button>
@@ -128,6 +138,24 @@ const showPasswordConfirm = ref(false)
 const typeUtilisateur = ref('particulier')
 const suggestions = ref([]);
 const showSuggestions = ref(false);
+const addressSelected = ref(false);
+const phoneCheckError = ref('');
+const phoneAvailable = ref(false);
+
+const checkPhoneAvailability = async () => {
+  phoneCheckError.value = '';
+  phoneAvailable.value = false;
+  const digits = form.telephoneUtilisateur.replace(/\D/g, '');
+  if (digits.length !== 10) return;
+  try {
+    const res = await axios.get('/api/Utilisateurs/check-phone', { params: { phone: digits } });
+    if (!res.data.available) {
+      phoneCheckError.value = 'Numéro de téléphone déjà affilié à un compte.';
+    } else {
+      phoneAvailable.value = true;
+    }
+  } catch { /* silently ignore */ }
+};
 
 const closeSuggestions = () => {
   
@@ -135,7 +163,40 @@ const closeSuggestions = () => {
     showSuggestions.value = false;
   }, 200);
 };
+
+const formatTelephone = (event) => {
+  phoneCheckError.value = '';
+  phoneAvailable.value = false;
+  const input = event.target;
+  const cursorPos = input.selectionStart;
+  const digits = input.value.replace(/\D/g, '').substring(0, 10);
+
+  let formatted = '';
+  for (let i = 0; i < digits.length; i++) {
+    if (i > 0 && i % 2 === 0) formatted += ' ';
+    formatted += digits[i];
+  }
+
+  form.telephoneUtilisateur = formatted;
+  adjustCursor(input, cursorPos, input.value, formatted);
+};
+
+const adjustCursor = (input, oldCursor, oldValue, newValue) => {
+  const digitsBeforeCursor = oldValue.substring(0, oldCursor).replace(/\D/g, '').length;
+  let newCursor = 0;
+  let count = 0;
+  for (let i = 0; i < newValue.length; i++) {
+    if (newValue[i] !== ' ') count++;
+    if (count === digitsBeforeCursor) { newCursor = i + 1; break; }
+    newCursor = i + 1;
+  }
+  requestAnimationFrame(() => {
+    input.setSelectionRange(newCursor, newCursor);
+  });
+};
+
 const fetchAutocomplete = async () => {
+  if (addressSelected.value) return;
   if (form.adresseUtilisateur.rue.length < 3) {
     suggestions.value = [];
     return;
@@ -166,6 +227,16 @@ const selectSuggestion = (suggestion) => {
   
   showSuggestions.value = false;
   suggestions.value = [];
+  addressSelected.value = true;
+};
+
+const clearAddress = () => {
+  form.adresseUtilisateur.rue = '';
+  form.adresseUtilisateur.ville = '';
+  form.adresseUtilisateur.codePostal = '';
+  addressSelected.value = false;
+  suggestions.value = [];
+  showSuggestions.value = false;
 };
 
 
@@ -189,36 +260,45 @@ const errors = reactive({
 
 onMounted(() => {
 
+  const hasExternalErrors = window.history.state && window.history.state.externalErrors;
   const savedDraft = sessionStorage.getItem('registration_draft');
-  if (savedDraft) {
-    const data = JSON.parse(savedDraft);
-    form.pseudonyme = data.pseudonyme || "";
-    form.email = data.email || "";
-    form.telephoneUtilisateur = data.telephoneutilisateur || data.telephoneUtilisateur || "";
-    form.password = data.password || "";
-    form.passwordConfirm = data.passwordConfirm || data.password || "";
-    
+  const draft = savedDraft ? JSON.parse(savedDraft) : null;
 
-    form.adresseUtilisateur.rue = data.rue || data.adresseUtilisateur?.rue || "";
-    form.adresseUtilisateur.ville = data.ville || data.adresseUtilisateur?.ville || "";
-    form.adresseUtilisateur.codePostal = data.codePostal || data.adresseUtilisateur?.codePostal || "";
-    
-    if (data.typeUtilisateur) typeUtilisateur.value = data.typeUtilisateur;
+  // Restore form if returning from step 2 (draft contains typeUtilisateur)
+  // or if returning due to a conflict at step 2 (externalErrors)
+  const shouldRestore = hasExternalErrors || (draft && draft.typeUtilisateur);
+
+  if (shouldRestore && draft) {
+    form.pseudonyme = draft.pseudonyme || "";
+    form.email = draft.email || "";
+    form.telephoneUtilisateur = draft.telephoneutilisateur || draft.telephoneUtilisateur || "";
+    form.password = draft.password || "";
+    form.passwordConfirm = draft.passwordConfirm || draft.password || "";
+
+    form.adresseUtilisateur.rue = draft.rue || draft.adresseUtilisateur?.rue || "";
+    form.adresseUtilisateur.ville = draft.ville || draft.adresseUtilisateur?.ville || "";
+    form.adresseUtilisateur.codePostal = draft.codePostal || draft.adresseUtilisateur?.codePostal || "";
+    if (draft.rue || draft.adresseUtilisateur?.rue) addressSelected.value = true;
+
+    if (draft.typeUtilisateur) typeUtilisateur.value = draft.typeUtilisateur;
   }
 
-
-  if (route.query.email) {
-    form.email = route.query.email;
-  }
-
-  
-  if (window.history.state && window.history.state.externalErrors) {
-    const incoming = window.history.state.externalErrors;
+  if (hasExternalErrors) {
+    const incoming = hasExternalErrors;
     if (incoming.email) errors.email = incoming.email;
     if (incoming.pseudonyme) errors.pseudonyme = incoming.pseudonyme;
     if (incoming.telephoneutilisateur || incoming.telephoneUtilisateur) {
       errors.telephoneUtilisateur = incoming.telephoneutilisateur || incoming.telephoneUtilisateur;
     }
+  }
+
+  if (!shouldRestore) {
+    // Fresh visit: clear any leftover draft
+    sessionStorage.removeItem('registration_draft');
+  }
+
+  if (route.query.email) {
+    form.email = route.query.email;
   }
 });
 
@@ -252,6 +332,11 @@ const validate = () => {
   if (form.password !== form.passwordConfirm) { 
     errors.passwordConfirm = "Mots de passe différents."; 
     valid = false; 
+  }
+
+  if (!addressSelected.value) {
+    errors.adresseUtilisateur = "Veuillez sélectionner une adresse dans les suggestions.";
+    valid = false;
   }
 
   return valid

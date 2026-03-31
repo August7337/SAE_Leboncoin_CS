@@ -1,15 +1,12 @@
 <script setup>
 import { useRouter } from 'vue-router';
-import { ref, onMounted, computed, watch, nextTick, onUnmounted } from 'vue'
+import { ref, onMounted, computed, watch, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import { authState } from '@/auth.js';
 import axios from 'axios'
 import { buildAssetUrl } from '../../services/api'
 import PhotoCarousel from '../../components/PhotoCarousel.vue'
-import flatpickr from 'flatpickr'
-import { French } from 'flatpickr/dist/l10n/fr.js'
-import rangePlugin from 'flatpickr/dist/plugins/rangePlugin.js'
-import 'flatpickr/dist/flatpickr.min.css'
+import DateRangePicker from '../../components/DateRangePicker.vue'
 
 const router = useRouter();
 
@@ -37,8 +34,7 @@ const dateWarning = ref('* Veuillez sélectionner vos dates pour continuer')
 const canReserve = ref(false)
 const nombreNuits = ref(0)
 const totalPrix = ref(null)
-
-let rangePicker = null
+const selectedDates = ref({ start: '', end: '' })
 
 const googleApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY
 
@@ -84,153 +80,29 @@ const commoditesGroupees = computed(() => {
   }, {})
 })
 
-// --- Flatpickr ---
+// --- Calendrier ---
 
-function isDateReserved(date) {
-  const dateStr = date.toISOString().split('T')[0]
-  return reservedDates.value.includes(dateStr)
-}
-
-function hasReservedDatesInRange(startDate, endDate) {
-  const current = new Date(startDate)
-  while (current < endDate) {
-    if (isDateReserved(current)) return true
-    current.setDate(current.getDate() + 1)
-  }
-  return false
-}
-
-function computeSummary(start, end) {
-  if (!start || !end) {
+function onDatesChanged({ start, end }) {
+  selectedDates.value = { start, end }
+  dateArrivee.value = start
+  dateDepart.value = end
+  if (start && end) {
+    const s = new Date(start)
+    const e = new Date(end)
+    const nights = Math.max(0, Math.round((e - s) / (1000 * 60 * 60 * 24)))
+    nombreNuits.value = nights
+    totalPrix.value = nights > 0 && annonce.value?.prixnuitee
+      ? Math.round(nights * annonce.value.prixnuitee)
+      : null
+    canReserve.value = true
+    dateWarning.value = ''
+  } else {
     nombreNuits.value = 0
     totalPrix.value = null
-    return
-  }
-  const nights = Math.max(0, Math.round((end - start) / (1000 * 60 * 60 * 24)))
-  nombreNuits.value = nights
-  totalPrix.value = nights > 0 && annonce.value?.prixnuitee
-    ? Math.round(nights * annonce.value.prixnuitee)
-    : null
-}
-
-function attachMinimumHeader(instance) {
-  const minimumNights = annonce.value?.minimumnuitee ?? 1
-  const existing = instance.calendarContainer?.querySelector('.fp-minimum-header')
-  if (existing) existing.remove()
-  if (instance?.calendarContainer) {
-    const header = document.createElement('div')
-    header.className = 'fp-minimum-header'
-    header.style.cssText = `
-      padding: 14px 16px;
-      background: #EA580C;
-      text-align: center;
-      font-size: 13px;
-      font-weight: 600;
-      color: white;
-      border-radius: 12px 12px 0 0;
-      letter-spacing: 0.3px;
-    `
-    header.innerHTML = `Minimum requis&nbsp;: <strong>${minimumNights} nuit${minimumNights > 1 ? 's' : ''}</strong>`
-    instance.calendarContainer.insertBefore(header, instance.calendarContainer.firstChild)
+    canReserve.value = false
+    if (!start && !end) dateWarning.value = ''
   }
 }
-
-function destroyFlatpickr() {
-  if (rangePicker) {
-    try {
-      rangePicker.destroy()
-    } catch (e) {
-      console.warn('Erreur lors de la destruction de Flatpickr:', e)
-    }
-    rangePicker = null
-  }
-}
-
-function initFlatpickr() {
-
-  const inputArrivee = document.querySelector('#dateArriveeInput')
-  const inputDepart = document.querySelector('#dateDepartInput')
-
-  if (!inputArrivee || !inputDepart) {
-    console.warn('Les inputs Flatpickr ne sont pas encore dans le DOM')
-    return false
-  }
-
-  destroyFlatpickr()
-
-  try {
-    rangePicker = flatpickr('#dateArriveeInput', {
-      minDate: 'today',
-      dateFormat: 'd/m/Y',
-      locale: French,
-      showMonths: 2,
-      mode: 'range',
-      monthSelectorType: 'dropdown',
-      closeOnSelect: false,
-      disable: [
-        (date) => isDateReserved(date),
-      ],
-      plugins: [rangePlugin({ input: '#dateDepartInput' })],
-      onChange(selectedDates) {
-        if (selectedDates.length === 1) {
-          dateArrivee.value = selectedDates[0].toISOString().split('T')[0]
-          dateDepart.value = ''
-          canReserve.value = false
-          computeSummary(null, null)
-          dateWarning.value = ''
-        }
-        if (selectedDates.length === 2) {
-          const [start, end] = selectedDates
-          const minimumNights = annonce.value?.minimumnuitee ?? 1
-          const nights = Math.max(0, Math.round((end - start) / (1000 * 60 * 60 * 24)))
-
-          if (hasReservedDatesInRange(start, end)) {
-            rangePicker.clear()
-            dateArrivee.value = ''
-            dateDepart.value = ''
-            canReserve.value = false
-            computeSummary(null, null)
-            dateWarning.value = '⚠️ Cette plage contient des dates réservées. Veuillez en choisir une autre.'
-            return
-          }
-
-          if (nights < minimumNights) {
-            rangePicker.clear()
-            dateArrivee.value = ''
-            dateDepart.value = ''
-            canReserve.value = false
-            computeSummary(null, null)
-            dateWarning.value = `⚠️ Minimum de ${minimumNights} nuit${minimumNights > 1 ? 's' : ''} requises. Vous avez sélectionné ${nights} nuit${nights > 1 ? 's' : ''}.`
-            return
-          }
-
-          dateArrivee.value = start.toISOString().split('T')[0]
-          dateDepart.value = end.toISOString().split('T')[0]
-          canReserve.value = true
-          computeSummary(start, end)
-          dateWarning.value = ''
-        }
-      },
-      onOpen(selectedDates, dateStr, instance) {
-        attachMinimumHeader(instance)
-      },
-    })
-
-    return true
-  } catch (error) {
-    console.error('Erreur initFlatpickr:', error)
-    return false
-  }
-}
-
-watch(annonce, async (newVal) => {
-  if (newVal) {
-    await nextTick()
-    setTimeout(() => {
-      initFlatpickr()
-    }, 50)
-  }
-})
 
 // --- Autres fonctions ---
 
@@ -282,10 +154,6 @@ async function fetchAnnonce() {
     loading.value = false
   }
 }
-
-onUnmounted(() => {
-  destroyFlatpickr()
-})
 
 onMounted(fetchAnnonce)
 </script>
@@ -844,28 +712,15 @@ onMounted(fetchAnnonce)
               <p class="text-sm font-bold text-slate-800 mb-2">
                 Sélectionnez vos dates de séjour :
               </p>
-              <div class="flex items-center gap-2">
-                <div class="flex-1">
-                  <label class="block text-xs font-bold text-slate-500 mb-1 ml-1">Arrivée</label>
-                  <input
-                    id="dateArriveeInput"
-                    type="text"
-                    placeholder="Sélectionnez"
-                    readonly
-                    class="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-orange-500 outline-none cursor-pointer bg-white"
-                  />
-                </div>
-                <div class="flex-1">
-                  <label class="block text-xs font-bold text-slate-500 mb-1 ml-1">Départ</label>
-                  <input
-                    id="dateDepartInput"
-                    type="text"
-                    placeholder="Sélectionnez"
-                    readonly
-                    class="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-orange-500 outline-none cursor-pointer bg-white"
-                  />
-                </div>
-              </div>
+              <DateRangePicker
+                v-model="selectedDates"
+                :disabled-dates="reservedDates"
+                :min-nights="annonce?.minimumnuitee ?? 1"
+                :show-months="2"
+                :show-minimum-banner="true"
+                @update:model-value="onDatesChanged"
+                @warning="dateWarning = $event"
+              />
             </div>
 
             <!-- Résumé du séjour -->

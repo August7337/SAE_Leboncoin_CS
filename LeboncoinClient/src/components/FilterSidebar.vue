@@ -40,25 +40,15 @@
             <span class="text-lg font-medium text-slate-900">Dates</span>
           </div>
 
-          <div class="flex gap-4 mb-6">
-            <div class="flex-1">
-              <label class="text-xs text-gray-500 block mb-1">Arrivée</label>
-              <input
-                type="date"
-                v-model="localFilters.dateArrivee"
-                class="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-orange-500 outline-none"
-              />
-            </div>
-            <div class="flex items-center text-sm text-gray-400 pt-5">au</div>
-            <div class="flex-1">
-              <label class="text-xs text-gray-500 block mb-1">Départ</label>
-              <input
-                type="date"
-                v-model="localFilters.dateDepart"
-                class="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-orange-500 outline-none"
-              />
-            </div>
-          </div>
+          <DateRangePicker
+            :model-value="{ start: localFilters.dateArrivee, end: localFilters.dateDepart }"
+            @update:model-value="val => { localFilters.dateArrivee = val.start; localFilters.dateDepart = val.end }"
+            :show-months="2"
+            :show-minimum-banner="false"
+            start-label="Arrivée"
+            end-label="Départ"
+            class="mb-6"
+          />
         </div>
         <!-- Type d'hébergement -->
         <div class="py-6 border-b border-gray-200 border-t">
@@ -368,6 +358,7 @@
 <script setup>
 import { ref, watch, onMounted } from 'vue'
 import annoncesService from '../services/annoncesService'
+import DateRangePicker from './DateRangePicker.vue'
 
 const props = defineProps({
   isOpen: Boolean,
