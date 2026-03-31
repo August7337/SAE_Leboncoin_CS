@@ -217,6 +217,8 @@ public class AnnoncesController : ControllerBase
         {
             foreach (var base64Data in dto.Liensphoto)
             {
+                if (string.IsNullOrEmpty(base64Data)) continue;
+
                 string base64Image;
                 if (base64Data.Contains(","))
                 {
