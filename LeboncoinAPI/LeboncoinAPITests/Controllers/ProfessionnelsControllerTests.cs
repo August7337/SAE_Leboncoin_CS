@@ -22,6 +22,7 @@ public class ProfessionnelsControllerTests
     [TestMethod]
     public async Task GetProfessionnel_ExistingId_ReturnsProfessionnel()
     {
+        // Arrange
         var pro = new Professionnel
         {
             Idutilisateur = 1,
@@ -31,7 +32,9 @@ public class ProfessionnelsControllerTests
         };
         _context.Professionnels.Add(pro);
         await _context.SaveChangesAsync();
+        // Act
         var result = await _controller.GetProfessionnel(1);
+        // Assert
         Assert.IsNotNull(result.Value);
         Assert.AreEqual("Ma Boite", result.Value.Nomsociete);
     }
@@ -39,7 +42,9 @@ public class ProfessionnelsControllerTests
     [TestMethod]
     public async Task GetProfessionnel_UnknownId_ReturnsNotFound()
     {
+        // Act
         var result = await _controller.GetProfessionnel(999);
+        // Assert
         Assert.IsInstanceOfType(result.Result, typeof(NotFoundResult));
     }
     [TestMethod]
@@ -54,6 +59,7 @@ public class ProfessionnelsControllerTests
             Nomsociete = "Ma Boite SAS"       
         };
 
+        // Arrange
         _context.Professionnels.Add(proInitial);
         await _context.SaveChangesAsync();
         _context.Entry(proInitial).State = EntityState.Detached;
@@ -63,7 +69,9 @@ public class ProfessionnelsControllerTests
             Secteuractivite = "Informatique", 
             Nomsociete = "Nouveau Nom"       
         };
+        // Act
         var result = await _controller.PutProfessionnel(proId, proUpdated);
+        // Assert
         Assert.IsInstanceOfType(result, typeof(NoContentResult));
 
         var proInDb = await _context.Professionnels.AsNoTracking()
@@ -74,6 +82,7 @@ public class ProfessionnelsControllerTests
     [TestMethod]
     public async Task PutProfessionnel_MismatchedId_ReturnsBadRequest()
     {
+        // Arrange
         var pro = new Professionnel
         {
             Idutilisateur = 1,
@@ -81,24 +90,30 @@ public class ProfessionnelsControllerTests
             Secteuractivite = "Immobilier", 
             Nomsociete = "Ma Boite SAS"     
         };
-        var result = await _controller.PutProfessionnel(2, pro); // ID 2 vs ID 1
+        // Act
+        var result = await _controller.PutProfessionnel(2, pro);
+        // Assert
         Assert.IsInstanceOfType(result, typeof(BadRequestResult));
     }
     [TestMethod]
     public async Task PostProfessionnel_ValidData_ReturnsCreated()
     {
+        // Arrange
         var pro = new Professionnel
         {
             Idutilisateur = 1,
             Secteuractivite = "Immobilier", 
             Nomsociete = "Ma Boite SAS"     
         };
+        // Act
         var result = await _controller.PostProfessionnel(pro);
+        // Assert
         Assert.IsInstanceOfType(result.Result, typeof(CreatedAtActionResult));
     }
     [TestMethod]
     public async Task DeleteProfessionnel_ExistingId_ReturnsNoContent()
     {
+        // Arrange
         var pro = new Professionnel
         {
             Idutilisateur = 1,
@@ -108,7 +123,9 @@ public class ProfessionnelsControllerTests
         };
         _context.Professionnels.Add(pro);
         await _context.SaveChangesAsync();
+        // Act
         var result = await _controller.DeleteProfessionnel(1);
+        // Assert
         Assert.IsInstanceOfType(result, typeof(NoContentResult));
         Assert.IsNull(await _context.Professionnels.FindAsync(1));
     }
@@ -116,7 +133,9 @@ public class ProfessionnelsControllerTests
     [TestMethod]
     public async Task DeleteProfessionnel_UnknownId_ReturnsNotFound()
     {
+        // Act
         var result = await _controller.DeleteProfessionnel(999);
+        // Assert
         Assert.IsInstanceOfType(result, typeof(NotFoundResult));
     }
 }

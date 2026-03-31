@@ -25,12 +25,10 @@ namespace LeboncoinAPI.Tests
             _controller = new MessagesController(_mockMessageRepo.Object, _mockUserRepo.Object);
         }
 
-        // --- TESTS POUR GetConversations ---
-
         [TestMethod]
         public void GetConversations_ValidUserId_ReturnsOkWithData_AvecMoq()
         {
-            // Arrange
+        // Arrange
             int userId = 1;
             var fakeConversations = new List<Message>
             {
@@ -42,11 +40,10 @@ namespace LeboncoinAPI.Tests
                     IdutilisateurreceveurNavigation = new Utilisateur { Pseudonyme = "Jean" }
                 }
             };
-            _mockMessageRepo.Setup(r => r.GetConversationsByUserIdAsync(userId).Result).Returns(fakeConversations);
+            _mockMessageRepo.Setup(r => r.GetConversationsByUserIdAsync(userId)).ReturnsAsync(fakeConversations);
 
             // Act
             var actionResult = _controller.GetConversations(userId).Result;
-
             // Assert
             Assert.IsInstanceOfType(actionResult.Result, typeof(OkObjectResult));
             var okResult = actionResult.Result as OkObjectResult;
@@ -57,33 +54,28 @@ namespace LeboncoinAPI.Tests
         [TestMethod]
         public void GetConversations_NoConversations_ReturnsEmptyList_AvecMoq()
         {
-            // Arrange
+        // Arrange
             int userId = 99;
-            _mockMessageRepo.Setup(r => r.GetConversationsByUserIdAsync(userId).Result).Returns(new List<Message>());
-
+            _mockMessageRepo.Setup(r => r.GetConversationsByUserIdAsync(userId)).ReturnsAsync(new List<Message>());
             // Act
             var actionResult = _controller.GetConversations(userId).Result;
-
-            // Assert
             var okResult = actionResult.Result as OkObjectResult;
             var list = okResult.Value as IEnumerable<object>;
+            // Assert
             Assert.AreEqual(0, list.Count());
         }
-
-        // --- TESTS POUR GetChat ---
 
         [TestMethod]
         public void GetChat_ValidIds_ReturnsChatHistory_AvecMoq()
         {
-            // Arrange
+        // Arrange
             int userId = 1;
             int interId = 2;
             var fakeMessages = new List<Message> { new Message { Idmessage = 1, Contenumessage = "Hello" } };
             var fakeInterlocuteur = new Utilisateur { Idutilisateur = 2, Pseudonyme = "Alice" };
 
-            _mockMessageRepo.Setup(r => r.GetChatAsync(userId, interId).Result).Returns(fakeMessages);
-            _mockUserRepo.Setup(r => r.GetByIdAsync(interId).Result).Returns(fakeInterlocuteur);
-
+            _mockMessageRepo.Setup(r => r.GetChatAsync(userId, interId)).ReturnsAsync(fakeMessages);
+            _mockUserRepo.Setup(r => r.GetByIdAsync(interId)).ReturnsAsync(fakeInterlocuteur);
             // Act
             var actionResult = _controller.GetChat(userId, interId).Result;
 
@@ -92,7 +84,6 @@ namespace LeboncoinAPI.Tests
             var okResult = actionResult.Result as OkObjectResult;
             Assert.IsNotNull(okResult);
 
-            // Utilisation de la réflexion pour lire la propriété Interlocuteur de l'objet anonyme
             var resultValue = okResult.Value;
             var interlocuteurProp = resultValue.GetType().GetProperty("Interlocuteur").GetValue(resultValue, null);
             var pseudonyme = interlocuteurProp.GetType().GetProperty("Pseudonyme").GetValue(interlocuteurProp, null);
@@ -102,35 +93,28 @@ namespace LeboncoinAPI.Tests
         [TestMethod]
         public async Task GetChat_UnknownInterlocuteur_ReturnsInconnu_AvecMoq()
         {
-            // Arrange
+        // Arrange
             _mockMessageRepo.Setup(r => r.GetChatAsync(It.IsAny<int>(), It.IsAny<int>())).ReturnsAsync(new List<Message>());
             _mockUserRepo.Setup(r => r.GetByIdAsync(It.IsAny<int>())).ReturnsAsync((Utilisateur)null);
-
             // Act
             var actionResult = await _controller.GetChat(1, 999);
-
-            // Assert
             var okResult = actionResult.Result as OkObjectResult;
             var data = okResult.Value;
 
             var interlocuteurProp = data.GetType().GetProperty("Interlocuteur").GetValue(data, null);
             var pseudonyme = interlocuteurProp.GetType().GetProperty("Pseudonyme").GetValue(interlocuteurProp, null);
 
+            // Assert
             Assert.AreEqual("Inconnu", pseudonyme);
         }
-
-        // --- TESTS POUR PostMessage ---
-
         [TestMethod]
         public void PostMessage_ValidContent_ReturnsOk_AvecMoq()
         {
-            // Arrange
+        // Arrange
             var dto = new MessagesController.PostMessageDto { ExpediteurId = 1, DestinataireId = 2, Contenu = "Texte valide" };
             _mockMessageRepo.Setup(r => r.AddMessageAsync(It.IsAny<Message>())).Returns(Task.CompletedTask);
-
             // Act
             var actionResult = _controller.PostMessage(dto).Result;
-
             // Assert
             Assert.IsInstanceOfType(actionResult, typeof(OkResult));
             _mockMessageRepo.Verify(r => r.AddMessageAsync(It.IsAny<Message>()), Times.Once);
@@ -139,12 +123,10 @@ namespace LeboncoinAPI.Tests
         [TestMethod]
         public void PostMessage_EmptyContent_ReturnsBadRequest_AvecMoq()
         {
-            // Arrange
+        // Arrange
             var dto = new MessagesController.PostMessageDto { Contenu = "" }; // Vide
-
             // Act
             var actionResult = _controller.PostMessage(dto).Result;
-
             // Assert
             Assert.IsInstanceOfType(actionResult, typeof(BadRequestObjectResult));
             var badRequest = actionResult as BadRequestObjectResult;

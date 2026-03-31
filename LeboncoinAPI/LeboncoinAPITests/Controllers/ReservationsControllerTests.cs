@@ -31,22 +31,29 @@ public class ReservationsControllerTests
     [TestMethod]
     public async Task GetReservation_ExistingId_ReturnsOk_AvecMoq()
     {
+        // Arrange
         var res = new Reservation { Idreservation = 1, Nomclient = "Test" };
         _mockRepo.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(res);
+        // Act
         var result = await _controller.GetReservation(1);
+        // Assert
         Assert.IsInstanceOfType(result.Result, typeof(OkObjectResult));
     }
 
     [TestMethod]
     public async Task GetReservation_UnknownId_ReturnsNotFound_AvecMoq()
     {
+        // Arrange
         _mockRepo.Setup(r => r.GetByIdAsync(99)).ReturnsAsync((Reservation)null);
+        // Act
         var result = await _controller.GetReservation(99);
+        // Assert
         Assert.IsInstanceOfType(result.Result, typeof(NotFoundResult));
     }
     [TestMethod]
     public async Task CreateUpdateCheckoutSession_RefundCase_UpdatesSolde()
     {
+        // Arrange
         var userId = 1;
         var user = new Utilisateur
         {
@@ -100,8 +107,10 @@ public class ReservationsControllerTests
             new InclureCreateDto { Idtypevoyageur = 1, Nombrevoyageur = 1 }
         }
         };
+        // Act
         var result = await _controller.CreateUpdateCheckoutSession(dto);
         var updatedUser = await _context.Utilisateurs.AsNoTracking().FirstAsync(u => u.Idutilisateur == userId);
+        // Assert
         Assert.IsInstanceOfType(result, typeof(OkObjectResult), "Le contrôleur aurait dû retourner Ok");
         Assert.IsTrue(updatedUser.Solde > 10.00m, $"Le solde ({updatedUser.Solde}) n'a pas bougé. Somme des transactions en DB : {await _context.Transactions.Where(t => t.Idreservation == 1).SumAsync(t => t.Montanttransaction)}");
     }
@@ -109,17 +118,23 @@ public class ReservationsControllerTests
     [TestMethod]
     public async Task CreateUpdateCheckoutSession_MissingId_ReturnsBadRequest()
     {
+        // Arrange
         var dto = new ReservationCreateDto { Idreservation = null };
+        // Act
         var result = await _controller.CreateUpdateCheckoutSession(dto);
+        // Assert
         Assert.IsInstanceOfType(result, typeof(BadRequestObjectResult));
     }
     [TestMethod]
     public async Task DeleteReservation_Success_ReturnsNoContent()
     {
+        // Arrange
         var res = new Reservation { Idreservation = 1 };
         _mockRepo.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(res);
         _mockRepo.Setup(r => r.DeleteAsync(res)).Returns(Task.CompletedTask);
+        // Act
         var result = await _controller.DeleteReservation(1);
+        // Assert
         Assert.IsInstanceOfType(result, typeof(NoContentResult));
         _mockRepo.Verify(r => r.DeleteAsync(res), Times.Once);
     }
@@ -127,8 +142,11 @@ public class ReservationsControllerTests
     [TestMethod]
     public async Task DeleteReservation_NotFound_ReturnsNotFound()
     {
+        // Arrange
         _mockRepo.Setup(r => r.GetByIdAsync(1)).ReturnsAsync((Reservation)null);
+        // Act
         var result = await _controller.DeleteReservation(1);
+        // Assert
         Assert.IsInstanceOfType(result, typeof(NotFoundResult));
     }
 }

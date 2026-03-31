@@ -21,14 +21,11 @@ public class CommoditeManagerTests
             IdcategorieNavigation = cat
         });
         await context.SaveChangesAsync();
-
         var manager = new CommoditeManager(context);
-
         // Act
         var results = await manager.GetAllAsync();
-
-        // Assert
         var item = results.First();
+        // Assert
         Assert.IsNotNull(item.IdcategorieNavigation);
         Assert.AreEqual("Cuisine", item.IdcategorieNavigation.Nomcategorie);
     }

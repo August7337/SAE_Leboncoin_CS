@@ -29,6 +29,7 @@ public class TypeHebergementsControllerTests
     [TestMethod]
     public async Task GetTypeHebergements_ReturnsAllItems()
     {
+        // Arrange
         var typesTestData = new List<Typehebergement>
     {
         new Typehebergement { Idtypehebergement = 1, Nomtypehebergement = "Appartement" },
@@ -36,6 +37,7 @@ public class TypeHebergementsControllerTests
     };
         _context.Typehebergements.AddRange(typesTestData);
         await _context.SaveChangesAsync();
+        // Act
         var actionResult = await _controller.GetTypeHebergements();
         IEnumerable<Typehebergement> model;
         if (actionResult.Value != null)
@@ -50,6 +52,7 @@ public class TypeHebergementsControllerTests
 
         var list = model.ToList();
 
+        // Assert
         Assert.IsNotNull(list, "La liste ne doit pas être nulle");
         Assert.AreEqual(2, list.Count);
         Assert.AreEqual("Appartement", list[0].Nomtypehebergement);
@@ -59,7 +62,10 @@ public class TypeHebergementsControllerTests
     [TestMethod]
     public async Task GetTypeHebergements_ReturnsEmpty_WhenNoData()
     {
+        // Act
         var result = await _controller.GetTypeHebergements();
+
+        // Assert
         Assert.IsNotNull(result.Value);
         Assert.AreEqual(0, result.Value.Count());
     }

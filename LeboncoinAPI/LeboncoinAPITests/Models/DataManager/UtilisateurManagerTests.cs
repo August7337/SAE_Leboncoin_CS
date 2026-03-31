@@ -20,7 +20,6 @@ public class UtilisateurManagerTests
         _context = new LeboncoinDBContext(options);
         _manager = new UtilisateurManager(_context);
 
-        // On ajoute un rôle "Client" en base car le manager le cherche
         _context.Roles.Add(new Role { Idrole = 1, Nomrole = "Client" });
         _context.SaveChanges();
     }
@@ -31,18 +30,18 @@ public class UtilisateurManagerTests
         // Arrange
         var options = new DbContextOptionsBuilder<LeboncoinDBContext>()
             .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
-            // Crucial pour ne pas planter sur la transaction BeginTransactionAsync
+
             .ConfigureWarnings(x => x.Ignore(InMemoryEventId.TransactionIgnoredWarning))
             .Options;
 
         using var context = new LeboncoinDBContext(options);
 
-        // On doit ajouter le rôle "Client" car le manager le cherche à la fin (AppRoles.Client)
         context.Roles.Add(new Role { Nomrole = "Client" });
         await context.SaveChangesAsync();
 
         var manager = new UtilisateurManager(context);
 
+        // Act
         var dto = new RegisterParticulierDTO
         {
             Email = "test@exemple.com",
@@ -51,14 +50,13 @@ public class UtilisateurManagerTests
             Nomutilisateur = "Doe",
             Prenomutilisateur = "John",
             Civilite = "M.",
-            Telephoneutilisateur = "0601020304", // ÉTAIT PROBABLEMENT MANQUANT OU NULL
+            Telephoneutilisateur = "0601020304",
             Rue = "10 Rue de la Paix",
             CodePostal = "75000",
             Ville = "Paris",
             DateNaissance = new DateTime(1990, 05, 20)
         };
 
-        // Act
         var result = await manager.RegisterFullParticulierAsync(dto);
 
         // Assert

@@ -9,6 +9,7 @@ public class ReservationManagerTests
     [TestMethod]
     public async Task GetByIdAsync_ReturnsFullObjectGraph()
     {
+        // Arrange
         var options = new DbContextOptionsBuilder<LeboncoinDBContext>()
             .UseInMemoryDatabase(databaseName: "ResaTest").ConfigureWarnings(x => x.Ignore(InMemoryEventId.TransactionIgnoredWarning)).Options;
         using var context = new LeboncoinDBContext(options);
@@ -19,24 +20,33 @@ public class ReservationManagerTests
         var annonce = new Annonce
         {
             Titreannonce = "Appart Luxe",
-            Descriptionannonce = "Une superbe description obligatoire", // REQUIS
-            IdadresseNavigation = adr
+            Descriptionannonce = "Une superbe description obligatoire",
+            IdadresseNavigation = adr,
+            IddateNavigation = new Date { Date1 = DateOnly.FromDateTime(DateTime.Now) },
+            IdtypehebergementNavigation = new Typehebergement { Nomtypehebergement = "Appartement" },
+            IdheurearriveeNavigation = new Heure { Heure1 = "14:00" },
+            IdheuredepartNavigation = new Heure { Heure1 = "10:00" },
+            IdutilisateurNavigation = new Utilisateur { Pseudonyme = "Owner", Email = "o@o.com", Password = "p", Telephoneutilisateur = "01", Solde = 0 }
         };
 
         var resa = new Reservation
         {
             Idreservation = 1,
-            Nomclient = "Doe",     // REQUIS
-            Prenomclient = "John", // REQUIS
-            IdannonceNavigation = annonce
+            Nomclient = "Doe",     
+            Prenomclient = "John", 
+            IdannonceNavigation = annonce,
+            IddatedebutreservationNavigation = new Date { Date1 = DateOnly.FromDateTime(DateTime.Now) },
+            IddatefinreservationNavigation = new Date { Date1 = DateOnly.FromDateTime(DateTime.Now.AddDays(1)) }
         };
 
         context.Reservations.Add(resa);
         await context.SaveChangesAsync();
 
         var manager = new ReservationManager(context);
+        // Act
         var result = await manager.GetByIdAsync(1);
 
+        // Assert
         Assert.IsNotNull(result);
         Assert.AreEqual("Paris", result.IdannonceNavigation.IdadresseNavigation.IdvilleNavigation.Nomville);
     }

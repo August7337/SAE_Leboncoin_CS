@@ -30,7 +30,6 @@ public class IncidentManagerTests
 
         using var context = new LeboncoinDBContext(options);
 
-        // 1. On crée d'abord l'utilisateur pour qu'il existe en base
         var monUser = new Utilisateur
         {
             Idutilisateur = 42,
@@ -41,24 +40,26 @@ public class IncidentManagerTests
         };
         context.Utilisateurs.Add(monUser);
 
-        // 2. On crée l'incident en utilisant l'OBJET utilisateur (pas juste l'ID)
         var incident = new Incident
         {
             Idincident = 1,
             Idutilisateur = 42,
             Descriptionincident = "Fuite",
             Motifincident = "Plomberie",
-            IdutilisateurNavigation = monUser // On force la liaison
+            IdutilisateurNavigation = monUser
         };
         context.Incidents.Add(incident);
 
+        // Ensure date is present (Incidents reference a Date)
+        context.Dates.Add(new Date { Date1 = DateOnly.FromDateTime(DateTime.UtcNow) });
+
         await context.SaveChangesAsync();
 
-        // 3. Act
         var manager = new IncidentManager(context);
+        // Act
         var results = await manager.GetByUtilisateurAsync(42);
 
-        // 4. Assert
+        // Assert
         Assert.AreEqual(1, results.Count(), "L'incident devrait être trouvé pour l'ID 42");
     }
 }

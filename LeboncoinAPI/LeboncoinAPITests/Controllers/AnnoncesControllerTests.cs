@@ -21,16 +21,11 @@ namespace LeboncoinAPI.Tests
         [TestInitialize]
         public void TestSetup()
         {
-            // Setup In-Memory Database
             var builder = new DbContextOptionsBuilder<LeboncoinDBContext>()
                           .UseInMemoryDatabase(databaseName: "LeboncoinTestDB");
             context = new LeboncoinDBContext(builder.Options);
-
-            // Mock Repository and Config
             mockRepo = new Mock<IAnnonceRepository>();
             mockConfig = new Mock<IConfiguration>();
-
-            // Mock Cloudinary Settings for Constructor
             mockConfig.Setup(c => c["CloudinarySettings:CloudName"]).Returns("test");
             mockConfig.Setup(c => c["CloudinarySettings:ApiKey"]).Returns("test");
             mockConfig.Setup(c => c["CloudinarySettings:ApiSecret"]).Returns("test");
@@ -50,12 +45,9 @@ namespace LeboncoinAPI.Tests
                 Reservations = new List<Reservation>(),
                 Idcommodites = new List<Commodite>()
             };
-
-            mockRepo.Setup(repo => repo.GetByIdAsync(1).Result).Returns(fakeAnnonce);
-
             // Act
+            mockRepo.Setup(repo => repo.GetByIdAsync(1)).ReturnsAsync(fakeAnnonce);
             var actionResult = controller.GetAnnonce(1).Result;
-
             // Assert
             Assert.IsInstanceOfType(actionResult, typeof(OkObjectResult));
             var okResult = actionResult as OkObjectResult;
@@ -66,11 +58,9 @@ namespace LeboncoinAPI.Tests
         public void GetAnnonceById_UnknownId_ReturnsNotFound_AvecMoq()
         {
             // Arrange
-            mockRepo.Setup(repo => repo.GetByIdAsync(999).Result).Returns((Annonce)null);
-
+            mockRepo.Setup(repo => repo.GetByIdAsync(999)).ReturnsAsync((Annonce)null);
             // Act
             var actionResult = controller.GetAnnonce(999).Result;
-
             // Assert
             Assert.IsInstanceOfType(actionResult, typeof(NotFoundObjectResult));
         }
@@ -80,12 +70,10 @@ namespace LeboncoinAPI.Tests
         {
             // Arrange
             var fakeAnnonce = new Annonce { Idannonce = 5 };
-            mockRepo.Setup(repo => repo.GetByIdAsync(5).Result).Returns(fakeAnnonce);
+            mockRepo.Setup(repo => repo.GetByIdAsync(5)).ReturnsAsync(fakeAnnonce);
             mockRepo.Setup(repo => repo.DeleteAsync(fakeAnnonce)).Returns(Task.CompletedTask);
-
             // Act
             var actionResult = controller.DeleteAnnonce(5).Result;
-
             // Assert
             Assert.IsInstanceOfType(actionResult, typeof(NoContentResult));
             mockRepo.Verify(r => r.DeleteAsync(It.IsAny<Annonce>()), Times.Once);
@@ -96,14 +84,12 @@ namespace LeboncoinAPI.Tests
         {
             // Arrange
             var dates = new List<DateOnly> { new DateOnly(2024, 12, 25) };
-            mockRepo.Setup(repo => repo.GetIndisponibilitesAsync(1).Result).Returns(dates);
-
+            mockRepo.Setup(repo => repo.GetIndisponibilitesAsync(1)).ReturnsAsync(dates);
             // Act
             var actionResult = controller.GetIndisponibilites(1).Result;
-
-            // Assert
             var okResult = actionResult.Result as OkObjectResult;
             var resultList = okResult.Value as IEnumerable<string>;
+            // Assert
             Assert.AreEqual("2024-12-25", resultList.First());
         }
 
@@ -114,10 +100,8 @@ namespace LeboncoinAPI.Tests
             int userId = 1;
             int annonceId = 10;
             mockRepo.Setup(r => r.AddFavoriteAsync(userId, annonceId)).Returns(Task.CompletedTask);
-
             // Act
             var actionResult = controller.AddFavorite(annonceId, userId).Result;
-
             // Assert
             Assert.IsInstanceOfType(actionResult, typeof(OkResult));
         }
@@ -127,11 +111,9 @@ namespace LeboncoinAPI.Tests
             // Arrange
             int userId = 1;
             var resultatsFake = new List<AnnonceSearchResultDto> { new AnnonceSearchResultDto { Idannonce = 10, Titreannonce = "Logement A" } };
-            mockRepo.Setup(r => r.GetByUserIdAsync(userId).Result).Returns(resultatsFake);
-
+            mockRepo.Setup(r => r.GetByUserIdAsync(userId)).ReturnsAsync(resultatsFake);
             // Act
             var actionResult = controller.GetAnnoncesByUser(userId).Result;
-
             // Assert
             Assert.IsInstanceOfType(actionResult.Result, typeof(OkObjectResult));
             var okResult = actionResult.Result as OkObjectResult;
@@ -144,15 +126,14 @@ namespace LeboncoinAPI.Tests
         {
             // Arrange
             int userId = 999;
-            mockRepo.Setup(r => r.GetByUserIdAsync(userId).Result).Returns(new List<AnnonceSearchResultDto>());
-
+            mockRepo.Setup(r => r.GetByUserIdAsync(userId)).ReturnsAsync(new List<AnnonceSearchResultDto>());
             // Act
             var actionResult = controller.GetAnnoncesByUser(userId).Result;
 
-            // Assert
             var okResult = actionResult.Result as OkObjectResult;
             var model = okResult.Value as IEnumerable<AnnonceSearchResultDto>;
-            Assert.AreEqual(0, model.Count()); // On attend une liste vide, pas une erreur 404
+            // Assert
+            Assert.AreEqual(0, model.Count()); 
         }
         [TestMethod]
         public void SearchAnnonces_WithCriteria_ReturnsFilteredResults()
@@ -160,14 +141,12 @@ namespace LeboncoinAPI.Tests
             // Arrange
             string query = "Annecy";
             var fakeResults = new List<AnnonceSearchResultDto> { new AnnonceSearchResultDto { Nomville = "Annecy" } };
-            mockRepo.Setup(r => r.GetByLocalisationAsync(query, null, null, null, null, null, null, null).Result).Returns(fakeResults);
-
+            mockRepo.Setup(r => r.GetByLocalisationAsync(query, null, null, null, null, null, null, null)).ReturnsAsync(fakeResults);
             // Act
             var actionResult = controller.SearchAnnonces(q: query).Result;
-
-            // Assert
             var okResult = actionResult.Result as OkObjectResult;
             var model = okResult.Value as IEnumerable<AnnonceSearchResultDto>;
+            // Assert
             Assert.AreEqual("Annecy", model.First().Nomville);
         }
 
@@ -176,14 +155,16 @@ namespace LeboncoinAPI.Tests
         {
             // Arrange
             string query = "VilleInexistante";
-            mockRepo.Setup(r => r.GetByLocalisationAsync(query, null, null, null, null, null, null, null).Result).Returns(new List<AnnonceSearchResultDto>());
+            mockRepo.Setup(r => r.GetByLocalisationAsync(query, null, null, null, null, null, null, null)).ReturnsAsync(new List<AnnonceSearchResultDto>());
+
 
             // Act
             var actionResult = controller.SearchAnnonces(q: query).Result;
 
-            // Assert
+
             var okResult = actionResult.Result as OkObjectResult;
             var model = okResult.Value as IEnumerable<AnnonceSearchResultDto>;
+            // Assert
             Assert.IsNotNull(model);
             Assert.AreEqual(0, model.Count());
         }
@@ -246,7 +227,7 @@ namespace LeboncoinAPI.Tests
             // Arrange
             int id = 1;
             var annonce = new Annonce { Idannonce = id };
-            mockRepo.Setup(r => r.GetByIdAsync(id).Result).Returns(annonce);
+            mockRepo.Setup(r => r.GetByIdAsync(id)).ReturnsAsync(annonce);
             mockRepo.Setup(r => r.UpdateAsync(It.IsAny<Annonce>(), It.IsAny<Annonce>())).Returns(Task.CompletedTask);
 
             // Act
@@ -261,13 +242,98 @@ namespace LeboncoinAPI.Tests
         {
             // Arrange
             int idUrl = 1;
-            var annonceBody = new Annonce { Idannonce = 2 }; // IDs différents
+            var annonceBody = new Annonce { Idannonce = 2 }; 
 
             // Act
             var actionResult = controller.PutAnnonce(idUrl, annonceBody).Result;
 
             // Assert
             Assert.IsInstanceOfType(actionResult, typeof(BadRequestResult));
+        }
+
+        [TestMethod]
+        public void GetSimilaires_ReturnsOk_AvecMoq()
+        {
+            // Arrange
+            var fakeList = new List<AnnonceSearchResultDto> { new AnnonceSearchResultDto { Idannonce = 2, Titreannonce = "Similaire" } };
+            mockRepo.Setup(r => r.GetSimilairesAsync(1)).ReturnsAsync(fakeList);
+
+            // Act
+            var actionResult = controller.GetSimilaires(1).Result;
+
+            // Assert
+            Assert.IsInstanceOfType(actionResult.Result, typeof(OkObjectResult));
+            var ok = actionResult.Result as OkObjectResult;
+            var model = ok.Value as IEnumerable<AnnonceSearchResultDto>;
+            Assert.AreEqual(1, model.Count());
+        }
+
+        [TestMethod]
+        public void GetFavorites_ReturnsOk_AvecMoq()
+        {
+            // Arrange
+            var fakeFavs = new List<AnnonceSearchResultDto> { new AnnonceSearchResultDto { Idannonce = 3 } };
+            mockRepo.Setup(r => r.GetFavoritesByUserIdAsync(1)).ReturnsAsync(fakeFavs);
+
+            // Act
+            var actionResult = controller.GetFavorites(1).Result;
+
+            // Assert
+            Assert.IsInstanceOfType(actionResult.Result, typeof(OkObjectResult));
+        }
+
+        [TestMethod]
+        public void GetFavoriteIds_ReturnsOk_AvecMoq()
+        {
+            // Arrange
+            var ids = new List<int> { 3, 4 };
+            mockRepo.Setup(r => r.GetFavoriteIdsByUserIdAsync(1)).ReturnsAsync(ids);
+
+            // Act
+            var actionResult = controller.GetFavoriteIds(1).Result;
+
+            // Assert
+            Assert.IsInstanceOfType(actionResult.Result, typeof(OkObjectResult));
+        }
+
+        [TestMethod]
+        public void AddPhoto_ReturnsOk_AvecMoq()
+        {
+            // Arrange
+            var photo = new Photo { Idphoto = 1, Idannonce = 1, Lienphoto = "url" };
+            mockRepo.Setup(r => r.AddPhotoAsync(1, "url")).ReturnsAsync(photo);
+
+            // Act
+            var actionResult = controller.AddPhoto(1, new AddPhotoRequest { Url = "url" }).Result;
+
+            // Assert
+            Assert.IsInstanceOfType(actionResult, typeof(OkObjectResult));
+        }
+
+        [TestMethod]
+        public void RemovePhoto_ReturnsNoContent_AvecMoq()
+        {
+            // Arrange
+            mockRepo.Setup(r => r.RemovePhotoAsync(5)).Returns(Task.CompletedTask);
+
+            // Act
+            var actionResult = controller.RemovePhoto(5).Result;
+
+            // Assert
+            Assert.IsInstanceOfType(actionResult, typeof(NoContentResult));
+        }
+
+        [TestMethod]
+        public void RemoveIndisponibilite_InvalidDate_ReturnsBadRequest()
+        {
+            // Arrange
+            var invalidDate = "bad-date";
+
+            // Act
+            var actionResult = controller.RemoveIndisponibilite(1, invalidDate).Result;
+
+            // Assert
+            Assert.IsInstanceOfType(actionResult, typeof(BadRequestObjectResult));
         }
     }
 }

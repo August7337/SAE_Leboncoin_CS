@@ -23,18 +23,18 @@ public class MessageManagerTests
     [TestMethod]
     public async Task GetConversationsByUserIdAsync_ReturnsOnlyLatestMessagePerContact()
     {
-        // Arrange: Utilisateur 1 parle avec Utilisateur 2 (2 messages)
+        // Arrange
+        var dateNow = new Date { Date1 = DateOnly.FromDateTime(DateTime.UtcNow) };
+        _context.Dates.Add(dateNow);
         _context.Messages.AddRange(new List<Message> {
-            new Message { Idmessage = 1, Idutilisateurexpediteur = 1, Idutilisateurreceveur = 2, Contenumessage = "Hello" },
-            new Message { Idmessage = 2, Idutilisateurexpediteur = 2, Idutilisateurreceveur = 1, Contenumessage = "Salut !" }
+            new Message { Idmessage = 1, Idutilisateurexpediteur = 1, Idutilisateurreceveur = 2, Contenumessage = "Hello", IddateNavigation = dateNow },
+            new Message { Idmessage = 2, Idutilisateurexpediteur = 2, Idutilisateurreceveur = 1, Contenumessage = "Salut !", IddateNavigation = dateNow }
         });
         await _context.SaveChangesAsync();
-
         // Act
         var conversations = await _manager.GetConversationsByUserIdAsync(1);
-
         // Assert
-        Assert.AreEqual(1, conversations.Count()); // Une seule conversation avec l'utilisateur 2
-        Assert.AreEqual("Salut !", conversations.First().Contenumessage); // Le dernier message
+        Assert.AreEqual(1, conversations.Count()); 
+        Assert.AreEqual("Salut !", conversations.First().Contenumessage); 
     }
 }

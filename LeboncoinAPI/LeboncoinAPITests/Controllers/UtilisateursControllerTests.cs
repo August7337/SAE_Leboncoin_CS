@@ -42,6 +42,7 @@ public class UtilisateursControllerTests
     [TestMethod]
     public async Task Login_InvalidPassword_ReturnsBadRequest()
     {
+        // Arrange
         var passwordClaire = "password123";
         var user = new Utilisateur
         {
@@ -61,13 +62,52 @@ public class UtilisateursControllerTests
             Email = "test@test.com",
             Password = "mauvais_password"
         };
-
         // Act
         var result = await _controller.Login(loginRequest);
-
         // Assert
         Assert.IsInstanceOfType(result, typeof(BadRequestObjectResult));
         var badRequest = result as BadRequestObjectResult;
         Assert.AreEqual("Mot de passe incorrect.", badRequest.Value);
+    }
+
+    [TestMethod]
+    public async Task GetUtilisateurs_ReturnsList()
+    {
+        // Arrange
+        _context.Utilisateurs.Add(new Utilisateur { Idutilisateur = 1, Email = "a@a.com", Pseudonyme = "A", Password = "p", Telephoneutilisateur = "01" });
+        await _context.SaveChangesAsync();
+
+        // Act
+        var result = await _controller.GetUtilisateurs();
+
+        // Assert
+        if (result.Value != null)
+        {
+            Assert.AreEqual(1, result.Value.Count());
+        }
+        else
+        {
+            var ok = result.Result as OkObjectResult;
+            Assert.IsNotNull(ok);
+            var list = ok.Value as IEnumerable<Utilisateur>;
+            Assert.IsNotNull(list);
+            Assert.AreEqual(1, list.Count());
+        }
+    }
+
+    [TestMethod]
+    public async Task Register_WhenEmailExists_ReturnsConflict()
+    {
+        // Arrange
+        _context.Utilisateurs.Add(new Utilisateur { Idutilisateur = 1, Email = "existing@ex.com", Pseudonyme = "X", Password = "p", Telephoneutilisateur = "01" });
+        await _context.SaveChangesAsync();
+
+        var dto = new RegisterParticulierDTO { Email = "existing@ex.com", Password = "P@ss1", Pseudonyme = "X" };
+
+        // Act
+        var result = await _controller.Register(dto);
+
+        // Assert
+        Assert.IsInstanceOfType(result, typeof(ConflictObjectResult));
     }
 }
