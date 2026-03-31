@@ -129,6 +129,9 @@ public class AnnoncesController : ControllerBase
             annonce.Smsverifie,
             annonce.Nombreetoilesleboncoin,
             annonce.Idutilisateur,
+            annonce.Idtypehebergement,
+            annonce.Idheurearrivee,
+            annonce.Idheuredepart,
             IdheurearriveeNavigation = annonce.IdheurearriveeNavigation == null ? null : new { Heure = annonce.IdheurearriveeNavigation.Heure1 },
             IdheuredepartNavigation = annonce.IdheuredepartNavigation == null ? null : new { Heure = annonce.IdheuredepartNavigation.Heure1 },
             IdtypehebergementNavigation = annonce.IdtypehebergementNavigation == null ? null : new { annonce.IdtypehebergementNavigation.Nomtypehebergement },
@@ -197,6 +200,17 @@ public class AnnoncesController : ControllerBase
             Idtypehebergement = dto.Idtypehebergement,
             IdadresseNavigation = adresse
         };
+
+        if (dto.Idcommodites != null && dto.Idcommodites.Any())
+        {
+            var commodites = await _dbContext.Commodites
+                .Where(c => dto.Idcommodites.Contains(c.Idcommodite))
+                .ToListAsync();
+            foreach (var c in commodites)
+            {
+                nouvelleAnnonce.Idcommodites.Add(c);
+            }
+        }
 
 
         if (dto.Liensphoto != null && dto.Liensphoto.Any())
@@ -298,13 +312,8 @@ public class AnnoncesController : ControllerBase
 
     // PUT: api/Annonces/5
     [HttpPut("{id}")]
-    public async Task<IActionResult> PutAnnonce(int id, Annonce annonce)
+    public async Task<IActionResult> PutAnnonce(int id, UpdateAnnonceRequestDTO dto)
     {
-        if (id != annonce.Idannonce)
-        {
-            return BadRequest();
-        }
-
         var annonceToUpdate = await _annonceRepository.GetByIdAsync(id);
 
         if (annonceToUpdate == null)
@@ -312,7 +321,7 @@ public class AnnoncesController : ControllerBase
             return NotFound();
         }
 
-        await _annonceRepository.UpdateAsync(annonceToUpdate, annonce);
+        await _annonceRepository.UpdateFromDtoAsync(annonceToUpdate, dto);
 
         return NoContent();
     }

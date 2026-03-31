@@ -24,7 +24,50 @@ const form = reactive({
   nombrebebesmax: 0,
   possibiliteanimaux: false,
   possibilitefumeur: false,
+  idtypehebergement: 1,
+  idheurearrivee: 14,
+  idheuredepart: 10
 })
+
+const allCommodites = ref([]);
+const selectedCommodites = ref([]);
+const activeTab = ref('');
+
+const typesHebergement = [
+  { id: 1, nom: "Appartement" },
+  { id: 2, nom: "Maison" },
+  { id: 3, nom: "Chambre d'hôte" },
+  { id: 4, nom: "Gîte" },
+  { id: 5, nom: "Studio" },
+  { id: 6, nom: "Loft" },
+  { id: 7, nom: "Chalet" },
+  { id: 8, nom: "Maison d'hôtes" },
+  { id: 9, nom: "Bungalow" }
+];
+
+const groupedCommodites = computed(() => {
+  const groups = {}; 
+  allCommodites.value.forEach(item => {
+    const catName = item.idcategorieNavigation?.nomcategorie || 'Autres';
+    if (!groups[catName]) {
+      groups[catName] = [];
+    }
+    groups[catName].push(item);
+  });
+  return groups;
+});
+
+async function fetchCommodites() {
+  try {
+    const response = await api.get('/Commodites');
+    allCommodites.value = response.data;
+    if (Object.keys(groupedCommodites.value).length > 0) {
+      activeTab.value = Object.keys(groupedCommodites.value)[0];
+    }
+  } catch (error) {
+    console.error("Erreur commodités:", error);
+  }
+}
 
 const photos = ref([])
 const unavailabilities = ref([])
@@ -172,7 +215,15 @@ async function fetchAnnonce() {
       nombrebebesmax: data.nombrebebesmax || 0,
       possibiliteanimaux: data.possibiliteanimaux || false,
       possibilitefumeur: data.possibilitefumeur || false,
+      idtypehebergement: data.idtypehebergement || 1,
+      idheurearrivee: data.idheurearrivee || 14,
+      idheuredepart: data.idheuredepart || 10
     })
+
+    if (data.idcommodites) {
+      selectedCommodites.value = data.idcommodites.map(c => c.idcommodite)
+    }
+
     photos.value = data.photos || []
     
     if (authState.user && data.idutilisateur !== authState.user.idutilisateur) {
@@ -194,6 +245,7 @@ async function fetchUnavailabilities() {
 
 async function init() {
   loading.value = true
+  await fetchCommodites()
   await fetchAnnonce()
   await fetchUnavailabilities()
   loading.value = false
@@ -207,7 +259,11 @@ async function saveAnnonce() {
   errorMessage.value = ''
   successMessage.value = ''
   try {
-    await api.put(`/Annonces/${annonceId}`, form)
+    const payload = {
+      ...form,
+      idcommodites: selectedCommodites.value
+    };
+    await api.put(`/Annonces/${annonceId}`, payload)
     successMessage.value = 'Annonce mise à jour avec succès.'
     setTimeout(() => successMessage.value = '', 3000)
     window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -335,6 +391,18 @@ onMounted(() => {
               <textarea v-model="form.descriptionannonce" rows="6" class="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-base shadow-sm focus:bg-white focus:border-[#EA580C] focus:ring-4 focus:ring-orange-500/10 transition-all outline-none resize-y" placeholder="Détaillez les atouts de votre propriété..."></textarea>
             </div>
             
+            <div>
+              <label class="block font-semibold text-gray-800 mb-2 text-sm">Type d'hébergement</label>
+              <select 
+                v-model="form.idtypehebergement"
+                class="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-base shadow-sm focus:bg-white focus:border-[#EA580C] focus:ring-4 focus:ring-orange-500/10 transition-all outline-none"
+              >
+                <option v-for="type in typesHebergement" :key="type.id" :value="type.id">
+                  {{ type.nom }}
+                </option>
+              </select>
+            </div>
+            
             <div class="grid grid-cols-2 gap-6">
               <div>
                 <label class="block font-semibold text-gray-800 mb-2 text-sm">Prix par nuit (€)</label>
@@ -363,6 +431,55 @@ onMounted(() => {
                 <input v-model="form.possibilitefumeur" type="checkbox" class="w-5 h-5 rounded border-gray-300 text-[#ea580c] shadow-sm focus:ring-[#ea580c] transition-colors" />
                 <span class="text-base font-medium text-gray-800">Fumeur autorisé</span>
               </label>
+            </div>
+
+            <div class="border-t border-gray-100 pt-6 mt-6">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="font-bold text-lg text-gray-900">Équipements et services</h3>
+                <span class="text-xs font-bold text-orange-600 bg-orange-50 px-2 py-1 rounded-lg">
+                  {{ selectedCommodites.length }} sélectionné(s)
+                </span>
+              </div>
+            
+              <div class="flex flex-wrap gap-2 border-b border-gray-100 pb-4 mb-4">
+                <button 
+                  v-for="(items, catName) in groupedCommodites" 
+                  :key="catName"
+                  type="button"
+                  @click="activeTab = catName"
+                  :class="[
+                    'px-4 py-2 rounded-xl text-xs font-black transition-all',
+                    activeTab === catName 
+                      ? 'bg-[#ea580c] text-white shadow-md' 
+                      : 'bg-gray-50 text-gray-500 hover:bg-gray-100'
+                  ]"
+                >
+                  {{ catName }}
+                </button>
+              </div>
+            
+              <div v-if="activeTab" class="grid grid-cols-2 lg:grid-cols-3 gap-3">
+                <label 
+                  v-for="item in groupedCommodites[activeTab]" 
+                  :key="item.idcommodite" 
+                  :class="[
+                    'flex items-center p-3 rounded-2xl border transition-all cursor-pointer group',
+                    selectedCommodites.includes(item.idcommodite) 
+                      ? 'border-orange-200 bg-orange-50 ring-1 ring-orange-200' 
+                      : 'border-gray-50 hover:border-gray-100 hover:bg-gray-100'
+                  ]"
+                >
+                  <input 
+                    type="checkbox" 
+                    :value="item.idcommodite" 
+                    v-model="selectedCommodites"
+                    class="h-4 w-4 accent-[#ea580c] rounded"
+                  />
+                  <span class="ml-3 text-xs font-bold text-gray-700 truncate group-hover:text-gray-900">
+                    {{ item.nomcommodite }}
+                  </span>
+                </label>
+              </div>
             </div>
 
             <div class="flex justify-end pt-6">

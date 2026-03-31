@@ -267,6 +267,43 @@ public class AnnonceManager : IAnnonceRepository
         await _dbContext.SaveChangesAsync();
     }
 
+    public async Task UpdateFromDtoAsync(Annonce entityToUpdate, UpdateAnnonceRequestDTO dto)
+    {
+        var trackedEntity = await _dbContext.Annonces
+            .Include(a => a.Idcommodites)
+            .FirstOrDefaultAsync(a => a.Idannonce == entityToUpdate.Idannonce);
+
+        if (trackedEntity == null) return;
+
+        trackedEntity.Titreannonce = dto.Titreannonce;
+        trackedEntity.Descriptionannonce = dto.Descriptionannonce;
+        trackedEntity.Prixnuitee = dto.Prixnuitee;
+        trackedEntity.Capacite = dto.Capacite;
+        trackedEntity.Nbchambres = dto.Nbchambres;
+        trackedEntity.Minimumnuitee = dto.Minimumnuitee;
+        trackedEntity.Nombrebebesmax = dto.Nombrebebesmax;
+        trackedEntity.Possibiliteanimaux = dto.Possibiliteanimaux;
+        trackedEntity.Possibilitefumeur = dto.Possibilitefumeur;
+        trackedEntity.Idheurearrivee = dto.Idheurearrivee;
+        trackedEntity.Idheuredepart = dto.Idheuredepart;
+        trackedEntity.Idtypehebergement = dto.Idtypehebergement;
+
+        trackedEntity.Idcommodites.Clear();
+        if (dto.Idcommodites != null && dto.Idcommodites.Any())
+        {
+            var commodites = await _dbContext.Commodites
+                .Where(c => dto.Idcommodites.Contains(c.Idcommodite))
+                .ToListAsync();
+
+            foreach (var c in commodites)
+            {
+                trackedEntity.Idcommodites.Add(c);
+            }
+        }
+
+        await _dbContext.SaveChangesAsync();
+    }
+
     public async Task DeleteAsync(Annonce entity)
     {
         _dbContext.Annonces.Remove(entity);
