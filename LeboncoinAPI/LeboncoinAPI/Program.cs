@@ -131,13 +131,12 @@ app.Lifetime.ApplicationStarted.Register(() => LogBoot("ApplicationStarted"));
 app.Lifetime.ApplicationStopping.Register(() => LogBoot("ApplicationStopping"));
 app.Lifetime.ApplicationStopped.Register(() => LogBoot("ApplicationStopped"));
 
-if (app.Environment.IsDevelopment())
-{
-    LogBoot("Middleware.UseSwagger:start");
-    app.UseSwagger();
-    app.UseSwaggerUI();
-    LogBoot("Middleware.UseSwagger:done");
-}
+
+LogBoot("Middleware.UseSwagger:start");
+app.UseSwagger();
+app.UseSwaggerUI();
+LogBoot("Middleware.UseSwagger:done");
+
 
 
 LogBoot("MiddlewarePipeline:start");
