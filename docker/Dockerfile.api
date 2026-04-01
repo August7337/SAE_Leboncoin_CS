@@ -1,0 +1,71 @@
+# syntax=docker/dockerfile:1
+# =============================================================================
+# Dockerfile.api — LeboncoinAPI (.NET 8, multi-stage build)
+# Build context : racine du workspace (c:\SAE_Leboncoin_CS\)
+# =============================================================================
+
+# ─── Stage 1 : Build & migration bundle ──────────────────────────────────────
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+WORKDIR /src
+
+# Installer l'outil EF Core CLI (nécessaire pour créer le bundle de migrations)
+RUN dotnet tool install --global dotnet-ef --version 8.*
+ENV PATH="$PATH:/root/.dotnet/tools"
+
+# Copier uniquement les fichiers de projet en premier (cache de layer Docker)
+COPY LeboncoinAPI/LeboncoinAPI.sln                              ./LeboncoinAPI/
+COPY LeboncoinAPI/LeboncoinAPI/LeboncoinAPI.csproj             ./LeboncoinAPI/LeboncoinAPI/
+
+# Restore des dépendances NuGet (avec le RID cible pour que publish et ef bundle fonctionnent)
+RUN dotnet restore ./LeboncoinAPI/LeboncoinAPI/LeboncoinAPI.csproj --runtime linux-x64
+
+# Copier tout le code source de l'API (sans les tests)
+COPY LeboncoinAPI/LeboncoinAPI/ ./LeboncoinAPI/LeboncoinAPI/
+
+# Publier l'application en mode Release
+RUN dotnet publish ./LeboncoinAPI/LeboncoinAPI/LeboncoinAPI.csproj \
+    --configuration Release \
+    --no-restore \
+    --output /app/publish \
+    --runtime linux-x64 \
+    --self-contained false
+
+# Créer un bundle EF Core autonome (exécutable sans SDK au runtime)
+RUN dotnet ef migrations bundle \
+    --project     ./LeboncoinAPI/LeboncoinAPI/LeboncoinAPI.csproj \
+    --startup-project ./LeboncoinAPI/LeboncoinAPI/LeboncoinAPI.csproj \
+    --output      /app/efbundle \
+    --self-contained \
+    --runtime     linux-x64 \
+    --force \
+    --verbose
+
+
+# ─── Stage 2 : Runtime image ─────────────────────────────────────────────────
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
+
+# Labels de métadonnées
+LABEL maintainer="SAE Leboncoin"
+LABEL description="LeboncoinAPI — .NET 8 Web API"
+
+WORKDIR /app
+
+# Copier l'application publiée
+COPY --from=build /app/publish .
+
+# Copier le bundle de migrations EF Core
+COPY --from=build /app/efbundle ./efbundle
+RUN chmod +x ./efbundle
+
+# Copier le script d'entrée (chemin relatif au build context = racine du workspace)
+COPY docker/entrypoint.sh ./entrypoint.sh
+RUN chmod +x ./entrypoint.sh
+
+# Port exposé par Kestrel (correspondant à la variable PORT lue dans Program.cs)
+EXPOSE 8080
+
+# Healthcheck interne (API)
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:8080/health || curl -f http://localhost:8080/swagger/index.html || exit 1
+
+ENTRYPOINT ["./entrypoint.sh"]
