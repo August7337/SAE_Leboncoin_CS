@@ -3,3 +3,4 @@
 **/.env
 docker/.env
 docker/deploy/.env
+.agents/rules/rule1.md
