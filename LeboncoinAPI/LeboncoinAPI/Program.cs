@@ -31,6 +31,12 @@ LogBoot("CreateBuilder:start");
 var builder = WebApplication.CreateBuilder(args);
 LogBoot("CreateBuilder:done");
 
+// Azure App Service Linux expose le port via la variable PORT (généralement 8080).
+// On force Kestrel à écouter dessus pour éviter le timeout de 45s.
+var listenPort = Environment.GetEnvironmentVariable("PORT") ?? "8080";
+Console.WriteLine($"[BOOT] Kestrel will listen on http://+:{listenPort}");
+builder.WebHost.UseUrls($"http://+:{listenPort}");
+
 LogBoot("Env.Load:start");
 if (System.IO.File.Exists(".env"))
 {
@@ -42,7 +48,13 @@ builder.Configuration["CloudinarySettings:CloudName"] = Environment.GetEnvironme
 builder.Configuration["CloudinarySettings:ApiKey"] = Environment.GetEnvironmentVariable("CLOUDINARY_API_KEY");
 builder.Configuration["CloudinarySettings:ApiSecret"] = Environment.GetEnvironmentVariable("CLOUDINARY_API_SECRET");
 builder.Configuration["Stripe:SecretKey"] = Environment.GetEnvironmentVariable("STRIPE_SECRET_KEY");
-builder.Configuration["JwtSettings:SecretKey"] = Environment.GetEnvironmentVariable("JWT_SECRET_KEY");
+var jwtSecret = Environment.GetEnvironmentVariable("JWT_SECRET_KEY");
+if (string.IsNullOrEmpty(jwtSecret))
+{
+    Console.WriteLine("[WARNING] JWT_SECRET_KEY is not set. Using an insecure fallback. Set this variable in Azure App Settings.");
+    jwtSecret = "FALLBACK_INSECURE_KEY_CHANGE_ME_32CHARS";
+}
+builder.Configuration["JwtSettings:SecretKey"] = jwtSecret;
 builder.Configuration["JwtSettings:Issuer"] = Environment.GetEnvironmentVariable("JWT_ISSUER") ?? "LeboncoinAPI";
 builder.Configuration["JwtSettings:Audience"] = Environment.GetEnvironmentVariable("JWT_AUDIENCE") ?? "LeboncoinVueApp";
 
