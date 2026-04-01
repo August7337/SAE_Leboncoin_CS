@@ -31,9 +31,10 @@ LogBoot("CreateBuilder:start");
 var builder = WebApplication.CreateBuilder(args);
 LogBoot("CreateBuilder:done");
 
-// Azure App Service Linux expose le port via la variable PORT (généralement 8080).
-// On force Kestrel à écouter dessus pour éviter le timeout de 45s.
-var listenPort = Environment.GetEnvironmentVariable("PORT") ?? "8080";
+// Azure App Service Linux expose le port via PORT ou WEBSITES_PORT.
+var listenPort = Environment.GetEnvironmentVariable("PORT") 
+              ?? Environment.GetEnvironmentVariable("WEBSITES_PORT") 
+              ?? "8080";
 Console.WriteLine($"[BOOT] Kestrel will listen on http://+:{listenPort}");
 builder.WebHost.UseUrls($"http://+:{listenPort}");
 
@@ -57,6 +58,10 @@ if (string.IsNullOrEmpty(jwtSecret))
 builder.Configuration["JwtSettings:SecretKey"] = jwtSecret;
 builder.Configuration["JwtSettings:Issuer"] = Environment.GetEnvironmentVariable("JWT_ISSUER") ?? "LeboncoinAPI";
 builder.Configuration["JwtSettings:Audience"] = Environment.GetEnvironmentVariable("JWT_AUDIENCE") ?? "LeboncoinVueApp";
+
+// Configuration Email (lu depuis Azure Env Vars)
+builder.Configuration["EmailSettings:SenderEmail"] = Environment.GetEnvironmentVariable("EMAIL_SENDER");
+builder.Configuration["EmailSettings:AppPassword"] = Environment.GetEnvironmentVariable("EMAIL_APP_PASSWORD");
 
 var dbHost = Environment.GetEnvironmentVariable("DB_HOST") ?? "localhost";
 var dbPort = Environment.GetEnvironmentVariable("DB_PORT") ?? "5432";

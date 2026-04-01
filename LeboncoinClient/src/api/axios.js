@@ -4,7 +4,7 @@ import { authState } from '@/auth.js'
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL
     ? `${import.meta.env.VITE_API_BASE_URL}/api`
-    : '/api'
+    : 'https://leboncoinapi-b0b2bmazh9ebdqef.spaincentral-01.azurewebsites.net/api'
 })
 
 api.interceptors.request.use((config) => {
