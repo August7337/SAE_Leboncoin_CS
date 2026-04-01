@@ -24,8 +24,8 @@ public class ReservationManagerTests
             IdadresseNavigation = adr,
             IddateNavigation = new Date { Date1 = DateOnly.FromDateTime(DateTime.Now) },
             IdtypehebergementNavigation = new Typehebergement { Nomtypehebergement = "Appartement" },
-            IdheurearriveeNavigation = new Heure { Heure1 = "14:00" },
-            IdheuredepartNavigation = new Heure { Heure1 = "10:00" },
+            IdheurearriveeNavigation = new Heure { Heure1 = TimeOnly.Parse("14:00") },
+            IdheuredepartNavigation = new Heure { Heure1 = TimeOnly.Parse("10:00") },
             IdutilisateurNavigation = new Utilisateur { Pseudonyme = "Owner", Email = "o@o.com", Password = "p", Telephoneutilisateur = "01", Solde = 0 }
         };
 

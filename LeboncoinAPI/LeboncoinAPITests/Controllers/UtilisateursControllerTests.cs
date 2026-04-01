@@ -20,6 +20,7 @@ public class UtilisateursControllerTests
     private LeboncoinDBContext _context;
     private UtilisateurManager _userManager;
     private Mock<IConfiguration> _mockConfig;
+    private Mock<LeboncoinAPI.Services.IEmailService> _mockEmailService;
     private UtilisateursController _controller;
 
     [TestInitialize]
@@ -36,7 +37,9 @@ public class UtilisateursControllerTests
         _mockConfig.Setup(c => c["CloudinarySettings:ApiKey"]).Returns("test");
         _mockConfig.Setup(c => c["CloudinarySettings:ApiSecret"]).Returns("test");
 
-        _controller = new UtilisateursController(_userManager, _mockConfig.Object);
+        _mockEmailService = new Mock<LeboncoinAPI.Services.IEmailService>();
+
+        _controller = new UtilisateursController(_userManager, _context, _mockEmailService.Object, _mockConfig.Object);
     }
 
     [TestMethod]

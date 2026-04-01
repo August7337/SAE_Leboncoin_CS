@@ -227,28 +227,30 @@ namespace LeboncoinAPI.Tests
             // Arrange
             int id = 1;
             var annonce = new Annonce { Idannonce = id };
+            var dto = new UpdateAnnonceRequestDTO { Titreannonce = "Titre test ok", Descriptionannonce = "Description test", Prixnuitee = 50, Capacite = 2, Idtypehebergement = 1 };
             mockRepo.Setup(r => r.GetByIdAsync(id)).ReturnsAsync(annonce);
-            mockRepo.Setup(r => r.UpdateAsync(It.IsAny<Annonce>(), It.IsAny<Annonce>())).Returns(Task.CompletedTask);
+            mockRepo.Setup(r => r.UpdateFromDtoAsync(It.IsAny<Annonce>(), It.IsAny<UpdateAnnonceRequestDTO>())).Returns(Task.CompletedTask);
 
             // Act
-            var actionResult = controller.PutAnnonce(id, annonce).Result;
+            var actionResult = controller.PutAnnonce(id, dto).Result;
 
             // Assert
             Assert.IsInstanceOfType(actionResult, typeof(NoContentResult));
         }
 
         [TestMethod]
-        public void PutAnnonce_MismatchedIds_ReturnsBadRequest()
+        public void PutAnnonce_NotFound_ReturnsNotFound()
         {
             // Arrange
-            int idUrl = 1;
-            var annonceBody = new Annonce { Idannonce = 2 }; 
+            int idUrl = 99;
+            var dto = new UpdateAnnonceRequestDTO { Titreannonce = "Titre test ok", Descriptionannonce = "Description test", Prixnuitee = 50, Capacite = 2, Idtypehebergement = 1 };
+            mockRepo.Setup(r => r.GetByIdAsync(idUrl)).ReturnsAsync((Annonce)null);
 
             // Act
-            var actionResult = controller.PutAnnonce(idUrl, annonceBody).Result;
+            var actionResult = controller.PutAnnonce(idUrl, dto).Result;
 
             // Assert
-            Assert.IsInstanceOfType(actionResult, typeof(BadRequestResult));
+            Assert.IsInstanceOfType(actionResult, typeof(NotFoundResult));
         }
 
         [TestMethod]
