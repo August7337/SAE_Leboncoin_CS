@@ -1,0 +1,5 @@
+# Fichiers secrets — ne jamais commiter
+.env
+**/.env
+docker/.env
+docker/deploy/.env
