@@ -52,5 +52,4 @@ jobs:
           app-name: 'LeboncoinAPI'
           slot-name: 'Production'
           package: .
-          startup-command: 'dotnet LeboncoinAPI.dll'
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_C246180F5E87403CBC1106A17CE8D597 }}
