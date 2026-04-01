@@ -32,7 +32,10 @@ var builder = WebApplication.CreateBuilder(args);
 LogBoot("CreateBuilder:done");
 
 LogBoot("Env.Load:start");
-Env.TraversePath().Load();
+if (builder.Environment.IsDevelopment())
+{
+    Env.TraversePath().Load();
+}
 LogBoot("Env.Load:done");
 
 builder.Configuration["CloudinarySettings:CloudName"] = Environment.GetEnvironmentVariable("CLOUDINARY_CLOUD_NAME");
