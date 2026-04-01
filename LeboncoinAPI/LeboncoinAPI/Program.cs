@@ -32,9 +32,9 @@ var builder = WebApplication.CreateBuilder(args);
 LogBoot("CreateBuilder:done");
 
 LogBoot("Env.Load:start");
-if (builder.Environment.IsDevelopment())
+if (System.IO.File.Exists(".env"))
 {
-    Env.TraversePath().Load();
+    DotNetEnv.Env.Load();
 }
 LogBoot("Env.Load:done");
 
