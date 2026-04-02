@@ -165,7 +165,7 @@ const submitFinal = async () => {
     sessionStorage.removeItem('registration_draft')
 
     // If API returns token + user, log in immediately
-    if (response.data && response.data.Token) {
+    if (response.data && (response.data.token || response.data.Token)) {
       authState.login(response.data)
     }
 

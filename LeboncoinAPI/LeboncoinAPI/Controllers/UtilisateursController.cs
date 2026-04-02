@@ -365,7 +365,7 @@ public class UtilisateursController : ControllerBase
                 return Ok(new
                 {
                     message = "Inscription réussie !",
-                    Token = token,
+                    token = token,
                     user = new
                     {
                         idutilisateur = user.Idutilisateur,
@@ -373,7 +373,13 @@ public class UtilisateursController : ControllerBase
                         email = user.Email,
                         telephone = user.Telephoneutilisateur,
                         solde = user.Solde,
-                        typeUtilisateur = "particulier" 
+                        typeUtilisateur = "particulier",
+                        profilePhotoPath = user.ProfilePhotoPath,
+                        civilite = user.Particulier?.Civilite,
+                        nomutilisateur = user.Particulier?.Nomutilisateur,
+                        prenomutilisateur = user.Particulier?.Prenomutilisateur,
+                        roles = GetRoleNames(user),
+                        permissions = GetPermissionNames(user)
                     }
                 });
             }
@@ -402,16 +408,24 @@ public class UtilisateursController : ControllerBase
             return Ok(new
             {
                 message = "Success",
-                Token = token,
+                token = token,
                 user = new
                 {
                     idutilisateur = user.Idutilisateur,
                     pseudonyme = user.Pseudonyme,
                     email = user.Email,
                     telephone = user.Telephoneutilisateur,
-                    typeUtilisateur = "professionnel"
+                    typeUtilisateur = "professionnel",
+                    profilePhotoPath = user.ProfilePhotoPath,
+                    solde = user.Solde,
+                    nomEntreprise = user.Professionnel?.Nomsociete,
+                    siret = user.Professionnel?.Numsiret,
+                    secteuractivite = user.Professionnel?.Secteuractivite,
+                    roles = GetRoleNames(user),
+                    permissions = GetPermissionNames(user)
                 }
             });
+
         }
         catch (UtilisateurManager.RegistrationConflictException ex)
         {

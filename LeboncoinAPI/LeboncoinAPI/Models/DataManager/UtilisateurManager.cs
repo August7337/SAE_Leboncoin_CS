@@ -304,6 +304,13 @@ public class UtilisateurManager : IDataUtilisateurRepository<Utilisateur>
             _dbContext.Professionnels.Add(professionnel);
             await _dbContext.SaveChangesAsync();
 
+            var clientRole = await _dbContext.Roles.FirstOrDefaultAsync(r => r.Nomrole == AppRoles.Client);
+            if (clientRole != null)
+            {
+                nouvelUtilisateur.Idroles.Add(clientRole);
+                await _dbContext.SaveChangesAsync();
+            }
+
             await transaction.CommitAsync();
             return true;
         }
