@@ -1,4 +1,4 @@
-﻿using LeboncoinAPI.Controllers;
+using LeboncoinAPI.Controllers;
 using LeboncoinAPI.Models.DTOs;
 using LeboncoinAPI.Models.EntityFramework;
 using LeboncoinAPI.Models.Repository;
@@ -79,7 +79,9 @@ public class ReservationsControllerTests
             Idutilisateur = userId,
             Idannonce = 1,
             Nomclient = "N",
-            Prenomclient = "P"
+            Prenomclient = "P",
+            Iddatedebutreservation = 5,
+            Iddatefinreservation = 6
         };
         var transaction = new Transaction
         {
@@ -88,6 +90,10 @@ public class ReservationsControllerTests
             Montanttransaction = 1000.00m
         };
 
+        var dateD = new Date { Iddate = 5, Date1 = DateOnly.FromDateTime(DateTime.Now.AddDays(10)) };
+        var dateF = new Date { Iddate = 6, Date1 = DateOnly.FromDateTime(DateTime.Now.AddDays(11)) };
+
+        _context.Dates.AddRange(dateD, dateF);
         _context.Utilisateurs.Add(user);
         _context.Annonces.Add(annonce);
         _context.Reservations.Add(reservation);
@@ -129,14 +135,21 @@ public class ReservationsControllerTests
     public async Task DeleteReservation_Success_ReturnsNoContent()
     {
         // Arrange
-        var res = new Reservation { Idreservation = 1 };
+        var res = new Reservation 
+        { 
+            Idreservation = 1,
+            Nomclient = "Test",
+            Prenomclient = "User"
+        };
+        _context.Reservations.Add(res);
+        await _context.SaveChangesAsync();
         _mockRepo.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(res);
         _mockRepo.Setup(r => r.DeleteAsync(res)).Returns(Task.CompletedTask);
         // Act
         var result = await _controller.DeleteReservation(1);
         // Assert
         Assert.IsInstanceOfType(result, typeof(NoContentResult));
-        _mockRepo.Verify(r => r.DeleteAsync(res), Times.Once);
+        Assert.IsNull(await _context.Reservations.FindAsync(1));
     }
 
     [TestMethod]

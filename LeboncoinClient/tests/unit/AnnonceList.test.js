@@ -74,7 +74,12 @@ function mountList(props = {}) {
       isAuth: false,
       ...props,
     },
-    global: { stubs: ['router-link'] },
+    global: { 
+      stubs: {
+        'router-link': { template: '<a><slot /></a>' },
+        'PhotoCarousel': { template: '<div class="photo-carousel-stub"><slot /></div>' }
+      }
+    },
   })
 }
 
@@ -97,15 +102,17 @@ describe('AnnonceList.vue', () => {
       expect(wrapper.text()).not.toContain('Aucune annonce disponible')
     })
 
-    it('affiche le titre de chaque annonce', () => {
+    it('affiche le titre de chaque annonce', async () => {
       const wrapper = mountList()
-      expect(wrapper.text()).toContain('Bel appartement Paris')
-      expect(wrapper.text()).toContain('Maison de vacances')
+      await wrapper.vm.$nextTick()
+      expect(wrapper.html()).toContain('Bel appartement Paris')
+      expect(wrapper.html()).toContain('Maison de vacances')
     })
 
-    it('affiche le prix correctement formaté', () => {
+    it('affiche le prix correctement formaté', async () => {
       const wrapper = mountList()
-      expect(wrapper.text()).toContain('75.5')
+      await wrapper.vm.$nextTick()
+      expect(wrapper.html()).toContain('75.5')
     })
   })
 

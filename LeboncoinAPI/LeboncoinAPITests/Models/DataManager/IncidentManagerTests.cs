@@ -1,4 +1,4 @@
-﻿using LeboncoinAPI.Models.DataManager;
+using LeboncoinAPI.Models.DataManager;
 using LeboncoinAPI.Models.EntityFramework;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
@@ -30,6 +30,12 @@ public class IncidentManagerTests
 
         using var context = new LeboncoinDBContext(options);
 
+        var statut = new StatutIncident { Idstatutincident = 1, Libelle = "Ouvert", Code = "OUVERT" };
+        context.StatutsIncident.Add(statut);
+
+        var date = new Date { Iddate = 1, Date1 = DateOnly.FromDateTime(DateTime.UtcNow) };
+        context.Dates.Add(date);
+
         var monUser = new Utilisateur
         {
             Idutilisateur = 42,
@@ -40,18 +46,50 @@ public class IncidentManagerTests
         };
         context.Utilisateurs.Add(monUser);
 
+        var proprietaire = new Utilisateur
+        {
+            Idutilisateur = 43,
+            Pseudonyme = "Proprio",
+            Email = "proprio@test.com",
+            Password = "hash",
+            Telephoneutilisateur = "0600000001"
+        };
+        context.Utilisateurs.Add(proprietaire);
+
+        var annonce = new Annonce
+        {
+            Idannonce = 1,
+            Titreannonce = "Annonce Test",
+            Prixnuitee = 50,
+            Capacite = 2,
+            Idutilisateur = 43,
+            Descriptionannonce = "Desc"
+        };
+        context.Annonces.Add(annonce);
+
+        var reservation = new Reservation
+        {
+            Idreservation = 1,
+            Idutilisateur = 42,
+            Idannonce = 1,
+            Nomclient = "Client",
+            Prenomclient = "Test",
+            Iddatedebutreservation = 1,
+            Iddatefinreservation = 1
+        };
+        context.Reservations.Add(reservation);
+
         var incident = new Incident
         {
             Idincident = 1,
             Idutilisateur = 42,
+            Idreservation = 1,
+            Iddate = 1,
+            Idstatutincident = 1,
             Descriptionincident = "Fuite",
-            Motifincident = "Plomberie",
-            IdutilisateurNavigation = monUser
+            Motifincident = "Plomberie"
         };
         context.Incidents.Add(incident);
-
-        // Ensure date is present (Incidents reference a Date)
-        context.Dates.Add(new Date { Date1 = DateOnly.FromDateTime(DateTime.UtcNow) });
 
         await context.SaveChangesAsync();
 

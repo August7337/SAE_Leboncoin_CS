@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  api-ci:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
+
+    - name: Restore dependencies
+      run: dotnet restore LeboncoinAPI/LeboncoinAPI.sln
+
+    - name: Build
+      run: dotnet build LeboncoinAPI/LeboncoinAPI.sln --no-restore --configuration Release
+
+    - name: Test
+      run: dotnet test LeboncoinAPI/LeboncoinAPI.sln --no-build --verbosity normal
+
+  client-ci:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup Node
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20
+        cache: 'npm'
+        cache-dependency-path: LeboncoinClient/package-lock.json
+
+    - name: Install dependencies
+      run: npm ci
+      working-directory: LeboncoinClient
+
+    - name: Build
+      run: npm run build
+      working-directory: LeboncoinClient
+
+    - name: Test
+      run: npm run test:unit -- --run
+      working-directory: LeboncoinClient
