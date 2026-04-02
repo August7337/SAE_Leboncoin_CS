@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted } from 'vue'
-import axios from 'axios'
+import api from '@/api/axios'
 import { authState } from '@/auth.js'
 import EmptyState from '@/components/EmptyState.vue'
 
@@ -12,8 +12,8 @@ async function fetchConversations() {
 
   try {
     // On récupère les discussions de l'utilisateur connecté
-    const response = await axios.get(
-      `https://localhost:7057/api/Messages/conversations/${authState.user.idutilisateur}`,
+    const response = await api.get(
+      `/Messages/conversations/${authState.user.idutilisateur}`,
     )
     conversations.value = response.data
   } catch (error) {

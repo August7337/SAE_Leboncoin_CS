@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import axios from 'axios'
+import api from '@/api/axios'
 import AnnonceList from '@/components/AnnonceList.vue'
 
 const route = useRoute()
@@ -21,8 +21,8 @@ async function fetchData() {
   loading.value = true
   try {
     const [userRes, annoncesRes] = await Promise.all([
-      axios.get(`https://localhost:7057/api/Utilisateurs/${sellerId}/public`),
-      axios.get(`https://localhost:7057/api/Annonces/user/${sellerId}`)
+      api.get(`/Utilisateurs/${sellerId}/public`),
+      api.get(`/Annonces/user/${sellerId}`)
     ])
     seller.value = userRes.data
     annonces.value = annoncesRes.data

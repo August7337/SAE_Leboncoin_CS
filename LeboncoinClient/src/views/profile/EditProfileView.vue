@@ -1,7 +1,7 @@
 <script setup>
 import { reactive, ref, onMounted } from 'vue'
 import { authState } from '@/auth.js'
-import axios from 'axios'
+import api from '@/api/axios'
 
 const isSaving = ref(false)
 const message = ref({ text: '', type: '' })
@@ -46,12 +46,10 @@ const updateAccount = async () => {
     // 3. Choose the endpoint based on user type if your API is separated
     const endpoint =
       userType.value === 'professionnel'
-        ? `https://localhost:7057/api/Professionnels/${userId}`
-        : `https://localhost:7057/api/Utilisateurs/${userId}`
+        ? `/Professionnels/${userId}`
+        : `/Utilisateurs/${userId}`
 
-    const response = await axios.put(endpoint, payload, {
-      headers: { Authorization: `Bearer ${authState.token}` }
-    })
+    const response = await api.put(endpoint, payload)
 
     const updatedUser = { ...authState.user, ...response.data }
     authState.setUser(updatedUser)

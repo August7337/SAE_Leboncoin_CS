@@ -2,8 +2,8 @@
 import { useRouter } from 'vue-router';
 import { ref, onMounted, computed, watch, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
-import { authState } from '@/auth.js';
-import axios from 'axios'
+import { authState } from '@/auth.js'
+import api from '@/api/axios'
 import { buildAssetUrl } from '../../services/api'
 import PhotoCarousel from '../../components/PhotoCarousel.vue'
 import DateRangePicker from '../../components/DateRangePicker.vue'
@@ -132,9 +132,9 @@ async function fetchAnnonce() {
   loading.value = true
   try {
     const [annonceRes, similairesRes] = await Promise.all([
-      axios.get(`https://localhost:7057/api/Annonces/${route.params.id}`),
-      axios
-        .get(`https://localhost:7057/api/Annonces/${route.params.id}/similaires`)
+      api.get(`/Annonces/${route.params.id}`),
+      api
+        .get(`/Annonces/${route.params.id}/similaires`)
         .catch(() => ({ data: [] })),
     ])
 

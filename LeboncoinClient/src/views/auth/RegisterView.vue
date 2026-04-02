@@ -178,6 +178,7 @@
 import { reactive, ref, onMounted } from "vue"
 import { useRouter, useRoute } from "vue-router"
 import { authState } from '@/auth.js'
+import api from '@/api/axios'
 import axios from 'axios'
 
 const router = useRouter()
@@ -221,7 +222,7 @@ const checkPhoneAvailability = async () => {
   const digits = form.telephoneUtilisateur.replace(/\D/g, '');
   if (digits.length !== 10) return;
   try {
-    const res = await axios.get('/api/Utilisateurs/check-phone', { params: { phone: digits } });
+    const res = await api.get('/Utilisateurs/check-phone', { params: { phone: digits } });
     if (!res.data.available) {
       phoneCheckError.value = 'Numéro de téléphone déjà affilié à un compte.';
     } else {
