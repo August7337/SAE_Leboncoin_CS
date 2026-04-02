@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import recherchesService from '@/services/recherchesService'
 import annoncesService from '@/services/annoncesService'
+import EmptyState from '@/components/EmptyState.vue'
 
 const router = useRouter()
 const savedSearches = ref([])
@@ -66,7 +67,7 @@ const getFilterSummary = (filters) => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-[#f5f5f5] py-12">
+  <div class="min-h-screen bg-[#f5f5f5] py-10">
     <div class="max-w-4xl mx-auto px-4">
       <div class="flex items-center gap-4 mb-8">
         <h1 class="text-3xl font-black text-gray-900">Mes recherches sauvegardées</h1>
@@ -75,18 +76,18 @@ const getFilterSummary = (filters) => {
         </div>
       </div>
 
-      <div v-if="savedSearches.length === 0" class="bg-white rounded-3xl p-12 text-center shadow-sm border border-gray-100">
-        <div class="bg-orange-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
+      <EmptyState
+        v-if="savedSearches.length === 0"
+        title="Aucune recherche sauvegardée"
+        description="Vous n'avez pas encore sauvegardé de recherche."
+        link-label="Faire une recherche"
+      >
+        <template #icon>
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-10 h-10 text-[#ea580c]">
             <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
           </svg>
-        </div>
-        <h2 class="text-xl font-bold text-gray-900">Aucune recherche sauvegardée</h2>
-        <p class="text-gray-500 mt-2">Vous n'avez pas encore sauvegardé de recherche.</p>
-        <router-link to="/" class="inline-block mt-6 bg-[#ea580c] hover:bg-[#c2410c] text-white font-bold py-3 px-6 rounded-xl transition-colors">
-          Faire une recherche
-        </router-link>
-      </div>
+        </template>
+      </EmptyState>
 
       <div v-else class="space-y-4">
         <div v-for="search in savedSearches" :key="search.id" class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition-shadow group">

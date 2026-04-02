@@ -17,12 +17,6 @@ login(data) {
         this.token = tokenToSave;
         localStorage.setItem('token', tokenToSave);
     }
-
-    console.log("Auth System Check:", { 
-        hasUser: !!this.user, 
-        hasToken: !!this.token,
-        fullUser: this.user 
-    });
 },
 
   setUser(userData) {

@@ -91,7 +91,8 @@ INSERT INTO statut_incident (idstatutincident, code, libelle, ordre, estfinal) V
 (9, 'TRANSFERE_CONTENTIEUX', 'Transfere au contentieux', 8, FALSE),
 (10, 'CLOTURE_SANS_REMBOURSEMENT', 'Cloture sans remboursement', 9, TRUE),
 (11, 'PROCEDURE_JURIDIQUE_ENGAGEE', 'Procedure juridique engagee', 10, TRUE),
-(12, 'REMBOURSEMENT_EFFECTUE', 'Remboursement effectue', 11, TRUE);
+(12, 'REMBOURSEMENT_EFFECTUE', 'Remboursement effectue', 11, TRUE)
+ON CONFLICT (idstatutincident) DO NOTHING;
 
 /*==============================================================*/
 /* Table : permission                                           */
@@ -115,16 +116,20 @@ INSERT INTO permission (idpermission, nompermission) VALUES
 (21, 'dashboard.incidents.location'),
 (22, 'dashboard.incidents.comptabilite'),
 (23, 'dashboard.incidents.contentieux'),
-(24, 'app.view.gdpr_data');
+(24, 'app.view.gdpr_data')
+ON CONFLICT (idpermission) DO NOTHING;
 
 /*==============================================================*/
 /* Table : role                                                 */
 /*==============================================================*/
 
 INSERT INTO role (idrole, nomrole) VALUES
+(1, 'Administrateur'),
+(2, 'Utilisateur'),
 (3, 'Service_Location'),
 (4, 'Service_Comptabilite'),
-(5, 'Service_Contentieux');
+(5, 'Service_Contentieux')
+ON CONFLICT (idrole) DO NOTHING;
 
 /*==============================================================*/
 /* Table : permettre                                            */
@@ -135,7 +140,8 @@ INSERT INTO permettre (idrole, idpermission) VALUES
 (3, 4), (3, 5), (3, 6), (3, 7), (3, 9),
 (3, 20), (3, 21),
 (4, 4), (4, 10), (4, 20), (4, 22),
-(5, 4), (5, 13), (5, 14), (5, 20), (5, 23);
+(5, 4), (5, 13), (5, 14), (5, 20), (5, 23)
+ON CONFLICT (idrole, idpermission) DO NOTHING;
 
 /*==============================================================*/
 /* Table : date (nombre de dates variable)                      */
@@ -6785,5 +6791,13 @@ INSERT INTO demander(idincident, idcompensation) VALUES
 (4,6),
 (4,8),
 (5,9);
+
+/*==============================================================*/
+/* Synchronisation des séquences pour les IDs manuels           */
+/*==============================================================*/
+
+SELECT setval(pg_get_serial_sequence('statut_incident', 'idstatutincident'), COALESCE((SELECT MAX(idstatutincident) FROM statut_incident), 1));
+SELECT setval(pg_get_serial_sequence('permission', 'idpermission'), COALESCE((SELECT MAX(idpermission) FROM permission), 1));
+SELECT setval(pg_get_serial_sequence('role', 'idrole'), COALESCE((SELECT MAX(idrole) FROM role), 1));
 
 COMMIT;

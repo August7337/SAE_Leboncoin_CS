@@ -4,6 +4,7 @@ import api from '@/api/axios'
 import { authState } from '@/auth.js'
 import AnnonceList from '@/components/AnnonceList.vue'
 import annoncesService from '@/services/annoncesService'
+import EmptyState from '@/components/EmptyState.vue'
 import { buildAssetUrl } from '@/services/api'
 
 const favorites = ref([])
@@ -53,7 +54,7 @@ onMounted(fetchFavorites)
 
 <template>
   <div class="min-h-screen bg-[#f5f5f5] py-10">
-    <div class="max-w-6xl mx-auto px-4">
+    <div class="max-w-4xl mx-auto px-4">
       <h1 class="text-3xl font-black text-gray-900 mb-8">Mes favoris</h1>
 
       <div v-if="loading" class="text-center py-20 text-gray-400">Chargement...</div>
@@ -66,20 +67,18 @@ onMounted(fetchFavorites)
         />
       </div>
 
-      <div v-else class="bg-white rounded-3xl p-16 text-center border border-gray-100 shadow-sm">
-        <div
-          class="w-20 h-20 bg-pink-50 text-pink-500 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl"
-        >
-          ❤️
-        </div>
-        <h2 class="text-xl font-bold text-gray-900">Aucun favori pour le moment</h2>
-        <p class="text-gray-500 mt-2 max-w-sm mx-auto">
-          Parcourez les annonces et cliquez sur le cœur pour les retrouver ici.
-        </p>
-        <router-link to="/" class="inline-block mt-6 font-bold text-[#ea580c]"
-          >Explorer les annonces</router-link
-        >
-      </div>
+      <EmptyState
+        v-else
+        title="Aucun favori pour le moment"
+        description="Parcourez les annonces et cliquez sur le cœur pour les retrouver ici."
+        link-label="Explorer les annonces"
+      >
+        <template #icon>
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-10 h-10 text-[#ea580c]">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 4.875 6.426 9.06 9 10.5 2.574-1.44 9-5.625 9-10.5z" />
+          </svg>
+        </template>
+      </EmptyState>
     </div>
   </div>
 </template>

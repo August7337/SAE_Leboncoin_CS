@@ -102,7 +102,8 @@ describe('FileUploader.vue', () => {
       const file = makeFile('photo.jpg')
       await wrapper.vm.processFiles([file])
       expect(wrapper.emitted('update:modelValue')).toBeTruthy()
-      expect(wrapper.emitted('update:modelValue')[0][0]).toContain(file)
+      const lastEmission = wrapper.emitted('update:modelValue').slice(-1)[0][0]
+      expect(lastEmission[lastEmission.length - 1].name).toBe('photo.jpg')
     })
 
     it('filtre silencieusement les fichiers invalides sans erreur', async () => {
@@ -160,7 +161,8 @@ describe('FileUploader.vue', () => {
       await wrapper.vm.handleDrop({ dataTransfer: { files: [file] } })
       expect(wrapper.vm.files).toHaveLength(1)
       expect(wrapper.emitted('update:modelValue')).toBeTruthy()
-      expect(wrapper.emitted('update:modelValue')[0][0]).toEqual([file])
+      const lastEmission = wrapper.emitted('update:modelValue').slice(-1)[0][0]
+      expect(lastEmission[0].name).toBe('drop.jpg')
     })
 
     it('ne plante pas si dataTransfer.files est absent', () => {

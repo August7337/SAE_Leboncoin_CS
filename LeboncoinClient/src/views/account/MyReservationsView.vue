@@ -22,7 +22,6 @@ const fetchReservations = async () => {
   error.value = null
   try {
     const data = await reservationsService.getByUserId(authState.user.idutilisateur)
-    console.log('Reservations data:', data)
     reservations.value = data
   } catch (err) {
     console.error('Error fetching reservations:', err)

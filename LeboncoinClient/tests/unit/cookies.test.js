@@ -46,8 +46,8 @@ import {
 describe('CookieBanner.vue', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mockCookieState.hasAnswered = false
-    mockCookieState.showSettings = false
+    __mockCookieState.hasAnswered = false
+    __mockCookieState.showSettings = false
   })
 
   it("affiche la bannière quand hasAnswered est false", () => {
@@ -58,7 +58,7 @@ describe('CookieBanner.vue', () => {
   })
 
   it("n'affiche pas la bannière quand hasAnswered est true", () => {
-    mockCookieState.hasAnswered = true
+    __mockCookieState.hasAnswered = true
     const wrapper = mount(CookieBanner, {
       global: { stubs: ['router-link'] },
     })
@@ -71,7 +71,7 @@ describe('CookieBanner.vue', () => {
       global: { stubs: ['router-link'] },
     })
     await wrapper.find('button:first-of-type').trigger('click')
-    expect(mockRejectAll).toHaveBeenCalledOnce()
+    expect(__mockRejectAll).toHaveBeenCalledOnce()
   })
 
   it('appelle openCookieSettings au clic sur "Paramétrer"', async () => {
@@ -81,7 +81,7 @@ describe('CookieBanner.vue', () => {
     const buttons = wrapper.findAll('button')
     const settingsBtn = buttons.find((b) => b.text() === 'Paramétrer')
     await settingsBtn.trigger('click')
-    expect(mockOpenCookieSettings).toHaveBeenCalledOnce()
+    expect(__mockOpenCookieSettings).toHaveBeenCalledOnce()
   })
 
   it('appelle acceptAll au clic sur "Tout accepter"', async () => {
@@ -91,7 +91,7 @@ describe('CookieBanner.vue', () => {
     const buttons = wrapper.findAll('button')
     const acceptBtn = buttons.find((b) => b.text() === 'Tout accepter')
     await acceptBtn.trigger('click')
-    expect(mockAcceptAll).toHaveBeenCalledOnce()
+    expect(__mockAcceptAll).toHaveBeenCalledOnce()
   })
 
   it('affiche le texte principal de consentement', () => {
@@ -105,8 +105,8 @@ describe('CookieBanner.vue', () => {
 // ── Tests CookieSettings ──────────────────────────────────────────────────────
 describe('CookieSettings.vue', () => {
   function mountSettings(showSettings = true, preferences = { maps: false, chatbot: false }) {
-    mockCookieState.showSettings = showSettings
-    mockCookieState.preferences = { ...preferences }
+    __mockCookieState.showSettings = showSettings
+    __mockCookieState.preferences = { ...preferences }
     return mount(CookieSettings, {
       global: { stubs: ['router-link'] },
     })
@@ -135,7 +135,8 @@ describe('CookieSettings.vue', () => {
 
     it('affiche les détails après clic sur le bouton toggle', async () => {
       const wrapper = mountSettings()
-      const toggleBtn = wrapper.find('button')
+      const buttons = wrapper.findAll('button')
+      const toggleBtn = buttons.find(b => b.text().includes('Détails'))
       await toggleBtn.trigger('click')
       expect(wrapper.vm.showDetails).toBe(true)
     })
@@ -184,7 +185,7 @@ describe('CookieSettings.vue', () => {
     it('ne mute pas cookieState.preferences directement', () => {
       const wrapper = mountSettings(true, { maps: false, chatbot: false })
       wrapper.vm.localPreferences.maps = true
-      expect(mockCookieState.preferences.maps).toBe(false)
+      expect(__mockCookieState.preferences.maps).toBe(false)
     })
   })
 
@@ -193,7 +194,7 @@ describe('CookieSettings.vue', () => {
     it('appelle saveCookiePreferences avec les préférences locales', async () => {
       const wrapper = mountSettings(true, { maps: true, chatbot: false })
       wrapper.vm.savePreferences()
-      expect(mockSaveCookiePreferences).toHaveBeenCalledWith({ maps: true, chatbot: false })
+      expect(__mockSaveCookiePreferences).toHaveBeenCalledWith({ maps: true, chatbot: false })
     })
   })
 
@@ -204,7 +205,7 @@ describe('CookieSettings.vue', () => {
       const buttons = wrapper.findAll('button')
       const refuserBtn = buttons.find((b) => b.text() === 'Tout refuser')
       await refuserBtn.trigger('click')
-      expect(mockRejectAll).toHaveBeenCalledOnce()
+      expect(__mockRejectAll).toHaveBeenCalledOnce()
     })
   })
 
@@ -215,14 +216,14 @@ describe('CookieSettings.vue', () => {
       // The close (×) button is in the header of the modal
       const closeBtn = wrapper.find('button')
       await closeBtn.trigger('click')
-      expect(mockCloseCookieSettings).toHaveBeenCalled()
+      expect(__mockCloseCookieSettings).toHaveBeenCalled()
     })
 
     it('appelle closeCookieSettings au clic sur l\'overlay', async () => {
       const wrapper = mountSettings()
       const overlay = wrapper.find('.absolute.inset-0')
       await overlay.trigger('click')
-      expect(mockCloseCookieSettings).toHaveBeenCalled()
+      expect(__mockCloseCookieSettings).toHaveBeenCalled()
     })
   })
 })

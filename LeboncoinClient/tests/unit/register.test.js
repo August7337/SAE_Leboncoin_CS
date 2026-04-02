@@ -73,6 +73,7 @@ function fillValidForm(vm) {
   vm.form.adresseUtilisateur.rue = '10 rue de Paris'
   vm.form.adresseUtilisateur.ville = 'Paris'
   vm.form.adresseUtilisateur.codePostal = '75001'
+  vm.addressSelected = true
 }
 
 // ─── Tests ──────────────────────────────────────────────────────────────────

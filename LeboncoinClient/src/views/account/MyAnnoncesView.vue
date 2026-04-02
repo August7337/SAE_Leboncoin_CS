@@ -27,7 +27,6 @@ async function fetchMyAnnonces() {
           : null,
       reservations: annonce.reservations || [] 
     }))
-    console.log('Mes annonces récupérées:', JSON.parse(JSON.stringify(myAnnonces.value)))
   } catch (error) {
     console.error('Erreur lors du chargement des annonces', error)
   } finally {

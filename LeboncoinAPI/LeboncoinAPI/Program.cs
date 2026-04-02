@@ -31,17 +31,37 @@ LogBoot("CreateBuilder:start");
 var builder = WebApplication.CreateBuilder(args);
 LogBoot("CreateBuilder:done");
 
+// Azure App Service Linux expose le port via PORT ou WEBSITES_PORT.
+var listenPort = Environment.GetEnvironmentVariable("PORT") 
+              ?? Environment.GetEnvironmentVariable("WEBSITES_PORT") 
+              ?? "8080";
+Console.WriteLine($"[BOOT] Kestrel will listen on http://+:{listenPort}");
+builder.WebHost.UseUrls($"http://+:{listenPort}");
+
 LogBoot("Env.Load:start");
-Env.TraversePath().Load();
+if (System.IO.File.Exists(".env"))
+{
+    DotNetEnv.Env.Load();
+}
 LogBoot("Env.Load:done");
 
 builder.Configuration["CloudinarySettings:CloudName"] = Environment.GetEnvironmentVariable("CLOUDINARY_CLOUD_NAME");
 builder.Configuration["CloudinarySettings:ApiKey"] = Environment.GetEnvironmentVariable("CLOUDINARY_API_KEY");
 builder.Configuration["CloudinarySettings:ApiSecret"] = Environment.GetEnvironmentVariable("CLOUDINARY_API_SECRET");
 builder.Configuration["Stripe:SecretKey"] = Environment.GetEnvironmentVariable("STRIPE_SECRET_KEY");
-builder.Configuration["JwtSettings:SecretKey"] = Environment.GetEnvironmentVariable("JWT_SECRET_KEY");
+var jwtSecret = Environment.GetEnvironmentVariable("JWT_SECRET_KEY");
+if (string.IsNullOrEmpty(jwtSecret))
+{
+    Console.WriteLine("[WARNING] JWT_SECRET_KEY is not set. Using an insecure fallback. Set this variable in Azure App Settings.");
+    jwtSecret = "FALLBACK_INSECURE_KEY_CHANGE_ME_32CHARS";
+}
+builder.Configuration["JwtSettings:SecretKey"] = jwtSecret;
 builder.Configuration["JwtSettings:Issuer"] = Environment.GetEnvironmentVariable("JWT_ISSUER") ?? "LeboncoinAPI";
 builder.Configuration["JwtSettings:Audience"] = Environment.GetEnvironmentVariable("JWT_AUDIENCE") ?? "LeboncoinVueApp";
+
+// Configuration Email (lu depuis Azure Env Vars)
+builder.Configuration["EmailSettings:SenderEmail"] = Environment.GetEnvironmentVariable("EMAIL_SENDER");
+builder.Configuration["EmailSettings:AppPassword"] = Environment.GetEnvironmentVariable("EMAIL_APP_PASSWORD");
 
 var dbHost = Environment.GetEnvironmentVariable("DB_HOST") ?? "localhost";
 var dbPort = Environment.GetEnvironmentVariable("DB_PORT") ?? "5432";
@@ -131,13 +151,12 @@ app.Lifetime.ApplicationStarted.Register(() => LogBoot("ApplicationStarted"));
 app.Lifetime.ApplicationStopping.Register(() => LogBoot("ApplicationStopping"));
 app.Lifetime.ApplicationStopped.Register(() => LogBoot("ApplicationStopped"));
 
-if (app.Environment.IsDevelopment())
-{
-    LogBoot("Middleware.UseSwagger:start");
-    app.UseSwagger();
-    app.UseSwaggerUI();
-    LogBoot("Middleware.UseSwagger:done");
-}
+
+LogBoot("Middleware.UseSwagger:start");
+app.UseSwagger();
+app.UseSwaggerUI();
+LogBoot("Middleware.UseSwagger:done");
+
 
 
 LogBoot("MiddlewarePipeline:start");

@@ -1,0 +1,51 @@
+# =============================================================================
+# .dockerignore — Exclusions du contexte de build Docker
+# Ce fichier doit rester à la racine du workspace (c:\SAE_Leboncoin_CS\)
+# =============================================================================
+
+# ─── Dossiers de build .NET ───────────────────────────────────────────────────
+**/bin/
+**/obj/
+
+# ─── Tests (non nécessaires pour l'image de production) ──────────────────────
+LeboncoinAPITests/
+**/Tests/
+**/tests/
+
+# ─── Frontend Vue.js (non nécessaire pour l'image API) ───────────────────────
+LeboncoinClient/
+
+# ─── Node.js ──────────────────────────────────────────────────────────────────
+**/node_modules/
+**/.pnp/
+**/.pnp.js
+
+# ─── Fichiers secrets locaux ──────────────────────────────────────────────────
+**/.env
+**/.env.local
+**/.env.*.local
+LeboncoinAPI/LeboncoinAPI/.env
+
+# ─── Git ──────────────────────────────────────────────────────────────────────
+.git/
+.gitignore
+.gitattributes
+**/.gitkeep
+
+# ─── IDE & outils de développement ───────────────────────────────────────────
+.vs/
+.vscode/
+**/*.user
+**/*.suo
+**/.DS_Store
+**/Thumbs.db
+
+# ─── Logs & artefacts temporaires ────────────────────────────────────────────
+**/logs/
+**/*.log
+**/tmp/
+**/temp/
+
+# ─── Documentation ────────────────────────────────────────────────────────────
+README.md
+docker/README.md

@@ -7,7 +7,7 @@ export default defineConfig({
   test: {
     // This allows you to use 'describe', 'it', 'expect' without importing them in every file
     globals: true, 
-    environment: 'jsdom', // Simulates a browser environment
+    environment: 'happy-dom', // Faster and better ESM support
   },
   resolve: {
     alias: {

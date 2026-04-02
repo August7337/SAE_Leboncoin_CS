@@ -103,22 +103,22 @@ describe('LoginView.vue', () => {
 
   // ── Vérification email (étape 1) ─────────────────────────────────────────
   describe("Vérification de l'existence de l'email", () => {
-    it("appelle GET /Utilisateurs/email/:email avec l'email saisi", async () => {
-      mockGet.mockResolvedValueOnce({ data: {} })
+    it("appelle GET /Utilisateurs/check-email avec l'email saisi", async () => {
+      mockGet.mockResolvedValueOnce({ data: { exists: true } })
       wrapper.vm.form.email = 'user@example.com'
       await wrapper.vm.login()
-      expect(mockGet).toHaveBeenCalledWith('/Utilisateurs/email/user@example.com')
+      expect(mockGet).toHaveBeenCalledWith('/Utilisateurs/check-email', { params: { email: 'user@example.com' } })
     })
 
-    it('passe emailExists à true si le GET réussit', async () => {
-      mockGet.mockResolvedValueOnce({ data: {} })
+    it('passe emailExists à true si le GET réussit avec exists: true', async () => {
+      mockGet.mockResolvedValueOnce({ data: { exists: true } })
       wrapper.vm.form.email = 'user@example.com'
       await wrapper.vm.login()
       expect(wrapper.vm.emailExists).toBe(true)
     })
 
-    it('redirige vers register avec le query email si 404', async () => {
-      mockGet.mockRejectedValueOnce({ response: { status: 404 } })
+    it('redirige vers register avec le query email si exists: false', async () => {
+      mockGet.mockResolvedValueOnce({ data: { exists: false } })
       wrapper.vm.form.email = 'nouveau@example.com'
       await wrapper.vm.login()
       expect(mockPush).toHaveBeenCalledWith({

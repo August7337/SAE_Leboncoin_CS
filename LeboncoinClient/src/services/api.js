@@ -1,4 +1,4 @@
-const DEFAULT_API_BASE_URL = 'https://localhost:7057'
+const DEFAULT_API_BASE_URL = 'https://leboncoinapi-b0b2bmazh9ebdqef.spaincentral-01.azurewebsites.net/api'
 
 const normalizeBaseUrl = (url) => (url || '').trim().replace(/\/+$/, '')
 

@@ -1,0 +1,129 @@
+# =============================================================================
+# docker-compose.yml — LeboncoinAPI (déploiement serveur)
+# Image pré-buildée sur Docker Hub : gregory73/leboncoin_api:latest
+#
+# Sur le serveur Linux :
+#   cp .env.example .env && nano .env
+#   docker compose up -d
+# =============================================================================
+
+services:
+
+  # ─── Base de données PostgreSQL ─────────────────────────────────────────────
+  db:
+    image: postgres:16-alpine
+    container_name: leboncoin_db
+    restart: unless-stopped
+
+    environment:
+      POSTGRES_DB:       ${DB_NAME}
+      POSTGRES_USER:     ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASS}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=fr_FR.UTF-8"
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+    networks:
+      - leboncoin_net
+
+    command: >
+      postgres
+        -c max_connections=300
+        -c shared_buffers=256MB
+        -c effective_cache_size=1GB
+        -c work_mem=4MB
+        -c maintenance_work_mem=64MB
+        -c wal_buffers=16MB
+        -c checkpoint_completion_target=0.9
+        -c random_page_cost=1.1
+        -c effective_io_concurrency=200
+        -c log_min_duration_statement=500
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME} -q"]
+      interval:     10s
+      timeout:      5s
+      retries:      10
+      start_period: 20s
+
+    deploy:
+      resources:
+        limits:
+          cpus:   '2.0'
+          memory: 1G
+        reservations:
+          cpus:   '0.5'
+          memory: 256M
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+
+  # ─── API .NET 8 — image pré-buildée ─────────────────────────────────────────
+  api:
+    image: gregory73/leboncoin_api:latest
+    container_name: leboncoin_api
+    restart: unless-stopped
+
+    ports:
+      - "${API_PORT:-8080}:8080"
+
+    environment:
+      PORT: "8080"
+
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASS: ${DB_PASS}
+
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      JWT_ISSUER:     ${JWT_ISSUER:-LeboncoinAPI}
+      JWT_AUDIENCE:   ${JWT_AUDIENCE:-LeboncoinVueApp}
+
+      CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME:-}
+      CLOUDINARY_API_KEY:    ${CLOUDINARY_API_KEY:-}
+      CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET:-}
+      STRIPE_SECRET_KEY:     ${STRIPE_SECRET_KEY:-}
+
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Production}
+
+      Logging__LogLevel__Default:              Information
+      Logging__LogLevel__Microsoft.AspNetCore: Warning
+      Logging__LogLevel__Microsoft.EntityFrameworkCore.Database.Command: Warning
+
+    depends_on:
+      db:
+        condition: service_healthy
+
+    networks:
+      - leboncoin_net
+
+    deploy:
+      resources:
+        limits:
+          cpus:   '2.0'
+          memory: 512M
+        reservations:
+          cpus:   '0.5'
+          memory: 128M
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "20m"
+        max-file: "5"
+
+
+networks:
+  leboncoin_net:
+    driver: bridge
+
+
+volumes:
+  postgres_data:
+    driver: local

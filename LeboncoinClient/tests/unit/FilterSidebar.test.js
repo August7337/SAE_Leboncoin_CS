@@ -159,10 +159,9 @@ describe('FilterSidebar.vue', () => {
     it('est déclenché par le bouton "Tout Effacer"', async () => {
       const wrapper = mountSidebar()
       wrapper.vm.localFilters.minPrice = 100
-      const resetSpy = vi.spyOn(wrapper.vm, 'resetFilters')
-      const btn = wrapper.findAll('button').find((b) => b.text() === 'Tout Effacer')
+      const btn = wrapper.findAll('button').find((b) => b.text().includes('Tout Effacer'))
       await btn.trigger('click')
-      expect(resetSpy).toHaveBeenCalled()
+      expect(wrapper.vm.localFilters.minPrice).toBe(null)
     })
   })
 
@@ -192,10 +191,10 @@ describe('FilterSidebar.vue', () => {
 
     it('est déclenché par le bouton "Rechercher"', async () => {
       const wrapper = mountSidebar()
-      const applySpy = vi.spyOn(wrapper.vm, 'applyFilters')
-      const btn = wrapper.findAll('button').find((b) => b.text() === 'Rechercher')
+      const btn = wrapper.findAll('button').find((b) => b.text().includes('Rechercher'))
       await btn.trigger('click')
-      expect(applySpy).toHaveBeenCalled()
+      expect(wrapper.emitted('apply')).toBeTruthy()
+      expect(wrapper.emitted('close')).toBeTruthy()
     })
   })
 

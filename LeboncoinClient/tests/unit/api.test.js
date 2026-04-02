@@ -21,9 +21,9 @@ describe('api.js', () => {
       expect(API_BASE_URL).toBe('https://api.example.com')
     })
 
-    it('retombe sur https://localhost:7057 si VITE_API_BASE_URL est vide', async () => {
+    it('retombe sur l\'URL par défaut si VITE_API_BASE_URL est vide', async () => {
       const { API_BASE_URL } = await freshModule('')
-      expect(API_BASE_URL).toBe('https://localhost:7057')
+      expect(API_BASE_URL).toBe('https://leboncoinapi-b0b2bmazh9ebdqef.spaincentral-01.azurewebsites.net/api')
     })
 
     it('supprime le slash final de VITE_API_BASE_URL', async () => {
