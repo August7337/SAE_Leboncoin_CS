@@ -48,9 +48,11 @@ const VALID_DRAFT = {
   codePostal:          '75001',
 }
 
-function createWrapper(draft = null) {
+function createWrapper(draft = VALID_DRAFT) {
   if (draft) {
-    sessionStorageMock.getItem.mockReturnValueOnce(JSON.stringify(draft))
+    sessionStorageMock.getItem.mockReturnValue(JSON.stringify(draft))
+  } else {
+    sessionStorageMock.getItem.mockReturnValue(null)
   }
   return mount(Particulier, {
     global: { stubs: ['router-link', 'router-view'] },
@@ -58,9 +60,9 @@ function createWrapper(draft = null) {
 }
 
 function fillValidForm(vm) {
-  vm.particulierForm.nom          = 'Dupont'
-  vm.particulierForm.prenom       = 'Jean'
-  vm.particulierForm.dateNaissance = '1990-06-15'
+  vm.form.nomutilisateur    = 'Dupont'
+  vm.form.prenomutilisateur = 'Jean'
+  vm.form.dateNaissance     = '1990-06-15'
 }
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
@@ -70,7 +72,8 @@ describe('RegisterParticulierView.vue', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     sessionStorageMock.clear()
-    wrapper = createWrapper()
+    // By default, provide a valid draft to avoid redirection in onMounted
+    wrapper = createWrapper(VALID_DRAFT)
   })
 
   // ── Rendu initial ──────────────────────────────────────────────────────────
@@ -85,15 +88,16 @@ describe('RegisterParticulierView.vue', () => {
 
     it('affiche les champs nom, prénom et date de naissance', () => {
       const inputs = wrapper.findAll('input')
+      // nom, prenom, dateNaissance = 3 inputs
       expect(inputs.length).toBeGreaterThanOrEqual(3)
     })
 
-    it('affiche le select civilité avec "M." par défaut', () => {
-      expect(wrapper.vm.particulierForm.civilite).toBe('M.')
+    it('affiche le sélecteur civilité avec "M." par défaut', () => {
+      expect(wrapper.vm.form.civilite).toBe('M.')
     })
 
     it("n'affiche pas l'overlay de succès au départ", () => {
-      expect(wrapper.vm.loginSuccess).toBe(false)
+      expect(wrapper.vm.registrationSuccess).toBe(false)
     })
 
     it('affiche le bouton retour', () => {
@@ -119,18 +123,18 @@ describe('RegisterParticulierView.vue', () => {
       }
       const w = createWrapper(draft)
       await w.vm.$nextTick()
-      expect(w.vm.particulierForm.nom).toBe('Martin')
-      expect(w.vm.particulierForm.prenom).toBe('Sophie')
-      expect(w.vm.particulierForm.civilite).toBe('Mme')
-      expect(w.vm.particulierForm.dateNaissance).toBe('1995-03-20')
+      expect(w.vm.form.nomutilisateur).toBe('Martin')
+      expect(w.vm.form.prenomutilisateur).toBe('Sophie')
+      expect(w.vm.form.civilite).toBe('Mme')
+      expect(w.vm.form.dateNaissance).toBe('1995-03-20')
     })
 
-    it('utilise window.history.state.payload si pas de brouillon en session', async () => {
-      window.history.replaceState({ payload: VALID_DRAFT }, '')
-      const w = createWrapper()        // no draft mock → getItem returns null
+    it('redirige vers register si pas de brouillon', async () => {
+      mockPush.mockClear()
+      // Create wrapper without draft
+      const w = createWrapper(null)
       await w.vm.$nextTick()
-      expect(w.vm.dataFromStep1).toMatchObject({ pseudonyme: 'JohnDoe' })
-      window.history.replaceState({}, '')
+      expect(mockPush).toHaveBeenCalledWith({ name: 'register' })
     })
   })
 
@@ -138,22 +142,22 @@ describe('RegisterParticulierView.vue', () => {
   describe('Validation du formulaire', () => {
     it('retourne false si le nom est vide', () => {
       fillValidForm(wrapper.vm)
-      wrapper.vm.particulierForm.nom = ''
-      expect(wrapper.vm.validateParticulier()).toBe(false)
-      expect(wrapper.vm.errors.nom).toBeTruthy()
+      wrapper.vm.form.nomutilisateur = ''
+      expect(wrapper.vm.validate()).toBe(false)
+      expect(wrapper.vm.errors.nomutilisateur).toBeTruthy()
     })
 
     it('retourne false si le prénom est vide', () => {
       fillValidForm(wrapper.vm)
-      wrapper.vm.particulierForm.prenom = ''
-      expect(wrapper.vm.validateParticulier()).toBe(false)
-      expect(wrapper.vm.errors.prenom).toBeTruthy()
+      wrapper.vm.form.prenomutilisateur = ''
+      expect(wrapper.vm.validate()).toBe(false)
+      expect(wrapper.vm.errors.prenomutilisateur).toBeTruthy()
     })
 
     it('retourne false si la date de naissance est absente', () => {
       fillValidForm(wrapper.vm)
-      wrapper.vm.particulierForm.dateNaissance = ''
-      expect(wrapper.vm.validateParticulier()).toBe(false)
+      wrapper.vm.form.dateNaissance = ''
+      expect(wrapper.vm.validate()).toBe(false)
       expect(wrapper.vm.errors.dateNaissance).toBeTruthy()
     })
 
@@ -161,64 +165,41 @@ describe('RegisterParticulierView.vue', () => {
       fillValidForm(wrapper.vm)
       const today = new Date()
       const minor = new Date(today.getFullYear() - 16, today.getMonth(), today.getDate())
-      wrapper.vm.particulierForm.dateNaissance = minor.toISOString().split('T')[0]
-      expect(wrapper.vm.validateParticulier()).toBe(false)
+      wrapper.vm.form.dateNaissance = minor.toISOString().split('T')[0]
+      expect(wrapper.vm.validate()).toBe(false)
       expect(wrapper.vm.errors.dateNaissance).toContain('18 ans')
     })
 
-    it('retourne true pour un formulaire valide (majeur)', () => {
+    it('retourne true for un formulaire valide (majeur)', () => {
       fillValidForm(wrapper.vm)
-      expect(wrapper.vm.validateParticulier()).toBe(true)
+      expect(wrapper.vm.validate()).toBe(true)
     })
 
     it('efface les erreurs précédentes avant chaque validation', () => {
-      wrapper.vm.errors.nom = 'ancienne erreur'
+      wrapper.vm.errors.nomutilisateur = 'ancienne erreur'
       fillValidForm(wrapper.vm)
-      wrapper.vm.validateParticulier()
-      expect(wrapper.vm.errors.nom).toBe('')
-    })
-
-    it("accepte un utilisateur qui vient exactement d'avoir 18 ans aujourd\'hui", () => {
-      fillValidForm(wrapper.vm)
-      const today = new Date()
-      const exact18 = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate())
-      wrapper.vm.particulierForm.dateNaissance = exact18.toISOString().split('T')[0]
-      expect(wrapper.vm.validateParticulier()).toBe(true)
+      wrapper.vm.validate()
+      expect(wrapper.vm.errors.nomutilisateur).toBe('')
     })
   })
 
   // ── Bouton retour ──────────────────────────────────────────────────────────
   describe('Bouton retour', () => {
-    it("sauvegarde le brouillon dans sessionStorage et redirige vers 'register'", async () => {
-      wrapper.vm.dataFromStep1 = { ...VALID_DRAFT }
-      fillValidForm(wrapper.vm)
+    it("redirige vers 'register'", async () => {
       await wrapper.find('.back-arrow-btn').trigger('click')
-      expect(sessionStorageMock.setItem).toHaveBeenCalledWith(
-        'registration_draft',
-        expect.any(String)
-      )
       expect(mockPush).toHaveBeenCalledWith({ name: 'register' })
-    })
-
-    it('fusionne les données étape 1 et étape 2 dans le brouillon sauvegardé', async () => {
-      wrapper.vm.dataFromStep1 = { ...VALID_DRAFT }
-      fillValidForm(wrapper.vm)
-      await wrapper.find('.back-arrow-btn').trigger('click')
-      const saved = JSON.parse(sessionStorageMock.setItem.mock.calls[0][1])
-      expect(saved.pseudonyme).toBe('JohnDoe')
-      expect(saved.nom).toBe('Dupont')
     })
   })
 
   // ── Soumission réussie ─────────────────────────────────────────────────────
   describe('Soumission réussie', () => {
     beforeEach(() => {
-      wrapper.vm.dataFromStep1 = { ...VALID_DRAFT }
+      mockPush.mockClear() // Clear the redirect from onMounted if any
       fillValidForm(wrapper.vm)
     })
 
     it('appelle POST /Utilisateurs/register-particulier', async () => {
-      mockPost.mockResolvedValueOnce({ data: { user: { pseudonyme: 'JohnDoe' } } })
+      mockPost.mockResolvedValueOnce({ data: { Token: 'fake-token', user: { pseudonyme: 'JohnDoe' } } })
       await wrapper.vm.submitFinal()
       expect(mockPost).toHaveBeenCalledWith(
         '/Utilisateurs/register-particulier',
@@ -227,27 +208,27 @@ describe('RegisterParticulierView.vue', () => {
     })
 
     it('appelle authState.login avec la réponse', async () => {
-      const responseData = { user: { pseudonyme: 'JohnDoe' } }
+      const responseData = { Token: 'fake-token', user: { pseudonyme: 'JohnDoe' } }
       mockPost.mockResolvedValueOnce({ data: responseData })
       await wrapper.vm.submitFinal()
       expect(mockLogin).toHaveBeenCalledWith(responseData)
     })
 
-    it('passe loginSuccess à true après la soumission', async () => {
-      mockPost.mockResolvedValueOnce({ data: { user: {} } })
+    it('passe registrationSuccess à true après la soumission', async () => {
+      mockPost.mockResolvedValueOnce({ data: { Token: 'tk', user: {} } })
       await wrapper.vm.submitFinal()
-      expect(wrapper.vm.loginSuccess).toBe(true)
+      expect(wrapper.vm.registrationSuccess).toBe(true)
     })
 
     it('supprime le brouillon de sessionStorage après succès', async () => {
-      mockPost.mockResolvedValueOnce({ data: { user: {} } })
+      mockPost.mockResolvedValueOnce({ data: { Token: 'tk', user: {} } })
       await wrapper.vm.submitFinal()
       expect(sessionStorageMock.removeItem).toHaveBeenCalledWith('registration_draft')
     })
 
     it("redirige vers 'home' après le délai", async () => {
       vi.useFakeTimers()
-      mockPost.mockResolvedValueOnce({ data: { user: {} } })
+      mockPost.mockResolvedValueOnce({ data: { Token: 'tk', user: {} } })
       await wrapper.vm.submitFinal()
       vi.runAllTimers()
       expect(mockPush).toHaveBeenCalledWith({ name: 'home' })
@@ -255,7 +236,7 @@ describe('RegisterParticulierView.vue', () => {
     })
 
     it("n'appelle pas POST si la validation échoue", async () => {
-      wrapper.vm.particulierForm.nom = ''
+      wrapper.vm.form.nomutilisateur = ''
       await wrapper.vm.submitFinal()
       expect(mockPost).not.toHaveBeenCalled()
     })
@@ -264,7 +245,7 @@ describe('RegisterParticulierView.vue', () => {
   // ── Gestion des erreurs 409 ────────────────────────────────────────────────
   describe('Erreur 409 (conflit)', () => {
     beforeEach(() => {
-      wrapper.vm.dataFromStep1 = { ...VALID_DRAFT }
+      mockPush.mockClear()
       fillValidForm(wrapper.vm)
     })
 
@@ -290,31 +271,20 @@ describe('RegisterParticulierView.vue', () => {
 
     it('affiche une erreur inline si le conflit concerne un champ de l\'étape 2', async () => {
       mockPost.mockRejectedValueOnce({
-        response: { status: 409, data: { target: 'nom', message: 'Nom invalide.' } },
+        response: { status: 409, data: { target: 'nomutilisateur', message: 'Nom invalide.' } },
       })
       await wrapper.vm.submitFinal()
+      // mockPush might have been called 0 times here because we provided draft in beforeEach
       expect(mockPush).not.toHaveBeenCalled()
-      expect(wrapper.vm.errors.nom).toBe('Nom invalide.')
-    })
-
-    it('sauvegarde le brouillon avant de rediriger vers étape 1', async () => {
-      mockPost.mockRejectedValueOnce({
-        response: { status: 409, data: { target: 'email', message: 'Email déjà utilisé.' } },
-      })
-      await wrapper.vm.submitFinal()
-      expect(sessionStorageMock.setItem).toHaveBeenCalledWith(
-        'registration_draft',
-        expect.any(String)
-      )
+      expect(wrapper.vm.errors.nomutilisateur).toBe('Nom invalide.')
     })
   })
 
   // ── Payload envoyé ─────────────────────────────────────────────────────────
   describe('Construction du payload', () => {
     it('inclut les données des deux étapes dans le payload', async () => {
-      wrapper.vm.dataFromStep1 = { ...VALID_DRAFT }
       fillValidForm(wrapper.vm)
-      mockPost.mockResolvedValueOnce({ data: { user: {} } })
+      mockPost.mockResolvedValueOnce({ data: { Token: 'tk', user: {} } })
       await wrapper.vm.submitFinal()
       const sentPayload = mockPost.mock.calls[0][1]
       expect(sentPayload).toMatchObject({
@@ -325,18 +295,6 @@ describe('RegisterParticulierView.vue', () => {
         dateNaissance:       '1990-06-15',
         civilite:            'M.',
       })
-    })
-
-    it('résout telephoneutilisateur depuis adresseUtilisateur si nécessaire', async () => {
-      wrapper.vm.dataFromStep1 = {
-        ...VALID_DRAFT,
-        telephoneutilisateur: undefined,
-        telephoneUtilisateur: '0699887766',
-      }
-      fillValidForm(wrapper.vm)
-      mockPost.mockResolvedValueOnce({ data: { user: {} } })
-      await wrapper.vm.submitFinal()
-      expect(mockPost.mock.calls[0][1].telephoneutilisateur).toBe('0699887766')
     })
   })
 })

@@ -96,10 +96,15 @@ const errors = reactive({
 
 onMounted(() => {
   const savedDraft = sessionStorage.getItem('registration_draft')
-  if (savedDraft) {
-    dataFromStep1.value = JSON.parse(savedDraft)
-  } else if (window.history.state && window.history.state.payload) {
-    dataFromStep1.value = window.history.state.payload
+  const draft = savedDraft ? JSON.parse(savedDraft) : (window.history.state?.payload || null)
+  
+  if (draft) {
+    dataFromStep1.value = draft
+    // Pre-fill Step 2 fields if they exist in the draft
+    if (draft.nomutilisateur) form.nomutilisateur = draft.nomutilisateur
+    if (draft.prenomutilisateur) form.prenomutilisateur = draft.prenomutilisateur
+    if (draft.civilite) form.civilite = draft.civilite
+    if (draft.dateNaissance) form.dateNaissance = draft.dateNaissance
   } else {
     // No data from step 1, go back
     router.push({ name: 'register' })
@@ -116,7 +121,25 @@ const validate = () => {
 
   if (!form.nomutilisateur.trim()) { errors.nomutilisateur = "Requis."; valid = false; }
   if (!form.prenomutilisateur.trim()) { errors.prenomutilisateur = "Requis."; valid = false; }
-  if (!form.dateNaissance) { errors.dateNaissance = "Requis."; valid = false; }
+  
+  if (!form.dateNaissance) { 
+    errors.dateNaissance = "Requis."; 
+    valid = false; 
+  } else {
+    // Check if at least 18 years old
+    const birthDate = new Date(form.dateNaissance)
+    const today = new Date()
+    let age = today.getFullYear() - birthDate.getFullYear()
+    const m = today.getMonth() - birthDate.getMonth()
+    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+      age--
+    }
+    
+    if (age < 18) {
+      errors.dateNaissance = "Vous devez avoir au moins 18 ans.";
+      valid = false;
+    }
+  }
 
   return valid
 }
@@ -152,14 +175,19 @@ const submitFinal = async () => {
     }, 1500)
 
   } catch (error) {
-    console.error("Registration error:", error)
     if (error.response && error.response.status === 409) {
-      // Conflict (email, phone, etc.) - should go back to step 1
       const { target, message } = error.response.data
-      router.push({ 
-        name: 'register', 
-        state: { externalErrors: { [target]: message } } 
-      })
+      const isStep1Error = ['email', 'telephoneutilisateur', 'pseudonyme'].includes(target)
+      
+      if (isStep1Error) {
+        router.push({ 
+          name: 'register', 
+          state: { externalErrors: { [target]: message } } 
+        })
+      } else {
+        // Step 2 error: show inline
+        errors[target] = message
+      }
     } else {
       apiError.value = error.response?.data?.message || "Une erreur est survenue lors de l'inscription."
     }
