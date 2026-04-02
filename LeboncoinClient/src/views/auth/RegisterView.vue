@@ -17,35 +17,63 @@
 
     <form @submit.prevent="register">
       <div class="field">
-        <label>Pseudonyme</label>
-        <input v-model="form.pseudonyme" type="text" :class="{ 'error': errors.pseudonyme, 'valid': !errors.pseudonyme && form.pseudonyme.trim() }" />
+        <label for="pseudonyme">Pseudonyme</label>
+        <input 
+          id="pseudonyme" 
+          v-model="form.pseudonyme" 
+          type="text" 
+          :class="{ 'error': errors.pseudonyme, 'valid': !errors.pseudonyme && form.pseudonyme.trim() }" 
+        />
         <span v-if="errors.pseudonyme" class="error-text">{{ errors.pseudonyme }}</span>
       </div>
 
       <div class="field">
-        <label>Email</label>
-        <input v-model="form.email" type="text" :class="{ 'error': errors.email, 'valid': !errors.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email) }" placeholder="exemple@mail.com" />
+        <label for="email">Email</label>
+        <input 
+          id="email" 
+          v-model="form.email" 
+          type="text" 
+          :class="{ 'error': errors.email, 'valid': !errors.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email) }" 
+          placeholder="exemple@mail.com" 
+        />
         <span v-if="errors.email" class="error-text">{{ errors.email }}</span>
       </div>
 
       <div class="field">
-        <label>Téléphone</label>
-        <input v-model="form.telephoneUtilisateur" type="text" inputmode="numeric" maxlength="14" @input="formatTelephone" @blur="checkPhoneAvailability" :class="{ 'error': errors.telephoneUtilisateur || phoneCheckError, 'valid': phoneAvailable }" placeholder="06 12 34 56 78"/>
+        <label for="telephone">Téléphone</label>
+        <input 
+          id="telephone" 
+          v-model="form.telephoneUtilisateur" 
+          type="text" 
+          inputmode="numeric" 
+          maxlength="14" 
+          @input="formatTelephone" 
+          @blur="checkPhoneAvailability" 
+          :class="{ 'error': errors.telephoneUtilisateur || phoneCheckError, 'valid': phoneAvailable }" 
+          placeholder="06 12 34 56 78"
+        />
         <span v-if="errors.telephoneUtilisateur" class="error-text">{{ errors.telephoneUtilisateur }}</span>
         <span v-else-if="phoneCheckError" class="error-text">{{ phoneCheckError }}</span>
       </div>
 
       <div class="field">
-        <label>Numéro et rue</label>
+        <label for="adresse">Numéro et rue</label>
         <div class="relative" style="width:100%">
           <input 
+            id="adresse"
             v-model="form.adresseUtilisateur.rue" 
             @input="fetchAutocomplete"
             @blur="closeSuggestions"
             type="text" 
             placeholder="Écrivez votre adresse et sélectionnez une suggestion"
             :readonly="addressSelected"
-            :class="{ 'error': errors.adresseUtilisateur, 'valid': addressSelected && !errors.adresseUtilisateur, 'bg-gray-50 cursor-default': addressSelected, 'address-input-with-clear': addressSelected }"
+            :class="{ 
+              'error': errors.adresseUtilisateur, 
+              'valid': addressSelected && !errors.adresseUtilisateur, 
+              'bg-gray-50 cursor-default': addressSelected, 
+              'address-input-with-clear': addressSelected 
+            }"
+            data-testid="address-input"
           />
           <button
             v-if="addressSelected"
@@ -54,11 +82,12 @@
             class="clear-address-btn"
             title="Modifier l'adresse"
           >&times;</button>
+
           <ul v-if="showSuggestions && suggestions.length" class="absolute z-50 w-full bg-white border border-gray-200 rounded-xl mt-1 shadow-xl max-h-60 overflow-auto">
             <li 
               v-for="(s, index) in suggestions" 
               :key="index"
-              @click="selectSuggestion(s)"
+              @mousedown="selectSuggestion(s)"
               class="px-4 py-3 hover:bg-orange-50 cursor-pointer border-b last:border-b-0 text-sm"
             >
               <span class="font-bold">{{ s.properties.formatted }}</span>
@@ -70,19 +99,38 @@
 
       <div class="grid grid-cols-2 gap-4 mb-4">
         <div class="field">
-          <label>Code Postal</label>
-          <input v-model="form.adresseUtilisateur.codePostal" type="text" placeholder="75001" :readonly="addressSelected" :class="{ 'bg-gray-50 cursor-default': addressSelected, 'valid': addressSelected }" />
+          <label for="codePostal">Code Postal</label>
+          <input 
+            id="codePostal"
+            v-model="form.adresseUtilisateur.codePostal" 
+            type="text" 
+            placeholder="75001" 
+            :readonly="addressSelected" 
+            :class="{ 'bg-gray-50 cursor-default': addressSelected, 'valid': addressSelected }" 
+          />
         </div>
         <div class="field">
-          <label>Ville</label>
-          <input v-model="form.adresseUtilisateur.ville" type="text" placeholder="Paris" :readonly="addressSelected" :class="{ 'bg-gray-50 cursor-default': addressSelected, 'valid': addressSelected }" />
+          <label for="ville">Ville</label>
+          <input 
+            id="ville"
+            v-model="form.adresseUtilisateur.ville" 
+            type="text" 
+            placeholder="Paris" 
+            :readonly="addressSelected" 
+            :class="{ 'bg-gray-50 cursor-default': addressSelected, 'valid': addressSelected }" 
+          />
         </div>
       </div>
 
       <div class="field">
-        <label>Mot de passe</label>
+        <label for="password">Mot de passe</label>
         <div class="password-wrapper">
-          <input v-model="form.password" :type="showPassword ? 'text' : 'password'" :class="{ 'error': errors.password, 'valid': !errors.password && form.password.length >= 6 }" />
+          <input 
+            id="password"
+            v-model="form.password" 
+            :type="showPassword ? 'text' : 'password'" 
+            :class="{ 'error': errors.password, 'valid': !errors.password && form.password.length >= 6 }" 
+          />
           <button type="button" class="toggle-btn" @click="showPassword = !showPassword">
             {{ showPassword ? 'Masquer' : 'Afficher' }}
           </button>
@@ -91,9 +139,14 @@
       </div>
 
       <div class="field">
-        <label>Confirmer le mot de passe</label>
+        <label for="passwordConfirm">Confirmer le mot de passe</label>
         <div class="password-wrapper">
-          <input v-model="form.passwordConfirm" :type="showPasswordConfirm ? 'text' : 'password'" :class="{ 'error': errors.passwordConfirm, 'valid': !errors.passwordConfirm && form.passwordConfirm.length >= 6 && form.passwordConfirm === form.password }" />
+          <input 
+            id="passwordConfirm"
+            v-model="form.passwordConfirm" 
+            :type="showPasswordConfirm ? 'text' : 'password'" 
+            :class="{ 'error': errors.passwordConfirm, 'valid': !errors.passwordConfirm && form.passwordConfirm.length >= 6 && form.passwordConfirm === form.password }" 
+          />
           <button type="button" class="toggle-btn" @click="showPasswordConfirm = !showPasswordConfirm">
             {{ showPasswordConfirm ? 'Masquer' : 'Afficher' }}
           </button>
@@ -126,10 +179,11 @@ import { reactive, ref, onMounted } from "vue"
 import { useRouter, useRoute } from "vue-router"
 import { authState } from '@/auth.js'
 import axios from 'axios'
+
 const router = useRouter()
 const route = useRoute()
 
-
+// State management
 const loginSuccess = ref(false)
 const successMessage = ref("")
 const apiError = ref("")
@@ -142,6 +196,25 @@ const addressSelected = ref(false);
 const phoneCheckError = ref('');
 const phoneAvailable = ref(false);
 
+const form = reactive({
+  pseudonyme: "",
+  email: "",
+  telephoneUtilisateur: "",
+  adresseUtilisateur: { rue: "", ville: "", codePostal: "" },
+  password: "",
+  passwordConfirm: ""
+})
+
+const errors = reactive({
+  pseudonyme: "",
+  email: "",
+  telephoneUtilisateur: "",
+  adresseUtilisateur: "",
+  password: "",
+  passwordConfirm: ""
+})
+
+// Functions
 const checkPhoneAvailability = async () => {
   phoneCheckError.value = '';
   phoneAvailable.value = false;
@@ -154,11 +227,10 @@ const checkPhoneAvailability = async () => {
     } else {
       phoneAvailable.value = true;
     }
-  } catch { /* silently ignore */ }
+  } catch { /* ignore */ }
 };
 
 const closeSuggestions = () => {
-  
   setTimeout(() => {
     showSuggestions.value = false;
   }, 200);
@@ -239,33 +311,11 @@ const clearAddress = () => {
   showSuggestions.value = false;
 };
 
-
-const form = reactive({
-  pseudonyme: "",
-  email: "",
-  telephoneUtilisateur: "",
-  adresseUtilisateur: { rue: "", ville: "", codePostal: "" },
-  password: "",
-  passwordConfirm: ""
-})
-
-const errors = reactive({
-  pseudonyme: "",
-  email: "",
-  telephoneUtilisateur: "",
-  adresseUtilisateur: "",
-  password: "",
-  passwordConfirm: ""
-})
-
 onMounted(() => {
-
   const hasExternalErrors = window.history.state && window.history.state.externalErrors;
   const savedDraft = sessionStorage.getItem('registration_draft');
   const draft = savedDraft ? JSON.parse(savedDraft) : null;
 
-  // Restore form if returning from step 2 (draft contains typeUtilisateur)
-  // or if returning due to a conflict at step 2 (externalErrors)
   const shouldRestore = hasExternalErrors || (draft && draft.typeUtilisateur);
 
   if (shouldRestore && draft) {
@@ -293,7 +343,6 @@ onMounted(() => {
   }
 
   if (!shouldRestore) {
-    // Fresh visit: clear any leftover draft
     sessionStorage.removeItem('registration_draft');
   }
 
@@ -303,7 +352,6 @@ onMounted(() => {
 });
 
 const validate = () => {
-
   Object.keys(errors).forEach(key => errors[key] = "")
   let valid = true
 
@@ -347,7 +395,6 @@ const register = () => {
 
   const cleanPhone = form.telephoneUtilisateur.replace(/[\s.-]/g, "");
   
-
   const payload = {
     pseudonyme: form.pseudonyme,
     email: form.email,
@@ -360,11 +407,9 @@ const register = () => {
     typeUtilisateur: typeUtilisateur.value 
   }
 
-  
   const existingDraft = JSON.parse(sessionStorage.getItem('registration_draft') || '{}');
   const mergedDraft = { ...existingDraft, ...payload };
   sessionStorage.setItem('registration_draft', JSON.stringify(mergedDraft));
-  
 
   router.push({ name: typeUtilisateur.value, state: { payload: mergedDraft } });
 }
