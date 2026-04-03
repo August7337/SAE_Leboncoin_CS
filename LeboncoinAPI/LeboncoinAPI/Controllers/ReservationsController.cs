@@ -28,10 +28,7 @@ public class ReservationsController : ControllerBase
         _configuration = configuration;
 
         StripeConfiguration.ApiKey = _configuration["Stripe:SecretKey"];
-        _clientBaseUrl = _configuration["ClientBaseUrl"] ?? "http://localhost:5173";
     }
-
-    private readonly string _clientBaseUrl;
 
     // =========================================================================
     // 1. MÉTHODES GET (Lecture des réservations)
@@ -165,7 +162,7 @@ public class ReservationsController : ControllerBase
             });
             await _dbContext.SaveChangesAsync();
 
-            return Ok(new { url = $"{_clientBaseUrl}/my-reservations?payment=success" });
+            return Ok(new { url = "http://localhost:5173/my-reservations?payment=success" });
         }
 
         // --- CAS B : Stripe (avec solde partiel éventuel) ---
@@ -214,8 +211,8 @@ public class ReservationsController : ControllerBase
             },
             Mode = "payment",
             Metadata = metadata,
-            SuccessUrl = $"{_clientBaseUrl}/my-reservations?session_id={{CHECKOUT_SESSION_ID}}",
-            CancelUrl = $"{_clientBaseUrl}/reservation/cancel",
+            SuccessUrl = "http://localhost:5173/my-reservations?session_id={CHECKOUT_SESSION_ID}",
+            CancelUrl = "http://localhost:5173/reservation/cancel",
         };
 
         var service = new SessionService();
@@ -309,7 +306,7 @@ public class ReservationsController : ControllerBase
 
             Console.WriteLine($"[DEBUG] Refund saved. New Solde={utilisateur.Solde}");
 
-            return Ok(new { url = $"{_clientBaseUrl}/my-reservations?payment=success", message = $"La modification a été enregistrée. Un remboursement de {refundAmount:F2}€ a été ajouté à votre solde." });
+            return Ok(new { url = "http://localhost:5173/my-reservations?payment=success", message = $"La modification a été enregistrée. Un remboursement de {refundAmount:F2}€ a été ajouté à votre solde." });
         }
 
         // --- CAS B : Pas de supplément à payer (Équilibre) ---
@@ -394,8 +391,8 @@ public class ReservationsController : ControllerBase
             },
             Mode = "payment",
             Metadata = metadata,
-            SuccessUrl = $"{_clientBaseUrl}/my-reservations?session_id={{CHECKOUT_SESSION_ID}}",
-            CancelUrl = $"{_clientBaseUrl}/reservation/cancel",
+            SuccessUrl = "http://localhost:5173/my-reservations?session_id={CHECKOUT_SESSION_ID}",
+            CancelUrl = "http://localhost:5173/reservation/cancel",
         };
 
         var service = new SessionService();
@@ -431,7 +428,7 @@ public class ReservationsController : ControllerBase
         }
 
         await _dbContext.SaveChangesAsync();
-        return Ok(new { url = $"{_clientBaseUrl}/my-reservations?payment=success" });
+        return Ok(new { url = "http://localhost:5173/my-reservations?payment=success" });
     }
 
     [HttpPost("confirm-payment")]
