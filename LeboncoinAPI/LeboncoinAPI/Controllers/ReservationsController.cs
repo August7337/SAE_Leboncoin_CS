@@ -105,6 +105,121 @@ public class ReservationsController : ControllerBase
 
     // =========================================================================
     // 2. MÉTHODES DE PAIEMENT ET CRÉATION (Stripe & Solde)
+    [HttpPost("create-checkout-session")]
+    public async Task<IActionResult> CreateCheckoutSession([FromBody] ReservationCreateDto dto)
+    {
+        var annonce = await _dbContext.Annonces.FindAsync(dto.Idannonce);
+        if (annonce == null) return NotFound("Annonce introuvable.");
+
+        var utilisateur = await _dbContext.Utilisateurs.FindAsync(dto.Idutilisateur);
+        if (utilisateur == null) return NotFound("Utilisateur introuvable.");
+
+        var voyageurs = dto.Inclures ?? new List<InclureCreateDto>();
+        int totalAdults = voyageurs.FirstOrDefault(i => i.Idtypevoyageur == 1)?.Nombrevoyageur ?? 1;
+
+        int nights = (dto.DateFin - dto.DateDebut).Days;
+        if (nights <= 0) nights = 1;
+
+        decimal totalRent = annonce.Prixnuitee * nights;
+        decimal serviceFee = totalRent * 0.14m;
+        decimal touristTax = 4.00m * nights * totalAdults;
+        decimal depositAmount = serviceFee + (totalRent * 0.35m) + touristTax;
+
+        decimal soldeDisponible = utilisateur.Solde;
+
+        // --- CAS A : Paiement par Solde ---
+        if (soldeDisponible >= depositAmount)
+        {
+            utilisateur.Solde -= depositAmount;
+            _dbContext.Utilisateurs.Update(utilisateur);
+
+            var dDebut = await GetOrCreateDate(DateOnly.FromDateTime(dto.DateDebut));
+            var dFin = await GetOrCreateDate(DateOnly.FromDateTime(dto.DateFin));
+            var dToday = await GetOrCreateDate(DateOnly.FromDateTime(DateTime.Now));
+
+            var reservation = new Reservation
+            {
+                Idannonce = dto.Idannonce,
+                Idutilisateur = dto.Idutilisateur,
+                Iddatedebutreservation = dDebut.Iddate,
+                Iddatefinreservation = dFin.Iddate,
+                Nomclient = dto.Nomclient,
+                Prenomclient = dto.Prenomclient,
+                Telephoneclient = dto.Telephoneclient
+            };
+            _dbContext.Reservations.Add(reservation);
+            await _dbContext.SaveChangesAsync();
+
+            foreach (var incDto in voyageurs)
+                _dbContext.Inclures.Add(new Inclure { Idreservation = reservation.Idreservation, Idtypevoyageur = incDto.Idtypevoyageur, Nombrevoyageur = incDto.Nombrevoyageur });
+
+            _dbContext.Transactions.Add(new Transaction
+            {
+                Iddate = dToday.Iddate,
+                Idreservation = reservation.Idreservation,
+                Idutilisateur = dto.Idutilisateur,
+                Montanttransaction = depositAmount
+            });
+            await _dbContext.SaveChangesAsync();
+
+            return Ok(new { url = "http://localhost:5173/my-reservations?payment=success" });
+        }
+
+        // --- CAS B : Stripe (avec solde partiel éventuel) ---
+        decimal soldeAUtiliser = soldeDisponible > 0 ? soldeDisponible : 0;
+        decimal montantRestantStripe = depositAmount - soldeAUtiliser;
+
+        int totalEnfants = voyageurs.FirstOrDefault(i => i.Idtypevoyageur == 2)?.Nombrevoyageur ?? 0;
+        int totalBebes = voyageurs.FirstOrDefault(i => i.Idtypevoyageur == 3)?.Nombrevoyageur ?? 0;
+        int totalAnimaux = voyageurs.FirstOrDefault(i => i.Idtypevoyageur == 4)?.Nombrevoyageur ?? 0;
+
+        var metadata = new Dictionary<string, string>
+        {
+            { "idannonce", dto.Idannonce.ToString() },
+            { "idutilisateur", dto.Idutilisateur.ToString() },
+            { "dateDebut", dto.DateDebut.ToString("yyyy-MM-dd") },
+            { "dateFin", dto.DateFin.ToString("yyyy-MM-dd") },
+            { "nomclient", dto.Nomclient ?? "Inconnu" },
+            { "prenomclient", dto.Prenomclient ?? "Inconnu" },
+            { "telephone", dto.Telephoneclient ?? "" },
+            { "adultes", totalAdults.ToString() },
+            { "enfants", totalEnfants.ToString() },
+            { "bebes", totalBebes.ToString() },
+            { "animaux", totalAnimaux.ToString() },
+            { "soldeUsed", soldeAUtiliser.ToString(CultureInfo.InvariantCulture) }
+        };
+
+        var options = new SessionCreateOptions
+        {
+            PaymentMethodTypes = new List<string> { "card" },
+            LineItems = new List<SessionLineItemOptions>
+            {
+                new SessionLineItemOptions
+                {
+                    PriceData = new SessionLineItemPriceDataOptions
+                    {
+                        UnitAmount = (long)(montantRestantStripe * 100),
+                        Currency = "eur",
+                        ProductData = new SessionLineItemPriceDataProductDataOptions
+                        {
+                            Name = $"Acompte réservation - {annonce.Titreannonce}",
+                            Description = $"Réservation du {dto.DateDebut:dd/MM/yyyy} au {dto.DateFin:dd/MM/yyyy}. Solde déduit : {soldeAUtiliser}€"
+                        },
+                    },
+                    Quantity = 1,
+                },
+            },
+            Mode = "payment",
+            Metadata = metadata,
+            SuccessUrl = "http://localhost:5173/my-reservations?session_id={CHECKOUT_SESSION_ID}",
+            CancelUrl = "http://localhost:5173/reservation/cancel",
+        };
+
+        var service = new SessionService();
+        Session session = await service.CreateAsync(options);
+        return Ok(new { url = session.Url });
+    }
+
     // =========================================================================
 
     [HttpPost("create-update-checkout-session")]
