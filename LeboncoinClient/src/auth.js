@@ -43,22 +43,28 @@ login(data) {
   async refreshUser() {
     if (!this.user?.idutilisateur || !this.token) return
     try {
-      const [profileRes, authRes] = await Promise.all([
+      const [profileResult, authResult] = await Promise.allSettled([
         api.get(`/utilisateurs/${this.user.idutilisateur}`),
         api.get(`/utilisateurs/${this.user.idutilisateur}/auth-profile`),
       ])
 
+      if (profileResult.status === 'rejected') {
+        const e = profileResult.reason
+        console.error('[refreshUser] Erreur profil :', e?.response?.status, e?.response?.data ?? e?.message)
+        if (e?.response?.status === 401) { this.clearUser(); return }
+      }
+
+      if (authResult.status === 'rejected') {
+        console.error('[refreshUser] Erreur auth-profile :', authResult.reason?.response?.status, authResult.reason?.response?.data ?? authResult.reason?.message)
+      }
+
       this.setUser({
         ...this.user,
-        solde: profileRes.data.solde,
-        roles: authRes.data.roles,
-        permissions: authRes.data.permissions,
+        ...(profileResult.status === 'fulfilled' ? { solde: profileResult.value.data.solde } : {}),
+        ...(authResult.status === 'fulfilled' ? { roles: authResult.value.data.roles, permissions: authResult.value.data.permissions } : {}),
       })
     } catch (e) {
-      console.error('[refreshUser] Erreur lors du rafraîchissement :', e?.response?.status, e?.response?.data ?? e?.message)
-      if (e.response && e.response.status === 401) {
-        this.clearUser()
-      }
+      console.error('[refreshUser] Erreur inattendue :', e?.message)
     }
   },
 })

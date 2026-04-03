@@ -125,7 +125,8 @@ public class UtilisateurManager : IDataUtilisateurRepository<Utilisateur>
         return await _dbContext.Utilisateurs
             .Include(u => u.Idroles)
                 .ThenInclude(r => r.Idpermissions)
-            .FirstOrDefaultAsync(u => u.Idutilisateur == id);
+            .FirstOrDefaultAsync(u => u.Idutilisateur == id)
+            ?? await _dbContext.Utilisateurs.FindAsync(id);
     }
 
     public async Task<bool> PhoneExistsAsync(string phone)
