@@ -351,7 +351,6 @@ public class UtilisateurManager : IDataUtilisateurRepository<Utilisateur>
     {
         var user = await _dbContext.Utilisateurs
             .AsNoTracking()
-            .AsSplitQuery()
             .Include(u => u.IdadresseNavigation).ThenInclude(a => a.IdvilleNavigation)
             .Include(u => u.IddateNavigation)
             .Include(u => u.Particulier).ThenInclude(p => p.IddateNavigation)
